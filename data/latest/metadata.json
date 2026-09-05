@@ -1,0 +1,36 @@
+{
+  "schema_version": 4,
+  "dataset_type": "derived_meteorological_risk_data",
+  "status": "live",
+  "application": "MeteoRisk Light",
+  "source_data": [
+    {
+      "name": "Open-Meteo",
+      "role": "meteorological input data",
+      "license": "CC BY 4.0"
+    }
+  ],
+  "attribution": "Meteorological source data: Open-Meteo.com / Data license: CC BY 4.0 / Processed and aggregated by MeteoRisk Light.",
+  "generated_at": "2026-09-05T22:27:17.606725+00:00",
+  "models_covered": [
+    "best_match",
+    "ecmwf_ifs"
+  ],
+  "forecast_days": 3,
+  "timezone": "Europe/Rome",
+  "point_count": 257,
+  "province_count": 107,
+  "day0": "2026-09-05",
+  "run_info": {
+    "run_key": "1788609600",
+    "driver_model": "italia_meteo_arpae_icon_2i",
+    "run_init_ts": 1788609600,
+    "run_available_ts": 1788652800,
+    "fetched_at": "2026-09-05T22:24:35.941422+00:00"
+  },
+  "files": {
+    "points": "meteorisk-points.json",
+    "provinces": "meteorisk-provinces.json",
+    "validation": "validation.json"
+  }
+}

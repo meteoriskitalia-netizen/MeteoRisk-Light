@@ -1,0 +1,195 @@
+name: Update Weather Data (Centralized Data Pipeline — Production Hardened)
+
+# 1.0.0.6 — GITHUB PRODUCTION HARDENING
+#   - Distinzione OBBLIGATORIA (workflow_gate.py, fonte unica testabile):
+#       check rc 0  = NEW RUN AVAILABLE  -> la pipeline continua
+#       check rc 10 = NO NEW RUN         -> clean SUCCESS, NESSUN lavoro
+#       check rc 1+ = TECHNICAL ERROR    -> workflow FAIL, errore visibile
+#   - Ordine: punti (if needed) -> CHECK MODEL RUN -> REQUEST PLANNER -> fetch
+#     -> build -> validate -> publish -> commit -> deploy. Niente pianificazione
+#     o analisi prima di sapere se esiste un nuovo run.
+#   - Request Planner: PLAN VALID -> continua · BUDGET BLOCKED (rc 2) -> success
+#     safe skip, last known good preservato · PLAN ERROR (rc 1+) -> FAIL (mai
+#     interpretato come "no new run").
+#   - No deploy su no-op: commit e deploy Pages SOLO con nuovo dataset valido
+#     (publish rc 0) oppure force_deploy (bootstrap operatore).
+#   - Log canonici [INFO]/[ERROR] emessi da workflow_gate.py.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: "Ignora il check 'run già processato' (MAI la validazione)"
+        required: false
+        default: false
+        type: boolean
+      force_deploy:
+        description: "Forza un deploy anche senza nuovo dataset (bootstrap Pages)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # Punti di campionamento: solo se assenti (rigenerabili e deterministici).
+      - name: Genera punti reali (se necessari, port V1/V2 deterministico)
+        run: |
+          if [ ! -f data/_workdir/real_points.json ]; then
+            rc=0
+            python scripts/generate_points.py || rc=$?
+            python scripts/workflow_gate.py points "$rc"
+            exit $?
+          fi
+          echo "[INFO] Required sample points already present"
+
+      # CHECK MODEL RUN PRIMA DI QUALSIASI PIANO: leggero (Metadata API, non
+      # conteggiata nel budget forecast). exit 10 -> clean success; 1+ -> FAIL.
+      - name: Rileva nuovo run modelli (Metadata API)
+        id: check
+        run: |
+          rc=0
+          if [ "${{ inputs.force_update }}" = "true" ]; then
+            python scripts/check_model_runs.py --force-update || rc=$?
+          else
+            python scripts/check_model_runs.py || rc=$?
+          fi
+          python scripts/workflow_gate.py check "$rc"
+          exit $?
+
+      # Solo con un NUOVO run: pianificazione (dedup + batching + pre-flight
+      # budget). rc 2 -> success safe-skip; rc 1+ -> FAIL.
+      - name: Request planner (dedup + batch + pre-flight budget)
+        id: plan
+        if: steps.check.outputs.new_run == 'true'
+        run: |
+          rc=0
+          python scripts/request_planner.py --no-write || rc=$?
+          python scripts/workflow_gate.py plan "$rc"
+          exit $?
+
+      # Raw TEMPORANEO (data/_raw, mai pubblicato/committato/deployato).
+      - name: Fetch dati sorgente (raw, mai pubblicato)
+        id: fetch
+        if: steps.check.outputs.new_run == 'true' && steps.plan.outputs.plan_state == 'ok'
+        run: |
+          rc=0
+          python scripts/fetch_source_data.py || rc=$?
+          python scripts/workflow_gate.py fetch "$rc"
+          exit $?
+
+      - name: Build dataset derivato (staging)
+        id: build
+        if: steps.check.outputs.new_run == 'true' && steps.fetch.outputs.fetch_ok == 'true'
+        run: |
+          rc=0
+          python scripts/build_meteorisk_dataset.py || rc=$?
+          python scripts/workflow_gate.py build "$rc"
+          exit $?
+
+      # Validazione (staging): la mancata validazione FALLA il workflow
+      # (nessun commit, nessun deploy; data/latest resta intatto).
+      - name: Valida dataset (staging)
+        id: validate
+        if: steps.check.outputs.new_run == 'true' && steps.build.outputs.build_ok == 'true'
+        run: |
+          rc=0
+          python scripts/validate_dataset.py --staging || rc=$?
+          python scripts/workflow_gate.py validate "$rc"
+          exit $?
+
+      # Publish atomico (swap staging -> latest, last known good preservato).
+      - name: Pubblica dataset valido (atomico)
+        id: publish
+        if: steps.check.outputs.new_run == 'true' && steps.build.outputs.build_ok == 'true' && steps.validate.outputs.validate_ok == 'true'
+        run: |
+          rc=0
+          python scripts/publish_dataset.py || rc=$?
+          python scripts/workflow_gate.py publish "$rc"
+          exit $?
+
+      # Commit SOLO con nuovo dataset valido pubblicato.
+      - name: Commit nuovo dataset valido
+        if: steps.publish.outputs.new_dataset == 'true'
+        run: |
+          git config user.name "meteorisk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/latest data/state/last_model_run.json data/state/api_usage.json
+          if git diff --cached --quiet; then
+            echo "[INFO] Nessuna modifica al dataset."
+          else
+            git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.0.6)"
+            git push
+          fi
+
+      # L'ARTEFATTO di deploy contiene SOLO: app, dataset derivati e geografie
+      # richieste. Mai _raw / _staging / _workdir / payload Open-Meteo.
+      - name: Build sito statico (html + data/latest + data/geography)
+        if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
+        run: |
+          mkdir -p _site/data
+          cp mri-light-1.0.0.6.html _site/index.html
+          cp -R data/latest _site/data/latest                    # dataset derivato
+          cp -R data/geography _site/data/geography              # boundaries richieste
+
+      - name: Upload Pages artifact
+        if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy su GitHub Pages
+        if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Riassunto SEMPRE visibile: nessun errore tecnico silenziato.
+      - name: Summary pipeline (sempre eseguito)
+        if: always()
+        run: |
+          {
+            echo "## MeteoRisk Light 1.0.0.6 — Pipeline status"
+            echo ""
+            echo "**Run check:** \`${{ steps.check.outputs.check_state || 'n/a' }}\` — **Planner:** \`${{ steps.plan.outputs.plan_state || 'skipped' }}\`"
+            echo ""
+            echo "**Fetch:** \`${{ steps.fetch.outputs.fetch_ok || 'skipped' }}\` ${{ steps.fetch.outputs.fetch_reason || '' }}"
+            echo "**Build:** \`${{ steps.build.outputs.build_ok || 'skipped' }}\`"
+            echo "**Validate:** \`${{ steps.validate.outputs.validate_ok || 'skipped' }}\`"
+            echo "**Publish (new dataset):** \`${{ steps.publish.outputs.new_dataset || 'false' }}\`"
+            echo ""
+            if [ "${{ steps.check.outputs.check_state }}" = "failed" ]; then
+              echo "⚠️ **CHECK FAILED:** errore Metadata API non silenziato — workflow FAIL."
+            elif [ "${{ steps.check.outputs.new_run }}" = "false" ]; then
+              echo "ℹ️ **No new model run — clean exit:** nessun fetch/build/commit/deploy (comportamento atteso)."
+            elif [ "${{ steps.publish.outputs.new_dataset }}" = "true" ]; then
+              echo "✅ Nuovo dataset valido pubblicato e deployato."
+            elif [ "${{ steps.fetch.outputs.fetch_reason }}" = "budget_blocked" ]; then
+              echo "⚠️ **Budget blocked:** safe skip, ultimo dataset valido preservato, nessun deploy."
+            elif [ "${{ steps.plan.outputs.plan_state }}" = "budget_blocked" ]; then
+              echo "⚠️ **Budget blocked:** safe skip, ultimo dataset valido preservato, nessun deploy."
+            else
+              echo "⚠️ Pipeline non completata senza nuovo dataset pubblicato (dettagli nei log sopra)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

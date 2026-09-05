@@ -1,0 +1,9 @@
+MeteoRisk Light — 1.0.0.6 — GitHub Production Hardening
+MAJOR=1
+MINOR=0
+PATCH=0
+BUILD=6
+RELEASE_TYPE=release
+DATE=2026-09-06
+NOTE=GitHub Production Hardening: distinzione obbligatoria NEW RUN (0) / NO NEW RUN (10, clean success) / TECHNICAL ERROR (1+, workflow FAIL never silenced); check model run PRIMA del request planner; PLAN VALID / BUDGET BLOCKED (safe success, last known good preserved) / PLAN ERROR (fail); deploy solo dopo nuovo run + fetch + build + validate + publish; repository ripulito (raw/staging/workdir fuori da Git, Pages e ZIP finale); log [INFO]/[ERROR] canonici.
+APP_FILE=mri-light-1.0.0.6.html

@@ -1,0 +1,32 @@
+{
+  "last_model_runs": {
+    "italia_meteo_arpae_icon_2i": {
+      "model": "italia_meteo_arpae_icon_2i",
+      "last_run_initialisation_time": 1788609600,
+      "available_time": null,
+      "update_interval_seconds": 43200,
+      "not_available_before_this_time": null
+    },
+    "ecmwf_ifs": {
+      "model": "ecmwf_ifs",
+      "last_run_initialisation_time": 1788609600,
+      "available_time": null,
+      "update_interval_seconds": 21600,
+      "not_available_before_this_time": null
+    }
+  },
+  "driver_model": "italia_meteo_arpae_icon_2i",
+  "run_key": "1788609600",
+  "run_init_ts": 1788609600,
+  "run_available_ts": 1788652800,
+  "last_processed_key": "1788609600",
+  "status": "live",
+  "checked_at": "2026-09-05T22:24:35.941422+00:00",
+  "note": "PROVISION-LOCALE (dev, fuori dalla cadenza dell'Action): run 1788609600 non ancora in grace, registrato per la generazione del dataset reale.",
+  "published_at": "2026-09-05T22:27:30.698293+00:00",
+  "last_processed_at": "2026-09-05T22:27:30.698314+00:00",
+  "dataset": {
+    "point_count": 257,
+    "validation_outcome": "OK"
+  }
+}
