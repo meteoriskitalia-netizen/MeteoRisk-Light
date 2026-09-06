@@ -41,6 +41,14 @@ for (const name of [
   failFast(`${name} non estratta`, !!m);
   pure += '\n' + m[0];
 }
+// helper puro del valore celle V3 (no canvas/DOM) estratto dal sorgente
+{
+  const name = 'function computeV3CellValues(lattice, fr, points, valueReal, flagsReal, anchors)';
+  const re = new RegExp(name.replace(/[()]/g, m => '\\' + m) + ' \\{[\\s\\S]*?\\n    \\}');
+  const m = src.match(re);
+  failFast(`${name} non estratta`, !!m);
+  pure += '\n' + m[0];
+}
 
 // ---------- vm con profili controllati ----------
 const RPROFILE = { level: 0, color: '#334155' };
@@ -188,6 +196,52 @@ vm.runInNewContext(pure, ctx);
   ok('V3 chiamata con ancore provinciali', /renderContinuousV3\(points, value, flags, v3Anchors\)/.test(src));
   ok('surfaceColor presente e condivisa', /function surfaceColor\(value, filteredShare\)/.test(src));
   ok('metricSurfaceValue presente', /function metricSurfaceValue\(metric, agg\)/.test(src));
+}
+
+// ---------- 9. V3: ogni cella parte dalla provincia che la contiene (sfumatura ≡ poligoni) ----------
+{
+  const mm = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+  const fr = { W: 256, H: 316, minLon: 0, maxLon: 12, minLat: 36, maxLat: 47,
+               lonSpan: 12, mSpan: mm(47) - mm(36), mnM: mm(36), mxM: mm(47) };
+  const px = (lon, lat) => ({
+    x: (lon - fr.minLon) / fr.lonSpan * (fr.W - 1),
+    y: (fr.mxM - mm(lat)) / fr.mSpan * (fr.H - 1),
+  });
+  const cellA = { lat: 36.3, lon: 0.3, zone: 5 };   // interno di provincia 5
+  const rawFar = { lat: 36.3, lon: 11.8 };          // punto reale LONTANO (prov. 9, verde)
+  const rawNear = { lat: 36.3, lon: 0.3 };          // punto reale SULLA cella
+  const pC = px(cellA.lon, cellA.lat), pF = px(rawFar.lon, rawFar.lat), pN = px(rawNear.lon, rawNear.lat);
+  const d2Far = (pC.x - pF.x) ** 2 + (pC.y - pF.y) ** 2;
+  const d2Near = (pC.x - pN.x) ** 2 + (pC.y - pN.y) ** 2;
+  ok('9: punto lontano è fuori dal raggio adattivo (>=180px)', d2Far >= 180 * 180, 'd2=' + d2Far.toFixed(0));
+  ok('9: punto sulla cella è a distanza 0', d2Near === 0);
+  const anchors = [
+    { lat: 45.9, lon: 6, value: 4, filtered: false, zone: 5 },  // prov 5: livello 4 (rosso)
+    { lat: 46.5, lon: 6, value: 1, filtered: false, zone: 9 },  // prov 9: livello 1 (verde)
+  ];
+  const resFar = ctx.computeV3CellValues([cellA], fr, [rawFar], [1], [false], anchors);
+  ok('9: cella in provincia 5 lontana da punti → valore 4 (≠ verde del vicino)',
+    Math.abs(resFar.cellv[0] - 4) < 1e-6, 'v=' + resFar.cellv[0].toFixed(6));
+  ok('9: flag filtrato base della provincia (0 senza filtro)', Math.abs(resFar.cellf[0]) < 1e-9);
+  const resOld = ctx.computeV3CellValues([{ lat: cellA.lat, lon: cellA.lon, zone: -1 }], fr,
+    [rawFar], [1], [false], anchors);
+  ok('9: senza zona la cella tirava dal punto più vicino (vecchio bug: verde)',
+    resOld.cellv[0] !== 4 && Math.abs(resOld.cellv[0] - 1) < 1e-9, 'v=' + resOld.cellv[0].toFixed(6));
+  const resMod = ctx.computeV3CellValues([cellA], fr, [rawNear], [1], [false], anchors);
+  const expMod = (4 * 3 + 1 * 1) / (3 + 1);
+  ok('9: punto reale SULLA cella modula localmente (PZ=3) → mix pesato',
+    Math.abs(resMod.cellv[0] - expMod) < 1e-9, 'v=' + resMod.cellv[0].toFixed(4));
+  const resFil = ctx.computeV3CellValues([{ lat: 36.3, lon: 0.3, zone: 5 }], fr,
+    [rawFar], [4], [false],
+    [{ lat: 45.9, lon: 6, value: 4, filtered: true, zone: 5 }]);
+  ok('9: filtro alto rischio della provincia propagato alla cella',
+    Math.abs(resFil.cellf[0] - 1) < 1e-6 && Math.abs(resFil.cellv[0] - 4) < 1e-6);
+  ok('9: V3 usa computeV3CellValues (helper puro a valore provinciale)',
+    /var cellRes = computeV3CellValues\(continuousLattice, fr, points, valueReal, flagsReal, anchorsList\)/.test(src));
+  ok('9: celle del reticolo portano la zona (rasterZoneField)',
+    /function rasterZoneField\(nx, ny, fr\)/.test(src) && /cell\.zone = zoneIds\[j \* nx \+ i\]/.test(src));
+  ok('9: le ancore portano lo zone index (mappa provincia → valore)',
+    /zone: vzA\.zoneIdx/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

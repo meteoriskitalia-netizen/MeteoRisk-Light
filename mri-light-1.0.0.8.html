@@ -14723,6 +14723,47 @@
     // Reticolo VIRTUALE ~0,25°: griglia sulla terra (maschera evenodd del GeoJSON) con
     // celle sparse SOLO dentro i confini italiani. Nessuna nuova coordinata reale, nessun
     // fetch: le celle servono solo alla colorazione ed ereditano i colori dei punti reali.
+    // Raster "a provincia": ogni cella della griglia V3 riceve l'indice della provincia che
+    // la contiene (0 = mare/nessuna), così la superficie parte dal valore ufficiale della
+    // poligonale. Stessa proiezione di rasterLandMask (evenodd, stessi anelli).
+    function rasterZoneField(nx, ny, fr) {
+        var fc = provinceGeoJsonData;
+        if (!fc || !fc.features || !fr) return null;
+        var c = document.createElement('canvas');
+        c.width = nx; c.height = ny;
+        var cx = c.getContext('2d');
+        var lonSpan = fr.lonSpan, mSpan = fr.mSpan;
+        function proj(lon, lat) {
+            var m = Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+            return [(lon - fr.minLon) / lonSpan * (nx - 1), (fr.mxM - m) / mSpan * (ny - 1)];
+        }
+        for (var f = 0; f < fc.features.length; f++) {
+            var props = fc.features[f].properties || {};
+            var sigla = props.SIGLA || '';
+            var zi = (sigla && provinceSiglaMap[sigla] !== undefined && provinceSiglaMap[sigla] !== null) ? provinceSiglaMap[sigla] : -1;
+            if (zi < 0) continue;
+            var geom = fc.features[f].geometry;
+            if (!geom || !geom.coordinates) continue;
+            var polys = geom.type === 'MultiPolygon' ? geom.coordinates : [geom.coordinates];
+            cx.beginPath();
+            for (var p = 0; p < polys.length; p++) {
+                for (var r = 0; r < polys[p].length; r++) {
+                    var ring = polys[p][r];
+                    for (var i = 0; i < ring.length; i++) {
+                        var ll = proj(ring[i][0], ring[i][1]);
+                        if (i === 0) cx.moveTo(ll[0], ll[1]); else cx.lineTo(ll[0], ll[1]);
+                    }
+                    cx.closePath();
+                }
+            }
+            cx.fillStyle = 'rgb(' + ((zi + 1) % 256) + ',0,0)';
+            cx.fill('evenodd');
+        }
+        var img = cx.getImageData(0, 0, nx, ny).data;
+        var ids = new Int16Array(nx * ny);
+        for (var k = 0; k < ids.length; k++) ids[k] = img[k * 4] - 1;
+        return ids;
+    }
     function buildVirtualLattice() {
         continuousLattice = [];
         if (!provinceGeoJsonData || !provinceGeoJsonData.features) { continuousLatticeReady = true; return; }
@@ -14732,13 +14773,16 @@
         var ny = Math.max(2, Math.round(fr.H * nx / fr.W));
         var m = rasterLandMask({ W: nx, H: ny, minLat: fr.minLat, maxLat: fr.maxLat,
                                  minLon: fr.minLon, maxLon: fr.maxLon, mnM: fr.mnM, mxM: fr.mxM });
+        var zoneIds = rasterZoneField(nx, ny, fr);
         var cells = new Array(nx * ny);
         for (var j = 0; j < ny; j++) {
             var mj = fr.mxM - (j + 0.5) / ny * fr.mSpan;
             var lat = (2 * Math.atan(Math.exp(mj)) - Math.PI / 2) * 180 / Math.PI;
             for (var i = 0; i < nx; i++) {
                 var lon = fr.minLon + (i + 0.5) / nx * fr.lonSpan;
-                cells[j * nx + i] = { lat: lat, lon: lon };
+                var cell = { lat: lat, lon: lon };
+                if (zoneIds) cell.zone = zoneIds[j * nx + i];
+                cells[j * nx + i] = cell;
             }
         }
         continuousLattice = cells;
@@ -14747,50 +14791,52 @@
         continuousLatticeReady = true;
     }
     var continuousLatticeNx = 0, continuousLatticeNy = 0;
-    // Render V3: pixel-loop con bilinear tra le celle del reticolo. Interpola i VALORI
-    // metrici (reali + ANCRE PROVINCIALI = valore aggregato ufficiale della provincia,
-    // identico alla poligonale) e converte il colore UNA volta a fine pixel (mai RGB).
-    function renderContinuousV3(points, valueReal, flagsReal, anchors) {
-        if (!continuousV3Frame) continuousV3Frame = computeContinuousFrame(points);
-        var fr = continuousV3Frame;
-        if (!fr) { hideContinuousOverlay(); return; }
-        if (!continuousLatticeReady) buildVirtualLattice();
-        if (!continuousLattice.length) { hideContinuousOverlay(); return; }
-        var nx = continuousLatticeNx, ny = continuousLatticeNy;
+    // Pure helper per il valore metrico delle celle V3 (niente canvas/DOM: testabile).
+    // Le ANCRE provinciali diventano una mappa zone→valore UFFICIALE (identico ai
+    // poligoni); ogni cella che cade dentro una provincia parte da quel valore (peso base
+    // PZ) e i punti reali dell'intorno lo modulano SOLO localmente (peso distanza). Senza
+    // GeoJSON le celle non hanno zona: si ripiega sull'IDW reale+ancore (vecchia semantica).
+    function computeV3CellValues(lattice, fr, points, valueReal, flagsReal, anchors) {
         var W = fr.W, H = fr.H;
-        // Campioni: punti reali + ancore provinciali (valori ufficiali).
         var anchorsList = anchors || [];
-        var nS = points.length + anchorsList.length;
+        var nPts = points.length;
+        var nS = nPts + anchorsList.length;
         var sx = new Array(nS), sy = new Array(nS), sv = new Array(nS), sf = new Array(nS);
-        for (var r = 0; r < points.length; r++) {
-            var mp = Math.log(Math.tan(Math.PI / 4 + points[r].lat * Math.PI / 360));
+        for (var r = 0; r < nPts; r++) {
+            var mpr = Math.log(Math.tan(Math.PI / 4 + points[r].lat * Math.PI / 360));
             sx[r] = (points[r].lon - fr.minLon) / fr.lonSpan * (W - 1);
-            sy[r] = (fr.mxM - mp) / fr.mSpan * (H - 1);
+            sy[r] = (fr.mxM - mpr) / fr.mSpan * (H - 1);
             sv[r] = (valueReal[r] == null) ? null : valueReal[r];
             sf[r] = !!flagsReal[r];
         }
+        var provVals = {};
         for (var a = 0; a < anchorsList.length; a++) {
             var an = anchorsList[a];
-            var idxA = points.length + a;
-            var mpa = Math.log(Math.tan(Math.PI / 4 + an.lat * Math.PI / 360));
+            var idxA = nPts + a;
+            var mpa2 = Math.log(Math.tan(Math.PI / 4 + an.lat * Math.PI / 360));
             sx[idxA] = (an.lon - fr.minLon) / fr.lonSpan * (W - 1);
-            sy[idxA] = (fr.mxM - mpa) / fr.mSpan * (H - 1);
+            sy[idxA] = (fr.mxM - mpa2) / fr.mSpan * (H - 1);
             sv[idxA] = (an.value == null) ? null : an.value;
             sf[idxA] = !!an.filtered;
+            if (an.zone != null && an.zone >= 0 && an.value != null && provVals[an.zone] === undefined) {
+                provVals[an.zone] = { value: an.value, filtered: !!an.filtered };
+            }
         }
-        // Valore di ogni cella: IDW sui VALORI (reale + ancorato). Il flag "filtrato" è
-        // mixato con gli stessi pesi, così la superficie rispetta il filtro alto rischio.
-        var R2 = 38 * 38, MAXA = 180, MAXN = 8, nC = continuousLattice.length;
+        var R2 = 38 * 38, MAXA = 180, MAXN = 8, PZ = 3, nC = lattice.length;
         var cellv = new Array(nC), cellf = new Array(nC);
         for (var ci = 0; ci < nC; ci++) {
-            var C = continuousLattice[ci];
+            var C = lattice[ci];
             if (!C) continue;
             var mpc = Math.log(Math.tan(Math.PI / 4 + C.lat * Math.PI / 360));
             var ccx = (C.lon - fr.minLon) / fr.lonSpan * (W - 1);
             var ccy = (fr.mxM - mpc) / fr.mSpan * (H - 1);
+            var zoned = (C.zone != null && C.zone >= 0 && provVals[C.zone]) ? provVals[C.zone] : null;
             var best = null, dmin2 = -1, imin = -1;
             for (var q = 0; q < nS; q++) {
                 if (sv[q] == null) continue;
+                // In modalità zonale le ancore valgono SOLO come base provincia, non come
+                // campioni di modulazione (evita il "tiro" da punti/ancore di province lontane).
+                if (zoned && q >= nPts) continue;
                 var dx = sx[q] - ccx, dy = sy[q] - ccy;
                 var d2 = dx * dx + dy * dy;
                 if (d2 <= R2) {
@@ -14804,6 +14850,7 @@
                 var rl2 = rl * rl;
                 for (var q2 = 0; q2 < nS; q2++) {
                     if (sv[q2] == null) continue;
+                    if (zoned && q2 >= nPts) continue;
                     var dx2 = sx[q2] - ccx, dy2 = sy[q2] - ccy;
                     var dd2 = dx2 * dx2 + dy2 * dy2;
                     if (dd2 <= rl2) {
@@ -14813,21 +14860,51 @@
                 }
                 if (!best) best = [[imin, dmin2]];
             }
-            if (!best) continue;
-            best.sort(function(a, b) { return a[1] - b[1]; });
-            if (best.length > MAXN) best.length = MAXN;
-            var sum = 0, vAcc = 0, fAcc = 0;
-            for (var wj = 0; wj < best.length; wj++) {
-                var w = 1 / Math.pow(1 + best[wj][1], 1.6);
-                vAcc += w * sv[best[wj][0]];
-                if (sf[best[wj][0]]) fAcc += w;
-                sum += w;
-            }
-            if (sum > 0) {
-                cellv[ci] = vAcc / sum;
-                cellf[ci] = fAcc / sum;
+            if (best) {
+                best.sort(function(a, b) { return a[1] - b[1]; });
+                if (best.length > MAXN) best.length = MAXN;
+                var sum = 0, vAcc = 0, fAcc = 0;
+                for (var wj = 0; wj < best.length; wj++) {
+                    var w = 1 / Math.pow(1 + best[wj][1], 1.6);
+                    vAcc += w * sv[best[wj][0]];
+                    if (sf[best[wj][0]]) fAcc += w;
+                    sum += w;
+                }
+                if (zoned) {
+                    // Base provinciale (peso PZ) + modulazione punti reali (peso distanza):
+                    // l'interno della provincia resta sul colore della poligonale.
+                    cellv[ci] = (zoned.value * PZ + vAcc) / (PZ + sum);
+                    cellf[ci] = ((zoned.filtered ? 1 : 0) * PZ + fAcc) / (PZ + sum);
+                } else if (sum > 0) {
+                    cellv[ci] = vAcc / sum;
+                    cellf[ci] = fAcc / sum;
+                }
+            } else if (zoned) {
+                // Nessun punto reale nel raggio: la cella resta sul valore della provincia.
+                cellv[ci] = zoned.value;
+                cellf[ci] = zoned.filtered ? 1 : 0;
             }
         }
+        return { cellv: cellv, cellf: cellf };
+    }
+    // Render V3: pixel-loop con bilinear tra le celle del reticolo. Interpola i VALORI
+    // metrici (reali + ANCRE PROVINCIALI = valore aggregato ufficiale della provincia,
+    // identico alla poligonale) e converte il colore UNA volta a fine pixel (mai RGB).
+    function renderContinuousV3(points, valueReal, flagsReal, anchors) {
+        if (!continuousV3Frame) continuousV3Frame = computeContinuousFrame(points);
+        var fr = continuousV3Frame;
+        if (!fr) { hideContinuousOverlay(); return; }
+        if (!continuousLatticeReady) buildVirtualLattice();
+        if (!continuousLattice.length) { hideContinuousOverlay(); return; }
+        var nx = continuousLatticeNx, ny = continuousLatticeNy;
+        var W = fr.W, H = fr.H;
+        // Campioni → computeV3CellValues (pure helper): ogni cella parte dal VALORE AGGREGATO
+        // ufficiale della provincia che la contiene (stesso dei poligoni) e i punti reali
+        // dell'intorno lo modulano localmente — l'interno di ogni provincia colora come la
+        // poligonale, i confini restano sfumati (nessun tiro da punti lontani/altre province).
+        var anchorsList = anchors || [];
+        var cellRes = computeV3CellValues(continuousLattice, fr, points, valueReal, flagsReal, anchorsList);
+        var cellv = cellRes.cellv, cellf = cellRes.cellf;
         // Pixel-loop: bilinear sul VALORE, poi UNICA conversione colore ufficiale
         var cv = document.createElement('canvas');
         cv.width = W; cv.height = H;
@@ -15098,7 +15175,7 @@ function renderContinuousOverlay() {
                     if (!aggVA) continue;
                     var svA = metricSurfaceValue(currentMetric, aggVA);
                     if (svA.v == null) continue;
-                    v3Anchors.push({ lat: vzA.lat, lon: vzA.lon, value: svA.v, filtered: svA.filtered });
+                    v3Anchors.push({ lat: vzA.lat, lon: vzA.lon, value: svA.v, filtered: svA.filtered, zone: vzA.zoneIdx });
                 }
             }
             renderContinuousV3(points, value, flags, v3Anchors);
