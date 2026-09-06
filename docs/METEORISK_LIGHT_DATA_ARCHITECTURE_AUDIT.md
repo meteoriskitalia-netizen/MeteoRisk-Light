@@ -1,5 +1,14 @@
 # METEORISK LIGHT — DATA ARCHITECTURE & MODEL UPDATE AUDIT
 
+> **⚠ SUPERSEDED (1.0.0.7 — Coordinated Scheduling).** Questo documento è un
+> **audit storico** della baseline 1.0.0.2/1.0.0.3: il contenuto resta valido
+> come registrazione architetturale e NON è operativo per la pipeline corrente.
+> Dalla **1.0.0.7** il ciclo è comandato dal **driver ECMWF IFS** (check leggero,
+> Metadata API) e il segmento **Best Match** è aggiornato **coordinato** con il run
+> ECMWF nello stesso ciclo di fetch. I riferimenti storici a `italia_meteo_arpae_icon_2i`
+> presenti in questo documento appartengono al periodo precedente e NON devono essere
+> usati come guida operativa (per la pipeline operativa aggiornata: `CENTRALIZED_DATA_PIPELINE.md`).
+
 **Versione analizzata:** MeteoRisk Light 1.0.0.2 (`releases/Light-1.0.0.2/mri-light-1.0.0.2.html`, SHA-256 `1DBC7757…07E5`)
 **Versione audit:** MeteoRisk Light 1.0.0.3 (`releases/MeteoRisk-Light-1.0.0.3-Data-Architecture-Audit/`)
 **Data analisi:** 2026-09-05

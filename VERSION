@@ -1,9 +1,9 @@
-MeteoRisk Light — 1.0.0.6 — GitHub Production Hardening
+MeteoRisk Light — 1.0.0.8 — Best Match Canary + Initial Dataset Bootstrap
 MAJOR=1
 MINOR=0
 PATCH=0
-BUILD=6
+BUILD=8
 RELEASE_TYPE=release
 DATE=2026-09-06
-NOTE=GitHub Production Hardening: distinzione obbligatoria NEW RUN (0) / NO NEW RUN (10, clean success) / TECHNICAL ERROR (1+, workflow FAIL never silenced); check model run PRIMA del request planner; PLAN VALID / BUDGET BLOCKED (safe success, last known good preserved) / PLAN ERROR (fail); deploy solo dopo nuovo run + fetch + build + validate + publish; repository ripulito (raw/staging/workdir fuori da Git, Pages e ZIP finale); log [INFO]/[ERROR] canonici.
-APP_FILE=mri-light-1.0.0.6.html
+NOTE=Best Match Canary indipendente (rilevatore sentinelle MI/VE/RM/PE/LE/PA, 1 richiesta/ciclo, fingerprint SHA-256 del solo contenuto registrata alla pubblicazione) + decision engine 2x2 in decide_cycle.py (coordinated / best_match_only / none / bootstrap; priorità 1..5, API USAGE GUARDRAILS: hard safety ceiling centralizzato in data/state/api_usage.json, blocco SOLO oltre il tetto, nessun razionamento preventivo, osservabilità separata) + refresh leggero best_match_only con merge e leg_timestamps espliciti. PARTE G — INITIAL DATASET BOOTSTRAP: il rilascio NON include nessun dataset locale; il primo dataset è generato ESCLUSIVAMENTE da GitHub Actions (bootstrap_pending, fetch reale, validate, publish atomico, commit, Pages); fallimento del primo ciclo = workflow FAIL senza file finti/parziali (G6). PARTE H — ROBUSTEZZA RETE/METADATA API: timeout esplicito connect/read (15s), retry automatici limitati (4 totali) su errori transienti TLS/timeout/conn-reset/429/5xx con backoff esponenziale + jitter; NETWORK ERROR != NO NEW RUN (lo state/fingerprint si aggiorna solo con check riuscito); summary esplicito "Metadata API unavailable after retries / No data fetch performed / Last dataset unchanged". Fix previsioni fascia oraria (getForecastSlotData con helper puri hourlyLength/fasciaIndices). PRODUCTION HARDENING: scheduler ripristinato a check ogni 10 minuti (cron */10, rileva solo cambi reali, clean exit se invariato); API usage guardrails semplificati (vedi sopra); coerenza packaging/percorsi di versione; prerequisiti dei test auto-generati. Conservati: driver ECMWF (check leggero Metadata), grace period, retry selettivi, last known good, commit/deploy solo su dataset valido, homepage Pages _site/index.html, pipeline coordinata invariata salvo quanto sopra.
+APP_FILE=mri-light-1.0.0.8.html

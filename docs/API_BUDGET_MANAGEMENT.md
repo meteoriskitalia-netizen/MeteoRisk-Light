@@ -1,82 +1,95 @@
-# METEORISK LIGHT — API BUDGET MANAGEMENT
-## Telemetria e protezione del consumo Open-Meteo (pipeline 1.0.0.5 · 1.0.0.6 hardening)
+# METEORISK LIGHT — API USAGE GUARDRAILS
 
-Questo documento descrive il meccanismo di budget/usage della pipeline: nessuna richiesta
-viene emessa verso l'API forecast Open-Meteo senza aver superato un **pre-flight** che legge
-il consumo persistito nel giorno corrente.
+## Osservabilità + protezioni, non razionamento (1.0.0.8 production hardening)
+
+Questo documento descrive le **API usage guardrails** della pipeline: protezione
+contro loop, retry infiniti, fetch duplicati, richieste massive accidentali,
+scheduler runaway ed errori di configurazione — con un **unico hard safety
+ceiling** centralizzato. Sostituisce la vecchia logica di "budget/riserva
+personale" del 1.0.0.5–1.0.0.7: **mai** un blocco preventivo per risparmiare la
+riserva; il fetch reale (nuovo run ECMWF / Best Match cambiato / bootstrap)
+parte normalmente finché il tetto di sicurezza non è effettivamente raggiunto.
 
 ---
 
-### 1. Costanti e sovrascritture d'ambiente
-Definite in `scripts/common.py`; ogni valore è sovrascrivibile con variabili `METEO_RISK_*`:
+### 1. Configurazione centralizzata (un unico luogo)
 
-| Costante | Default | Ruolo |
-|---|---|---|
-| `API_DAILY_LIMIT` | 10000 | massimo richieste forecast consentite/giorno |
-| `API_SAFETY_RESERVE_FRAC` | 0.10 | riserva di sicurezza sull'effettivo usabile |
-| `BATCH_MAX_LOCATIONS` | 100 | località per richiesta forecast (calibrato: 100 → ~4.1 MB) |
-| `API_MIN_REQUEST_INTERVAL_S` | 30.0 | pacing minimo tra richieste |
-| `RETRY_LIMIT` | 3 | tentativi per richiesta fallita (errore / 5xx) |
-| `RETRY_BACKOFF_BASE_S` | 5.0 | delay base del backoff esponenziale (5·2^i, cap) |
-| `API_USAGE_JSON` | `data/state/api_usage.json` | file di stato persistente |
-| `API_EFFICIENCY_DIR` | `data/_workdir/api_efficiency/` | report telemetria per run/plan |
+Definita in `scripts/common.py` (`API_GUARDRAILS_DEFAULT`, sovrascrivibile con
+variabili `METEO_RISK_API_DAILY_LIMIT` e `METEO_RISK_SAFETY_RESERVE_FRAC`) e
+persistita, come runtime, in `data/state/api_usage.json`:
 
-Il limite effettivo usabile è `API_DAILY_LIMIT * (1 - API_SAFETY_RESERVE_FRAC)`
-(es. 10000 → **9000**/giorno). La riserva copre fallback, retry e riaperture.
-
-### 2. Stato persistente `data/state/api_usage.json`
 ```jsonc
 {
-  "schema_version": 1,
-  "last_update": "2026-09-05T21:58:43Z",
-  "days": {
-    "2026-09-05": {
-      "requests": 6, "failed": 0, "batches": 3,
-      "locations": 257, "bytes": 8848830
-    }
-  }
+  "api_usage_guardrails": {
+    "enabled": true,
+    "daily_safety_ceiling": 10000,   // TETTO DURO: mai oltre questo numero di richieste/g
+    "warn_threshold_fraction": 0.8,  // soglia OSSERVABILITA': warning, MAI blocco
+    "hard_stop_enabled": true        // beyond-ceiling => safe skip / FAIL bootstrap
+  },
+  "days": { ... },
+  "last_update": null
 }
 ```
-- **requests** = richieste di rete forecast (batch × 2 leg modello); **failed** =
-  richieste fallite; **batches** = blocchi emessi; **locations** = località totali;
-  **bytes** = volume raw generato (informazione).
-- Rollover giornaliero: la chiave giorno = data UTC corrente; il budget si "azzera"
-  girando alla nuova chiave (i giorni precedenti restano come storico).
-- I conteggi sono **corretti per leg** (una richiesta per `n_model_legs` per batch,
-  senza contare i retry). Verificato sulla run reale: 3 batch × 2 = **6 requests**.
 
-### 3. Pre-flight bloccante
-1. `request_planner.py` calcola il piano (dedup + batch + leg) e il costo;
-   legge `usage_today()`; **exit 2** se `piano > disponibile` (nessun download avviato).
-2. `fetch_source_data.py` ripete il pre-flight (**exit 2**), quindi emette le richieste
-   con pacing `API_MIN_REQUEST_INTERVAL_S` e al termine registra `record_api_usage`.
-3. Il workflow valuta gli exit code: 2 ⇒ build/validate/publish SKIP con avviso nel
-   summary (mai errori silenziati).
+Nessun limite è hardcodato negli script: tutti leggono `common.guardrails()`.
+Un eventuale `api_usage.json` del vecchio schema (`daily_limit`) viene migrato
+automaticamente a `api_usage_guardrails.daily_safety_ceiling` al primo load.
 
-Esempio reale (2026-09-05):
-```
-limite=10000 riserva=10% effettivo=9000 · usato=6 · disponibile=8994
-PRE-FLIGHT OK: 6 pianificate <= 8994
-```
+### 2. Cosa viene CONTEGGIATO (osservabilità giornaliera, chiave = data UTC)
 
-### 4. Telemetria efficienza (`data/_workdir/api_efficiency/`)
-- `request_plan.json` — piano persistito dal planner (naive vs ottimizzate, batch).
-- `fetch_<timestamp>.json` — report esecuzione: `naive_requests=257`,
-  `optimized_requests=6`, `requests_saved=251`, `efficiency_gain_pct=97.67`,
-  `batch_size=100`, `n_model_legs=2`, `elapsed_s=153.2`, `ok/failed points`, `raw_bytes`,
-  `usage_after`.
+| Contatore | Chi lo alimenta | Significato |
+|---|---|---|
+| `checks` | `check_model_runs.py` | Metadata API (leggero, MAI usato per bloccare) |
+| `canary_requests` | `check_best_match.py` | 1 canary sentinel (weathercode+prec) |
+| `forecast_requests` | `fetch_source_data.py` | richieste forecast reali (batch × leg) |
+| `retries` | `get_model_metadata` (tentativi-1) | retry automatici su errori transienti |
+| `successful` / `failed` | fetch | esito delle richieste forecast |
+| `requests` | tutti i precedenti | totale richieste (base del ceiling) |
+| `batches` / `locations` / `bytes` | fetch | volume (informazione) |
 
-### 5. Perché l'efficienza conta
-- Naive 1.0.0.4: 257 richieste per run. Ottimizzato: **6**. Con cadenza aggiornamento
-  driver di 12 h → ~12 richieste/giorno vs 9000 disponibili (margine enorme; la riserva
-  resta per eventi anomali).
-- Dedup coordinate garantisce zero richieste ridondanti anche se `real_points.json`
-  contiene osservazioni ripetute.
+### 3. Cosa PUÒ bloccare (e cosa NO)
 
-### 6. Linee guida operative
-- Abilitare sovrascritture solo per test mirati (es. `METEO_RISK_API_MIN_REQUEST_INTERVAL_S=5`
-  su IP runner dedicato); in locale mantenere i default per non incappare nel limite
-  minutely (~5 richieste/min da IP condiviso).
-- `--skip-preflight` esiste SOLO per debug locale e **non** va usata nell'Action.
-- Se `api_usage.json` viene cancellato, il giorno corrente riparte da zero (autodifesa).
-- I report in `api_efficiency/` sono ignoti al VCS (`.gitignore`).
+- **PUÒ bloccare** — `guard_planned_requests(planned)` (pre-flight in
+  `decide_cycle.py`, `request_planner.py`, `fetch_source_data.py`):
+  - `hard_stop_enabled=true` **e** `usate_today + pianificate > daily_safety_ceiling`
+    → il fetch NON parte: `exit 2` (steady, safe skip, last known good preservato)
+    oppure `exit 3` (piano) / `exit 4` (fetch) in **bootstrap** = workflow FAIL.
+  - Canary sentinelle: stessa guardia (`available_today() < 1` → `exit 10`, skip).
+- **NON blocca MAI** (solo warning in log + summary):
+  - consumi alti **sotto** il tetto, anche oltre `warn_threshold_fraction`
+    (`[guardrails] OSSERVAZIONE (nessun blocco): ...`);
+  - contatori di osservabilità (`checks`, `canary_requests`, `forecast_requests`,
+    `retries`, `successful`, `failed`): registrano e basta;
+  - la **Metadata API** (run detection): non è conteggiata nel ceiling.
+
+### 4. Protezione da runaway / loop / retry infiniti
+
+- Retry limitati (mai infiniti) in un unico client (`fetch_source_batch`,
+  `get_model_metadata`): 429/5xx/Timeout/SSL con `RETRY_LIMIT=3` +
+  exponential backoff + jitter (Parte H). Sotto il tetto i retry contano nel
+  ceiling previsto (`worst = planned × RETRY_LIMIT`, informativo).
+- Pacing minimo tra richieste (`API_MIN_REQUEST_INTERVAL_S`) anti minutely-limit.
+- Pipeline **idempotente**: senza un nuovo run ECMWF / Best Match cambiato →
+  **clean exit, zero fetch** (cron `*/10 * * * *` rialzato per rilevare SOLO
+  cambi reali).
+- Nessun fetch "totale" se più del tetto verrebbe superato; nessuna ripetizione
+  integrale del piano su errori (retry **selettivi** sui soli batch falliti).
+
+### 5. Telemetria separata dai blocchi
+
+- `data/state/api_usage.json` — contatori giornalieri (sezione 2), rollover alla
+  data UTC; giorni precedenti conservati come storico.
+- `data/_workdir/api_efficiency/` — `request_plan.json`, `fetch_<ts>.json`
+  (naive vs ottimizzate, batch, elasticità), entrambi esclusi dal VCS e dal
+  publish.
+- Il **blocco** è deciso dal solo pre-flight guardrail (sezione 3); l'
+  **osservabilità** registra senza mai influenzare la decisione.
+
+### 6. Riferimenti
+
+- `scripts/common.py` → `API_GUARDRAILS_DEFAULT`, `guardrails()`,
+  `guard_planned_requests()`, `record_api_usage()`, `usage_today()`.
+- `scripts/decide_cycle.py` (exit 2/3), `scripts/fetch_source_data.py` (2/4),
+  `scripts/check_best_match.py` (10 = skip), `scripts/request_planner.py` (2).
+- `scripts/workflow_gate.py` — classificazione: chiavi macchina stabili
+  (`budget_blocked`, `bootstrap_budget_blocked`), messaggi guardrails.

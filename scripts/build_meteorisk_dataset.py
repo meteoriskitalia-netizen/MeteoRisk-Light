@@ -112,11 +112,12 @@ def main():
     state = common.load_run_state()
     run_info = {
         "run_key": state.get("run_key"),
-        "driver_model": state.get("driver_model"),
+        "driver_model": state.get("driver_model") or common.DRIVER_MODEL,
         "run_init_ts": state.get("run_init_ts"),
         "run_available_ts": state.get("run_available_ts"),
         "fetched_at": state.get("checked_at"),
     }
+    fetch_timestamps = None
     points_meta = json.load(open(args.points_json, encoding="utf-8")) if os.path.exists(args.points_json) else []
     points_meta_map = {p["index"]: p for p in points_meta}
 
@@ -158,6 +159,8 @@ def main():
             "note": "Placeholder: il dataset reale viene generato dalla GitHub Action "
                     "(o da un run locale riuscito) con i dati della fonte Open-Meteo.",
         }
+        if fetch_timestamps is not None:
+            metadata["fetch_timestamps"] = fetch_timestamps
         with open(common.DATA_STAGING / "metadata.json", "w", encoding="utf-8") as fh:
             json.dump(metadata, fh, indent=2, ensure_ascii=False)
         with open(common.DATA_STAGING / "meteorisk-points.json", "w", encoding="utf-8") as fh:
@@ -171,6 +174,24 @@ def main():
 
     raw = json.load(open(args.raw_json, encoding="utf-8"))
     raw_map = {idx: payload for idx, payload in raw.get("points", [])}
+    fetch_ts = raw.get("fetched_at")
+    run_info["fetched_at"] = fetch_ts
+    leg_ts = raw.get("leg_timestamps") or {}
+    bm_ts = leg_ts.get("best_match_fetched_at") or fetch_ts
+    ecm_ts = leg_ts.get("ecmwf_fetched_at") or fetch_ts
+    cycle_mode = raw.get("cycle_mode") or "coordinated"
+    if cycle_mode == "best_match_only":
+        coord_note = ("best_match aggiornata da sola (canary sentinelle 1.0.0.8); ecmwf_ifs invariata "
+                      "dal ciclo precedente (leg_timestamps espliciti).")
+    else:
+        coord_note = ("best_match e ecmwf_ifs scaricati nello stesso ciclo di fetch comandato "
+                      "dal run ECMWF IFS (coerenza temporale del dataset).")
+    fetch_timestamps = {
+        "dataset_generation_timestamp": fetch_ts,
+        "ecmwf_fetch_timestamp": ecm_ts,
+        "best_match_fetch_timestamp": bm_ts,
+        "coordinated_cycle": coord_note,
+    }
 
     provinces = []
     for i, r in enumerate(regions):
@@ -265,6 +286,8 @@ def main():
         "province_count": len(provinces),
         "day0": day_label(0),
         "run_info": run_info,
+        "fetch_timestamps": fetch_timestamps,
+        "update_strategy": cycle_mode,
         "files": {"points": "meteorisk-points.json", "provinces": "meteorisk-provinces.json",
                   "validation": "validation.json"},
     }

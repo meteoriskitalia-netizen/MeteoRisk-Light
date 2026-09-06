@@ -91,10 +91,32 @@ def main():
         finish(checks, infos, errors, "EMPTY_OK")
         return 0
 
+    # Coordinated scheduling: il ciclo è comandato dal run ECMWF IFS;
+    # best_match + ecmwf_ifs devono essere coperti e temporalmente coerenti.
+    ri = meta.get("run_info") or {}
+    check("driver_model == ecmwf_ifs", ri.get("driver_model") == common.DRIVER_MODEL,
+          "got %s" % ri.get("driver_model"))
+    check("run_info.run_key present", bool(ri.get("run_key")))
+    check("run_info.run_init_ts present", ri.get("run_init_ts") is not None)
+    check("run_info.fetched_at present", bool(ri.get("fetched_at")))
+    ft = meta.get("fetch_timestamps") or {}
+    check("fetch_timestamps presenti (coerenza temporale)",
+          bool(ft.get("ecmwf_fetch_timestamp") and ft.get("best_match_fetch_timestamp")))
+    us = meta.get("update_strategy") or "coordinated"
+    check("update_strategy valida", us in ("coordinated", "best_match_only"), "got %s" % us)
+    check("best_match_fetch_timestamp >= ecmwf_fetch_timestamp",
+          ft.get("best_match_fetch_timestamp") >= ft.get("ecmwf_fetch_timestamp"),
+          "best=%s ecmwf=%s" % (ft.get("best_match_fetch_timestamp"), ft.get("ecmwf_fetch_timestamp")))
+    check("update_strategy coerente con leg_timestamps",
+          (us == "best_match_only") == (ft.get("best_match_fetch_timestamp") != ft.get("ecmwf_fetch_timestamp")),
+          "strategy=%s best=%s ecmwf=%s" % (us, ft.get("best_match_fetch_timestamp"),
+                                            ft.get("ecmwf_fetch_timestamp")))
+
     # B. Punti: forma e integrità
     plist = points.get("points", [])
     check("point_count == metadati", meta.get("point_count") == len(plist),
           "meta=%s len=%s" % (meta.get("point_count"), len(plist)))
+    check("day0 presente", bool(points.get("day0")), "got %r" % points.get("day0"))
     ids = [p.get("id") for p in plist]
     check("ids univoci e contigui 0..N-1", sorted(ids) == list(range(len(plist))))
     s_prov = set()

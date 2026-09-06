@@ -2,10 +2,10 @@
 
 Verifica la separazione OBBLIGATORIA:
   A) check 10 (no new run)  -> clean success, zero fetch/build/commit/deploy
-  B) check 0 (+ catena ok)  -> planner, budget check, fetch, build, validate, commit, deploy
+  B) check 0 (+ catena ok)  -> planner, guardrail check, fetch, build, validate, commit, deploy
   C) check 1+ (errore)      -> workflow FAIL, nessuna pipeline successiva
   D) planner 1 (errore)     -> workflow FAIL, nessun fetch/pubblicazione
-  E) planner 2 (budget bloccato) -> workflow SUCCESS, safe skip, last known good
+  E) planner 2 (hard safety ceiling) -> workflow SUCCESS, safe skip, last known good
   F) validate 1             -> workflow FAIL, publish/commit/deploy mai eseguiti
 """
 
@@ -16,32 +16,35 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import workflow_gate as wg  # noqa: E402
 
 
-def run_chain(check_rc, plan_rc=None, fetch_rc=None, build_rc=None,
+def run_chain(check_rc, best_rc=0, plan_rc=None, fetch_rc=None, build_rc=None,
               validate_rc=None, publish_rc=None):
     """Simula la catena del workflow (if: sui gate) e riporta quali passi girano."""
-    used = {"plan": False, "fetch": False, "build": False, "validate": False,
-            "publish": False, "commit": False, "deploy": False}
+    used = {"best": False, "plan": False, "fetch": False, "build": False,
+            "validate": False, "publish": False, "commit": False, "deploy": False}
     check = wg.classify_check(check_rc)
-    plan = fetch = build = validate = publish = None
+    best = plan = fetch = build = validate = publish = None
     if check["decision"] in ("continue",):
-        plan = wg.classify_plan(plan_rc)
-        used["plan"] = True
-        if plan["decision"] == "continue":
-            fetch = wg.classify_fetch(fetch_rc)
-            used["fetch"] = True
-            if fetch["decision"] == "continue":
-                build = wg.classify_build(build_rc)
-                used["build"] = True
-                if build["decision"] == "continue":
-                    validate = wg.classify_validate(validate_rc)
-                    used["validate"] = True
-                    if validate["decision"] == "continue":
-                        publish = wg.classify_publish(publish_rc)
-                        used["publish"] = True
-                        if publish["decision"] == "continue":
-                            used["commit"] = True
-                            used["deploy"] = True
-    last = publish or validate or build or fetch or plan or check
+        best = wg.classify_best(best_rc)
+        used["best"] = True
+        if best["decision"] == "continue":
+            plan = wg.classify_plan(plan_rc)
+            used["plan"] = True
+            if plan["decision"] == "continue":
+                fetch = wg.classify_fetch(fetch_rc)
+                used["fetch"] = True
+                if fetch["decision"] == "continue":
+                    build = wg.classify_build(build_rc)
+                    used["build"] = True
+                    if build["decision"] == "continue":
+                        validate = wg.classify_validate(validate_rc)
+                        used["validate"] = True
+                        if validate["decision"] == "continue":
+                            publish = wg.classify_publish(publish_rc)
+                            used["publish"] = True
+                            if publish["decision"] == "continue":
+                                used["commit"] = True
+                                used["deploy"] = True
+    last = publish or validate or build or fetch or plan or best or check
     return used, check, last
 
 
@@ -97,7 +100,8 @@ def test_e_budget_blocked_safe_success():
     d = wg.classify_plan(2)
     assert d["exit_code"] == 0
     assert d["decision"] == "safe_skip"
-    assert "[INFO] Budget blocked — preserving last known good dataset" in d["message"]
+    assert "[INFO] Hard safety ceiling reached — safe skip, last known good dataset preserved" in d["message"]
+    assert d["outputs"]["plan_state"] == "budget_blocked"  # chiave macchina stabile
     used, _, _ = run_chain(0, plan_rc=2)
     assert staged_fetch_not_run(used)
     assert_no_heavy(used)

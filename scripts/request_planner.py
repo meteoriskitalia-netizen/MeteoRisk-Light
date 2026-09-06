@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-REQUEST PLANNER (1.0.0.5 · 1.0.0.6 hardening) — pianificazione e pre-flight del fetch sorgente.
+REQUEST PLANNER (1.0.0.5 · 1.0.0.6 hardening · 1.0.0.8 coordinated) — pianificazione
+e pre-flight del fetch sorgente. Il piano copre i leg COORDINATI best_match +
+ecmwf_ifs scaricati insieme quando il run driver ECMWF IFS è nuovo/disponibile.
 
 Principi (ADDENDUM obbligatorio, sezioni 9-16):
-  - BUDGET: il consumo giornaliero è tracciato in data/state/api_usage.json e il
-    piano ordinario NON consuma mai la riserva di sicurezza; pre-flight BLOCANTE
-    se il piano non rientra nel budget effettivo del giorno.
+  - GUARDRAILS: il consumo giornaliero è OSSERVATO in data/state/api_usage.json
+    (contatori separati per checks/canary/fetch/retry/riuscite/fallite); nessun
+    razionamento preventivo — blocco SOLO oltre l'hard safety ceiling
+    (pre-flight BLOCANTE se usate+pianificate > ceiling).
   - EFFICIENZA: dati derivati consumati a stesso-dataset -> il fetch è eseguito
     UNA volta per dataset; le coordinate sono DEDUPLICATE (round 1e-4 ~11 m) e le
     richieste sono BATCH-ate (100 coordinati/richiesta; misurato: URL 3.2 KB,
@@ -16,8 +19,8 @@ Principi (ADDENDUM obbligatorio, sezioni 9-16):
     data/_workdir/api_efficiency_<ts>.json (esclusi da .gitignore e dal publish).
 
 Exit codes (contratto HARDENING 1.0.0.6):
-  0 = PLAN VALID (preflight ok) · 2 = PLAN BLOCKED BY BUDGET (safe success,
-  ultimo dataset valido preservato) · 1 = PLAN TECHNICAL ERROR (nessuna
+  0 = PLAN VALID (preflight ok) · 2 = PLAN BLOCKED BY HARD SAFETY CEILING (safe
+  success, ultimo dataset valido preservato) · 1 = PLAN TECHNICAL ERROR (nessuna
   coordinata / errore; la Action FALLA, mai confuso con "no new run").
 """
 
@@ -85,7 +88,7 @@ def main():
         return 1
 
     plan = build_plan(points)
-    budget = common.ensure_api_budget(plan["optimized_requests"])
+    budget = common.guard_planned_requests(plan["optimized_requests"])
     usage = common.usage_today()
 
     print("[request_planner] punti=%d · coordinate uniche=%d · osservazioni duplicate=%d"
@@ -94,11 +97,10 @@ def main():
           % (plan["naive_requests"], plan["optimized_requests"], plan["batch_size"],
              plan["n_model_legs"], plan["requests_saved"], plan["efficiency_gain_pct"]))
     print("[request_planner] batch: %s" % ", ".join("%dx%d" % (b["batch"] + 1, b["locations"]) for b in plan["batches"]))
-    print("[request_planner] budget: limite=%d riserva=%.0f%% effettivo=%d · usato oggi=%d · disponibile=%d"
-          % (common.API_DAILY_LIMIT, common.API_SAFETY_RESERVE_FRAC * 100,
-             common.effective_budget(), usage["requests"], budget["available"]))
+    print("[request_planner] guardrails: ceiling=%d · usato oggi=%d · disponibile=%d"
+          % (common.effective_budget(), usage["requests"], budget["available"]))
     if not budget["ok"]:
-        print("[request_planner] PRE-FLIGHT BLOCKED: %s" % budget["reason"])
+        print("[request_planner] PRE-FLIGHT HARD SAFETY CEILING: %s" % budget["reason"])
         return 2
     print("[request_planner] PRE-FLIGHT OK: %d richieste pianificate <= %d disponibili."
           % (budget["planned"], budget["available"]))
@@ -107,11 +109,11 @@ def main():
         common.API_EFFICIENCY_DIR.mkdir(parents=True, exist_ok=True)
         report = {
             "plan": plan,
-            "budget": budget,
+            "guardrails": budget,
             "usage_today": usage,
-            "config": {"daily_limit": common.API_DAILY_LIMIT,
-                       "safety_reserve_fraction": common.API_SAFETY_RESERVE_FRAC,
-                       "effective_budget": common.effective_budget(),
+            "config": {"daily_safety_ceiling": common.effective_budget(),
+                       "warn_threshold_fraction": common.guardrails().get("warn_threshold_fraction"),
+                       "hard_stop_enabled": common.guardrails().get("hard_stop_enabled"),
                        "batch_size": common.BATCH_MAX_LOCATIONS,
                        "min_request_interval_s": common.API_MIN_REQUEST_INTERVAL_S},
             "generated_at": common.now_iso(),

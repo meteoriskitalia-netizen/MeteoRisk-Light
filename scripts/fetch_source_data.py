@@ -6,21 +6,38 @@ directorio TEMPORANEO data/_raw (MAI pubblicato: escluso dal repository e da
 qualunque publish). Open-Meteo è una FONTE (input meteorologico): i payload
 costituenti non vengono ripubblicati, specchiati o incapsulati.
 
-1.0.0.5 — PRODUCTION PIPELINE (1.0.0.6: hardening invariato):
+1.0.0.5 — PRODUCTION PIPELINE (1.0.0.6: hardening invariato; 1.0.0.8: il ciclo è
+  comandato dal run ECMWF IFS; BEST MATCH viene scaricato COORDINATO nello stesso
+  ciclo — stesso fetched_at, dataset temporalmente coerente):
   - REQUEST PLANNER integrato: coordinate DEDUPLICATE + BATCH (100/richiesta) +
-    pre-flight di BUDGET bloccante (api_usage.json, riserva di sicurezza).
+    pre-flight GUARDRAIL (api_usage.json, hard safety ceiling).
   - Piano reale (257 punti, 107 province): 3 blocchi (100/100/57) x 2 leg =
     6 richieste (era 1 a punto: 257). Spaziatura 30 s anti minutely-limit
     (~5/min osservato sul campo).
   - RETRY selettivi e limitati: al primo giro falliscono solo alcuni batch;
     vengono ritentati SOLO quelli falliti; l'exponential backoff limitato vive
     nel client interno (RETRY_LIMIT, mai ripetizioni integrali del piano).
-  - CONSUMO tracciato: data/state/api_usage.json (richieste/fallite/batch/
-    località/byte per giorno). Report efficienza in data/_workdir/api_efficiency/
-    (non pubblicato).
-  - Exit codes: 0 = raw scritto · 2 = pre-flight BUDGET BLOCKED · 3 = capoluoghi
-    mancanti (abort: nessuna pubblicazione parziale) · 1 = errore
+  - OSSERVABILITA' tracciata: data/state/api_usage.json (richieste/fallite/
+    riuscite/batch/località/byte/checks/canary/fetch/retry per giorno — mai
+    usata per blocchi se non l'hard ceiling). Report efficienza in
+    data/_workdir/api_efficiency/ (non pubblicato).
+  - Exit codes: 0 = raw scritto · 2 = pre-flight HARD SAFETY CEILING · 3 =
+    capoluoghi mancanti (abort: nessuna pubblicazione parziale) · 1 = errore
     tecnico (coordinate assenti o fallimento residuo).
+
+1.0.0.8 — BEST MATCH ONLY REFRESH + INITIAL BOOTSTRAP (B + G):
+  - --mode best_match_only: refresh SOLO del leg best_match (3 richieste) quando
+    il canary sentinelle rileva un cambiamento e il run ECMWF è invariato. I dati
+    ecmwf_ifs del raw precedente vengono PRESERVATI nel nuovo raw (merge leg):
+    il dataset resta dual con best_match fresca + ecmwf invariata. La coerenza
+    temporale onesta è espressa in leg_timestamps (best_match != ecmwf).
+  - BoOTSTRAP (G5): se non esiste ancora un dataset live, gli esiti che in
+    steady-state sono "safe skip" diventano FATAL (rc 4): hard ceiling o
+    capoluoghi mancanti in bootstrap non hanno alcun last-known-good da
+    preservare → workflow FAIL visibile (nessun file falso/parziale, G6).
+  - Exit codes 1.0.0.8: 0 = raw scritto · 2 = HARD SAFETY CEILING (safe skip) ·
+    3 = capoluoghi mancanti (safe skip) · 4 = BOOTSTRAP FATAL (ceiling o
+    capoluoghi su primo dataset: FAIL) · 1 = errore tecnico.
 """
 
 import argparse
@@ -33,15 +50,19 @@ sys.path.insert(0, __file__ and __file__[: __file__.rfind("\\")] or ".")
 import common
 
 
-def fetch_batch(batch):
+def fetch_batch(batch, only=None):
     """Una richiesta batched PER MODELLO leg (le risposte multi-location di
     Open-Meteo non annidano i modelli: arrays piatti per leg). Ricostruisce il
     record dual punto-punto nel formato del builder
     {best_match:{daily,hourly}, ecmwf_ifs:{daily,hourly}, elevation}.
+    `only` limita il leg a "best_match" o "ecmwf_ifs" (refresh parziale 1.0.0.8).
     Ritorna (records, error)."""
     records = {}
-    n_models = len(common.DUAL_MODELS.split(","))
-    for model in common.DUAL_MODELS.split(","):
+    if only:
+        models = [only]
+    else:
+        models = list(common.DUAL_MODELS.split(","))
+    for model in models:
         data = common.fetch_source_batch(batch["lats"], batch["lons"],
                                          models=model,
                                          forecast_days=common.FORECAST_DAYS)
@@ -61,6 +82,25 @@ def fetch_batch(batch):
     return [records[k] for k in sorted(records)], None
 
 
+def merge_best_match_only(prev_raw, results, fetched_ts):
+    """MERGE LEG (1.0.0.8): il refresh canary sostituisce SOLO best_match;
+    ecmwf_ifs e elevation restano dal raw precedente (leg_timestamps espliciti).
+    `results` e' {index: {best_match:..., elevation:...}} da fetch_batch(only)."""
+    merged = {}
+    for idx, rec in (prev_raw.get("points") or []):
+        merged[int(idx)] = rec
+    for idx, rec in results.items():
+        if idx not in merged:
+            merged[idx] = {"elevation": None}
+        merged[idx]["best_match"] = rec["best_match"]
+        if merged[idx].get("elevation") is None:
+            merged[idx]["elevation"] = rec.get("elevation")
+    sorted_points = sorted(merged.items())
+    prev_ts = (prev_raw.get("leg_timestamps") or {}).get("ecmwf_fetched_at") or prev_raw.get("fetched_at")
+    leg_ts = {"best_match_fetched_at": fetched_ts, "ecmwf_fetched_at": prev_ts}
+    return sorted_points, leg_ts
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch source data (raw, temporaneo).")
     parser.add_argument("--points-json", default=str(common.REPO_ROOT / "data" / "_workdir" / "real_points.json"),
@@ -70,7 +110,10 @@ def main():
     parser.add_argument("--dry-run", action="store_true",
                         help="Stampa il PIANO OTTIMIZZATO (dedup+batch+preflight) senza scaricare.")
     parser.add_argument("--skip-preflight", action="store_true",
-                        help="Salta il blocco di budget (uso diagnostico, MAI nelle Action).")
+                        help="Salta il blocco da hard safety ceiling (uso diagnostico, MAI nelle Action).")
+    parser.add_argument("--mode", choices=["coordinated", "best_match_only"], default="coordinated",
+                        help="coordinated (default): ambos i leg. best_match_only: solo best_match "
+                             "(refresh canary 1.0.0.8; ecmwf preservata dal raw precedente).")
     args = parser.parse_args()
 
     if not os.path.exists(args.points_json):
@@ -81,33 +124,53 @@ def main():
         print("[fetch_source_data] Nessuna coordinata (errore tecnico).")
         return 1
 
+    bootstrap = common.is_bootstrap_pending()
+    only = None if args.mode == "coordinated" else "best_match"
+    if only and bootstrap:
+        print("[fetch_source_data] ERRORE: best_match_only in stato BOOTSTRAP inconsistente "
+              "(il primo ciclo e' sempre coordinated).")
+        return 1
+    prev_raw = None
+    if only:
+        raw_prev_path = common.DATA_RAW / "source_raw.json"
+        if not os.path.exists(raw_prev_path):
+            print("[fetch_source_data] ERRORE: best_match_only richiede un raw coordinato precedente "
+                  "(assente in %s)." % raw_prev_path)
+            return 1
+        prev_raw = json.load(open(raw_prev_path, encoding="utf-8"))
+
     coords = common.unique_coordinates(points)
-    n_models = len(common.DUAL_MODELS.split(","))
+    n_models = len(common.DUAL_MODELS.split(",")) if only is None else 1
     batches = [{"batch": i, "global_start": i * common.BATCH_MAX_LOCATIONS,
                 "locations": len(chunk),
                 "lats": [c[0] for c in chunk], "lons": [c[1] for c in chunk]}
                for i, chunk in enumerate(
                    [coords[j:j + common.BATCH_MAX_LOCATIONS] for j in range(0, len(coords), common.BATCH_MAX_LOCATIONS)])]
     planned = len(batches) * n_models
-    budget = common.ensure_api_budget(planned)
+    budget = common.guard_planned_requests(planned)
 
-    print("[fetch_source_data] Real points=%d · coordinate uniche=%d (dedup) · batch=%dx%d · 2 leg modello → richieste ottimizzate=%d (era %d)"
-          % (len(points), len(coords), len(batches), common.BATCH_MAX_LOCATIONS, planned, len(coords)))
+    print("[fetch_source_data] Real points=%d · coordinate uniche=%d (dedup) · batch=%dx%d · %d leg → richieste ottimizzate=%d (era %d) · mode=%s%s"
+          % (len(points), len(coords), len(batches), common.BATCH_MAX_LOCATIONS, n_models, planned, len(coords),
+             args.mode, " · BOOTSTRAP" if bootstrap else ""))
     usage = common.usage_today()
-    print("[fetch_source_data] Budget: limite=%d riserva=%.0f%% effettivo=%d usato-oggi=%d disponibile=%d"
-          % (common.API_DAILY_LIMIT, common.API_SAFETY_RESERVE_FRAC * 100,
-             common.effective_budget(), usage["requests"], budget["available"]))
+    print("[fetch_source_data] Guardrails: ceiling=%d usato-oggi=%d disponibile=%d"
+          % (common.effective_budget(), usage["requests"], budget["available"]))
 
     if args.dry_run:
-        print("[fetch_source_data] DRY-RUN: batch=%s (x2 leg), risparmio richieste=%d, efficienza=%+.2f%%"
+        print("[fetch_source_data] DRY-RUN: batch=%s (x%d leg), risparmio richieste=%d, efficienza=%+.2f%%"
               % (", ".join("%dx%d" % (b["batch"] + 1, b["locations"]) for b in batches),
+                 n_models,
                  len(coords) - planned,
                  0.0 if not coords else 100.0 * (len(coords) - planned) / len(coords)))
         return 0
 
     if not budget["ok"]:
-        print("[fetch_source_data] PRE-FLIGHT BUDGET BLOCKED: %s" % budget["reason"])
+        print("[fetch_source_data] PRE-FLIGHT HARD SAFETY CEILING: %s" % budget["reason"])
         if not args.skip_preflight:
+            if bootstrap:
+                print("[fetch_source_data] BOOTSTRAP FATAL: nessun dataset da preservare (G6) "
+                      "-> workflow FAIL, nessun file falso/parziale.")
+                return 4
             return 2
         print("[fetch_source_data] (--skip-preflight: esecuzione forzata, uso diagnostico)")
 
@@ -122,7 +185,7 @@ def main():
     def request_policy(batch):
         """Ritorna ({punto->record}, {punto->errore}) per un batch."""
         try:
-            records, err = fetch_batch(batch)
+            records, err = fetch_batch(batch, only=only)
         except Exception as exc:  # noqa: BLE001
             records, err = None, str(exc)
         if err:
@@ -148,6 +211,8 @@ def main():
     def record_usage(reqs, bads, batch_list):
         # ogni batch = UNA richiesta per leg modello (best_match + ecmwf_ifs)
         common.record_api_usage(requests=reqs * n_models, failed=bads * n_models,
+                                successful=(reqs - bads) * n_models,
+                                forecast=reqs * n_models,
                                 batches=reqs,
                                 locations=sum(b["locations"] for b in batch_list))
 
@@ -189,19 +254,35 @@ def main():
     if stuck:
         print("[fetch_source_data] FALLIMENTO: capoluoghi mancanti %s → condizione di no-pubblicazione attiva."
               % sorted(stuck)[:20])
+        if bootstrap:
+            print("[fetch_source_data] BOOTSTRAP FATAL: nessun dataset da preservare (G6) "
+                  "-> workflow FAIL, nessun file falso/parziale.")
+            return 4
         return 3
 
+    fetched_ts = common.now_iso()
+    if only:
+        sorted_points, leg_ts = merge_best_match_only(prev_raw, results, fetched_ts)
+        cycle_mode = "best_match_only"
+    else:
+        sorted_points = sorted(results.items())
+        leg_ts = {"best_match_fetched_at": fetched_ts, "ecmwf_fetched_at": fetched_ts}
+        cycle_mode = "coordinated"
+
     payload = {
-        "fetched_at": common.now_iso(),
+        "fetched_at": fetched_ts,
         "forecast_days": common.FORECAST_DAYS,
         "timezone": common.TIMEZONE,
-        "models": [m for m in common.MODEL_RUN_DRIVER_MAP],
-        "points": sorted(results.items()),
+        "driver_model": common.DRIVER_MODEL,
+        "models": common.DUAL_MODELS.split(","),   # dataset SEMPRE dual (best_match + ecmwf_ifs)
+        "cycle_mode": cycle_mode,
+        "leg_timestamps": leg_ts,
+        "points": sorted_points,
     }
     tmp_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
     os.replace(tmp_path, out_path)
     size_kb = out_path.stat().st_size / 1024.0
-    common.record_api_usage(bytes_=out_path.stat().st_size)  # volume raw generato
+    common.record_api_usage(requests=0, bytes_=out_path.stat().st_size)  # solo volume raw generato
 
     # Report efficienza (non pubblicato)
     common.API_EFFICIENCY_DIR.mkdir(parents=True, exist_ok=True)

@@ -4,12 +4,24 @@
 //
 // Uso: node scripts/tests/contract_dataset_loader.mjs   (dalla root della release)
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const latest = path.join(root, "data", "latest");
+// PARTE G (1.0.0.8): il rilascio NON contiene un dataset live in data/latest.
+// Il contratto viene quindi verificato sul dataset reale quando presente,
+// altrimenti sul baseline offline generato dal fixture in data/_staging.
+let src = path.join(root, "data", "latest");
+if (!existsSync(path.join(src, "metadata.json"))) {
+  const staging = path.join(root, "data", "_staging");
+  if (!existsSync(path.join(staging, "metadata.json"))) {
+    console.error("Nessun dataset da verificare: genera prima il baseline " +
+      "(py scripts/tests/gen_fixture_raw.py && py scripts/build_meteorisk_dataset.py --raw-json data/_workdir/fixture_raw.json)");
+    process.exit(1);
+  }
+  src = staging;
+}
 
 const JSON_HEADERS = { "Content-Type": "application/json" }; // segnaposto (immutabile)
 const COVERED_MODELS = ["best_match", "ecmwf_ifs"];
@@ -39,9 +51,9 @@ const ok = (name, cond, detail = "") => {
   else { failures++; console.log(`  [FAIL] ${name}${detail ? ` · ${detail}` : ""}`); }
 };
 
-const md = JSON.parse(readFileSync(path.join(latest, "metadata.json"), "utf-8"));
-const P = JSON.parse(readFileSync(path.join(latest, "meteorisk-points.json"), "utf-8"));
-const PRV = JSON.parse(readFileSync(path.join(latest, "meteorisk-provinces.json"), "utf-8"));
+const md = JSON.parse(readFileSync(path.join(src, "metadata.json"), "utf-8"));
+const P = JSON.parse(readFileSync(path.join(src, "meteorisk-points.json"), "utf-8"));
+const PRV = JSON.parse(readFileSync(path.join(src, "meteorisk-provinces.json"), "utf-8"));
 
 // 1. metadata
 ok("metadata: dataset_type derivato", md.dataset_type === "derived_meteorological_risk_data", md.dataset_type);

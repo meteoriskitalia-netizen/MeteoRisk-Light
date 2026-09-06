@@ -2,14 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 test_negative_validation.py — test NEGATIVI della validazione dataset:
-una validazione deve FALLIRE su dataset corrotti e data/latest deve
-rimanere intatto (last known good).
+una validazione deve FALLIRE su dataset corrotti e il dataset protetto
+(last known good) deve rimanere intatto.
+
+PARTE G (1.0.0.8): il rilascio NON contiene dataset live in data/latest. Il
+baseline "noto-buono" da proteggere viene quindi generato OFFLINE dal fixture
+sintetico (gen_fixture_raw + build) in data/_staging; se invece data/latest
+contiene un dataset reale (snapshot successivo) si protegge quello.
 
 Copre 3 manomissioni:
   1. array hourly troncato (72 -> 70)           -> FAIL
   2. lat e selected_point alterati              -> FAIL
   3. valore non numerico in un array hourly     -> FAIL
-In ogni caso data/latest NON viene toccato.
 
 Uso:  py -3 scripts/tests/test_negative_validation.py
 """
@@ -23,15 +27,43 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import common
 
-SCRIPT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "validate_dataset.py")
+SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SCRIPT = os.path.join(SCRIPTS, "validate_dataset.py")
+BUILD = os.path.join(SCRIPTS, "build_meteorisk_dataset.py")
+FIXTURE = os.path.join(SCRIPTS, "tests", "gen_fixture_raw.py")
 POINTS_FILE = "meteorisk-points.json"
+PROTECTED_DIR = None  # risolto in ensure_baseline()
+
+
+def _env():
+    return {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+
+def ensure_baseline():
+    """Sceglie il baseline da proteggere:
+    - data/latest reale presente -> lo protegge;
+    - altrimenti (G1) genera il baseline OFFLINE dal fixture in _staging."""
+    global PROTECTED_DIR
+    if (common.DATA_LATEST / POINTS_FILE).exists():
+        PROTECTED_DIR = common.DATA_LATEST
+        return PROTECTED_DIR
+    PROTECTED_DIR = common.DATA_STAGING
+    if not (PROTECTED_DIR / POINTS_FILE).exists():
+        subprocess.run([sys.executable, FIXTURE], check=True, env=_env(), capture_output=True, text=True)
+        raw = common.DATA_WORK / "fixture_raw.json"
+        subprocess.run([sys.executable, BUILD, "--raw-json", str(raw)],
+                       check=True, env=_env(), capture_output=True, text=True)
+        print("[baseline] dataset protetto (fixture offline): data/_staging (last known good)")
+        return PROTECTED_DIR
+    print("[baseline] dataset reale protetto: data/latest")
+    return PROTECTED_DIR
 
 
 def clone(tag):
     dst = common.DATA_WORK / tag
     if dst.exists():
         shutil.rmtree(dst)
-    shutil.copytree(common.DATA_LATEST, dst)
+    shutil.copytree(PROTECTED_DIR, dst)
     return dst
 
 
@@ -46,19 +78,19 @@ def write_points(dst, points):
 def run_validate(dst):
     proc = subprocess.run(
         [sys.executable, SCRIPT, "--dir", str(dst)],
-        capture_output=True, text=True,
-        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        capture_output=True, text=True, env=_env(),
     )
     out = (proc.stdout or "") + (proc.stderr or "")
     return proc.returncode, out
 
 
-def latest_sha():
-    return (common.DATA_LATEST / POINTS_FILE).read_bytes()
+def protected_sha():
+    return (PROTECTED_DIR / POINTS_FILE).read_bytes()
 
 
 def main():
-    before = latest_sha()
+    ensure_baseline()
+    before = protected_sha()
     failures = 0
 
     d1 = clone("_t_neg_len")
@@ -95,9 +127,9 @@ def main():
     if not ok:
         failures += 1
 
-    after = latest_sha()
+    after = protected_sha()
     ok = before == after
-    print("[%s] data/latest intatto (last known good preservato)" % ("PASS" if ok else "FAIL"))
+    print("[%s] dataset protetto intatto (last known good preservato)" % ("PASS" if ok else "FAIL"))
     if not ok:
         failures += 1
 

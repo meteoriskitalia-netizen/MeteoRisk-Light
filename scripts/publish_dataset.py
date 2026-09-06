@@ -76,6 +76,25 @@ def main():
                        or (json.loads((latest / "metadata.json").read_text(encoding="utf-8")).get("point_count")),
         "validation_outcome": validation.get("outcome"),
     }
+
+    # Fingerprint Best Match (canary sentinelle 1.0.0.8) DAL DATASET VALIDATO
+    # pubblicato: atomicita' stato==dataset. last_changed_at solo su variazione.
+    # ecmwf_ifs resta tracciata dal run_key (Metadata API): stato separato.
+    points_pub = json.loads((latest / "meteorisk-points.json").read_text(encoding="utf-8"))
+    meta_pub = json.loads((latest / "metadata.json").read_text(encoding="utf-8"))
+    payload = common.best_match_sentinel_payload(points_pub.get("points", []), meta_pub.get("day0"))
+    fp = common.fingerprint_best_match(payload)
+    lmr = state.setdefault("last_model_runs", {})
+    bm_prev = lmr.get("best_match") or {}
+    bm_prev_fp = bm_prev.get("last_fingerprint")
+    pub_ts = state["published_at"]
+    lmr["best_match"] = {
+        "model": "best_match",
+        "last_checked_at": pub_ts,
+        "last_changed_at": pub_ts if (not bm_prev_fp or bm_prev_fp != fp) else bm_prev.get("last_changed_at"),
+        "last_fingerprint": fp,
+        "fingerprint_source": "sentinel",
+    }
     common.save_run_state(state)
 
     print("[publish] Pubblicato data/latest (nuovo dataset valido). State aggiornato (status=live).")

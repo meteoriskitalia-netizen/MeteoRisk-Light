@@ -16,9 +16,12 @@ The constants below mirror the application mri-light (APP_VERSION 1.0.0.3):
 """
 
 import datetime as _dt
+import hashlib
 import json
 import math
 import os
+import random
+import ssl
 import sys
 import time
 import urllib.error
@@ -65,18 +68,42 @@ OPENMETEO_TIMEOUT_S = 30
 BATCH_MAX_LOCATIONS = int(os.environ.get("METEO_RISK_BATCH_MAX_LOCATIONS", "100"))
 # Pacing anti-minutely-limits: la soglia osservata è ~5 richieste/minuto. Piano
 # reale (257 punti): 3 batch da 100 + 1 da 57 => 4 richieste con 30 s di
-# spaziatura, ampiamente sotto la soglia e sotto il budget giornaliero.
+# spaziatura, ampiamente sotto la soglia e sotto il ceiling giornaliero.
 API_MIN_REQUEST_INTERVAL_S = float(os.environ.get("METEO_RISK_API_MIN_INTERVAL_S", "30.0"))
-# Budget giornaliero API forecast (free tier Open-Meteo 10.000/giorno, default
-# conservativo e configurabile). La Metadata API (run detection) NON è conteggiata.
+# API USAGE GUARDRAILS (1.0.0.8 hardening) — unico luogo di definizione dei
+# limiti: default qui + data/state/api_usage.json (config runtime centralizzata),
+# MAI limite hardcodato nei singoli script.
+#   - daily_safety_ceiling: HARD SAFETY LIMIT (free tier Open-Meteo 10.000/g).
+#   - warn_threshold_fraction: soglia di OSSERVABILITA' (warning, NON blocca).
+#   - hard_stop_enabled: oltre il ceiling il fetch è bloccato (safe skip) e il
+#     canary è skippato; il rilevamento Metadata API resta solo osservato.
+# NON è un razionamento preventivo "per risparmiare la riserva per dopo": il
+# fetch reale (nuovo run ECMWF / Best Match cambiato / bootstrap) parte
+# normalmente finché il tetto di sicurezza non è raggiunto.
 API_DAILY_LIMIT = int(os.environ.get("METEO_RISK_API_DAILY_LIMIT", "10000"))
-# Riserva di sicurezza: frazione del limite mai consumata dal piano ordinario,
-# copre retry selettivi e slittamenti di meteo dati. Default 10%.
-API_SAFETY_RESERVE_FRAC = float(os.environ.get("METEO_RISK_SAFETY_RESERVE_FRAC", "0.1"))
+API_GUARDRAILS_DEFAULT = {
+    "enabled": True,
+    "daily_safety_ceiling": API_DAILY_LIMIT,
+    "warn_threshold_fraction": float(os.environ.get("METEO_RISK_SAFETY_RESERVE_FRAC", "0.8")),
+    "hard_stop_enabled": True,
+}
 # Retry: LIMITATI, esponenziali e selettivi. Al termine del primo giro vengono
 # ritentati SOLO i batch falliti (mai una ripetizione integrale del piano).
 RETRY_LIMIT = int(os.environ.get("METEO_RISK_RETRY_LIMIT", "3"))
 RETRY_BACKOFF_BASE_S = float(os.environ.get("METEO_RISK_RETRY_BACKOFF_BASE_S", "5.0"))
+# PARTE H (1.0.0.8) — ROBUSTEZZA RETE / Metadata API check (H1/H2/H3):
+#   H2 timeout esplicito connect/read (ossia non ci si affida al solo timeout
+#      implicito di urllib); la Metadata API non conteggiata nel ceiling resta
+#      veloce a rispondere, ma il TLS/keepalive puo' bloccarsi -> timeout esplicito.
+#   H1 retry AUTOMATICI per errori transienti (SSL handshake timeout, TimeoutError,
+#      URLError transitorio, connection reset, HTTP 429, HTTP 5xx); tentativi
+#      TOTALI METADATA_API_RETRIES (3-4): MAI retry infiniti.
+#   H3 exponential backoff + jitter (RETRY_JITTER_MAX_S), evita di martellare
+#      l'API durante un problema temporaneo.
+OPENMETEO_METADATA_TIMEOUT_S = 15
+METADATA_API_RETRIES = 4
+METADATA_RETRY_BASE_S = 2.0
+RETRY_JITTER_MAX_S = 1.5
 # Grace period after run availability before downloading (eventual consistency).
 GRACE_AFTER_AVAILABILITY_S = 10 * 60   # 10 minutes, configurable
 
@@ -107,21 +134,30 @@ DAILY_PARAMS = (
 )
 FORECAST_DAYS = 3
 TIMEZONE = "Europe/Rome"
+# Leg modello scaricati in OGNI ciclo (coordinati col run driver ECMWF IFS).
+# None di essi "comanda" il run: best_match è COORDINATO, non driver.
 DUAL_MODELS = "best_match,ecmwf_ifs"
 
 HOURLY_FIELDS = HOURLY_PARAMS.split(",")
 DAILY_FIELDS = DAILY_PARAMS.split(",")
 
-# Models consumed by the app (source identifiers used for run detection).
-# best_match is a COMPOSITE (no metadata endpoint): its Italian leading segment
-# for 3-day forecasts is ARPAE ICON-2I -> used as the run driver, together with
-# ECMWF IFS for the dual second leg.
-MODEL_RUN_DRIVER_MAP = [
-    # (app model id, metadata model id for run detection)
-    ("italia_meteo_arpae_icon_2i", "italia_meteo_arpae_icon_2i"),  # best_match driver
-    ("ecmwf_ifs", "ecmwf_ifs"),
-]
-METADATA_MODELS_TRACKED = ["italia_meteo_arpae_icon_2i", "ecmwf_ifs"]
+# COORDINATED SCHEDULING: ECMWF IFS e' il driver UNICO del ciclo.
+# best_match NON ha un proprio run_key: e' un composito senza endpoint metadata
+# e viene aggiornato COORDINATO con il run ECMWF nello stesso ciclo di fetch
+# (ogni ciclo scarica entrambi i leg: best_match + ecmwf_ifs).
+DRIVER_MODEL = "ecmwf_ifs"                     # run driver (metadata API)
+METADATA_MODELS_TRACKED = ["ecmwf_ifs"]        # soli run rilevati
+
+# B-MATCH CHANGE DETECTION (1.0.0.8): canary LIGHTWEIGHT su # 6 capoluoghi (= punti
+# reali del dataset, coordIdx 0, coordinate identiche a quelle pubblicate) in UNA
+# richiesta multi-location. Fingerprint indipendente dal generation-time: hash
+# SHA-256 su day0 + weathercode/precipitation orarie best_match dei sentinel.
+# Costo: 1 richiesta forecast/ciclo (96/giorno al peggio, ~1% del ceiling giornaliero).
+BEST_MATCH_SENTINEL_SIGLAS = ("MI", "VE", "RM", "PE", "LE", "PA")
+BEST_MATCH_SENTINEL_AREAS = {"MI": "NW-Po", "VE": "NE", "RM": "Tirreno-centro",
+                             "PE": "Adriatico", "LE": "Sud", "PA": "Isole"}
+# Campi minimi del canary (poco volume di risposta, determinismo fingerprint).
+BEST_MATCH_CHECK_HOURLY = "weathercode,precipitation"
 
 APP_NAME = "MeteoRisk Light"
 APP_DATA_TYPE = "derived_meteorological_risk_data"
@@ -516,14 +552,129 @@ def _http_json(url, timeout_s=OPENMETEO_TIMEOUT_S):
         return json.loads(resp.read().decode("utf-8"))
 
 
+def _is_transient_error(exc):
+    """Errori TRANSIENTI (rettentabili): SSL/keepalive handshake timeout,
+    TimeoutError, connessione resettata/chiusa, URLError di rete/TLS/DNS,
+    HTTP 429 e HTTP 5xx. NON transienti (raise immediata): HTTP 4xx."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code == 429 or exc.code >= 500
+    if isinstance(exc, (TimeoutError, ssl.SSLError, ConnectionResetError,
+                        ConnectionError, BrokenPipeError)):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        return True
+    return False
+
+
+def _backoff_delay(base_s, attempt):
+    """Backoff esponenziale con jitter (Parte H3)."""
+    return base_s * (2 ** attempt) + random.uniform(0.0, RETRY_JITTER_MAX_S)
+
+
+_last_metadata_attempts = 1
+
+
+def metadata_attempts():
+    """Tentativi usati dall'ultima get_model_metadata (telemetria guardrails)."""
+    return max(1, int(_last_metadata_attempts))
+
+
 def get_model_metadata(model_id):
-    """Official Metadata API (not counted toward API limits)."""
+    """Official Metadata API (NOT counted toward API limits). PARTE H:
+    - H2: timeout esplicito connect/read (OPENMETEO_METADATA_TIMEOUT_S);
+    - H1: retry automatici per errori transienti, al piu' METADATA_API_RETRIES
+      tentativi totali (mai infiniti);
+    - H3: exponential backoff + jitter tra i tentativi;
+    Al termine dei retry alza RuntimeError esplicito (il chiamante NON aggiorna
+    lo state: NETWORK ERROR != NO NEW RUN, requisito H4)."""
+    global _last_metadata_attempts
     url = OPENMETEO_META_BASE.format(model=urllib.parse.quote(model_id))
-    return _http_json(url)
+    last = None
+    for attempt in range(METADATA_API_RETRIES):
+        _last_metadata_attempts = attempt + 1
+        try:
+            return _http_json(url, timeout_s=OPENMETEO_METADATA_TIMEOUT_S)
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            if not _is_transient_error(exc):
+                raise  # errore NON transitorio (4xx/altro): propagare SUBITO
+            if attempt + 1 >= METADATA_API_RETRIES:
+                break
+            delay = _backoff_delay(METADATA_RETRY_BASE_S, attempt)
+            print("[common] Metadata API retry %d/%d in %.1fs: %s"
+                  % (attempt + 1, METADATA_API_RETRIES, delay, exc))
+            time.sleep(delay)
+    raise RuntimeError("Metadata API unavailable after %d retries: %s"
+                       % (METADATA_API_RETRIES, last))
 
 
 # ---------------------------------------------------------------------------
-# API budget management (data/state/api_usage.json) — consumo giornaliero
+# Best Match sentinel canary + fingerprint (1.0.0.8) + INITIAL BOOTSTRAP (G)
+# ---------------------------------------------------------------------------
+def best_match_sentinels():
+    """6 capoluoghi-sentinella (aree orografiche/regime diverse). Coordinate
+    IDENTICHE ai punti reali pubblicati (capoluogo, coordIdx 0 di regions_data):
+    la fingerprint pubblicata e quella del canary si confrontano su stessa base."""
+    regions = {r["sigla"]: r for r in _load_regions()}
+    out = []
+    for s in BEST_MATCH_SENTINEL_SIGLAS:
+        r = regions.get(s)
+        if r is None:
+            continue
+        out.append({"sigla": s, "area": BEST_MATCH_SENTINEL_AREAS.get(s, "?"),
+                    "lat": r["lat"], "lon": r["lon"]})
+    return out
+
+
+def best_match_sentinel_payload(points_data, day0):
+    """Estrae dal dataset derivato (o dal raw) i dati best_match SOLO dei
+    capoluoghi-sentinella (coordIdx 0): base condivisa per la fingerprint."""
+    by_sigla = {s: {"weathercode": [], "precipitation": []} for s in BEST_MATCH_SENTINEL_SIGLAS}
+    sigla_set = set(BEST_MATCH_SENTINEL_SIGLAS)
+    for p in (points_data or []):
+        if not isinstance(p, dict) or p.get("coordIdx") != 0 or p.get("sigla") not in sigla_set:
+            continue
+        bm = (p.get("models") or {}).get("best_match") or {}
+        h = bm.get("hourly") or {}
+        by_sigla[p["sigla"]] = {
+            "weathercode": list(h.get("weathercode") or []),
+            "precipitation": list(h.get("precipitation") or []),
+        }
+    return {"day0": day0, "sentinels": by_sigla}
+
+
+def fingerprint_best_match(payload):
+    """SHA-256 deterministico sul payload sentinella (chiavi ordinate, JSON
+    canonico). Indipendente da generation-time: riflette SOLO il contenuto."""
+
+    def canon(v):
+        if isinstance(v, dict):
+            return {k: canon(v[k]) for k in sorted(v.keys())}
+        if isinstance(v, list):
+            return [canon(x) for x in v]
+        return v
+
+    blob = json.dumps(canon(payload), separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def is_bootstrap_pending():
+    """PARTE G (1.0.0.8) — stato iniziale FIRST RUN / NO DATASET. Vero quando:
+    state assente (no run ecmwf processato) O dataset live assente (data/latest)
+    O fingerprint Best Match assente. MAI interpretato come 'no change' o
+    'already processed': attiva l'INITIAL DATASET BOOTSTRAP (fetch reale)."""
+    state = load_run_state()
+    ecmwf = (state.get("last_model_runs") or {}).get("ecmwf_ifs") or {}
+    bm = (state.get("last_model_runs") or {}).get("best_match") or {}
+    has_processed = bool(state.get("last_processed_key")) and state.get("status") == "live"
+    has_dataset = METADATA_JSON.exists() and POINTS_JSON.exists() and PROVINCES_JSON.exists()
+    has_ecmwf_run = ecmwf.get("last_run_initialisation_time") is not None
+    has_bm_fp = bool(bm.get("last_fingerprint"))
+    return not (has_processed and has_dataset and has_ecmwf_run and has_bm_fp)
+
+
+# ---------------------------------------------------------------------------
+# API USAGE GUARDRAILS (data/state/api_usage.json) — OSSERVABILITA' + protezioni
 # ---------------------------------------------------------------------------
 _last_request_at = 0.0
 
@@ -542,9 +693,16 @@ def load_usage_state():
             st = {}
     else:
         st = {}
-    st.setdefault("daily_limit", API_DAILY_LIMIT)
-    st.setdefault("safety_reserve_fraction", API_SAFETY_RESERVE_FRAC)
+    st.setdefault("last_update", None)
+    gr = st.setdefault("api_usage_guardrails", dict(API_GUARDRAILS_DEFAULT))
+    for k, v in API_GUARDRAILS_DEFAULT.items():
+        gr.setdefault(k, v)
+    migrated = "daily_limit" in st
+    if migrated:
+        gr["daily_safety_ceiling"] = int(st.pop("daily_limit"))
     st.setdefault("days", {})
+    if migrated:
+        save_usage_state(st)
     return st
 
 
@@ -556,9 +714,14 @@ def save_usage_state(st):
         fh.write("\n")
 
 
+def guardrails():
+    """Config guardrails attiva (dallo stato; default da API_GUARDRAILS_DEFAULT)."""
+    return load_usage_state().get("api_usage_guardrails", dict(API_GUARDRAILS_DEFAULT))
+
+
 def effective_budget():
-    """Budget effettivamente pianificabile: limite giornaliero meno la riserva."""
-    return int(API_DAILY_LIMIT * (1.0 - API_SAFETY_RESERVE_FRAC))
+    """Ceiling di sicurezza giornaliero (guardrails). Alias compatibile."""
+    return int(guardrails().get("daily_safety_ceiling", API_DAILY_LIMIT))
 
 
 def usage_today(day=None):
@@ -566,7 +729,12 @@ def usage_today(day=None):
     d = load_usage_state().get("days", {}).get(key, {})
     return {
         "requests": d.get("requests", 0),
+        "successful": d.get("successful", 0),
         "failed": d.get("failed", 0),
+        "checks": d.get("checks", 0),
+        "canary_requests": d.get("canary_requests", 0),
+        "forecast_requests": d.get("forecast_requests", 0),
+        "retries": d.get("retries", 0),
         "batches": d.get("batches", 0),
         "locations": d.get("locations", 0),
         "bytes": d.get("bytes", 0),
@@ -574,41 +742,67 @@ def usage_today(day=None):
 
 
 def available_today(day=None):
+    """Richieste ancora sotto il ceiling (usata SOLO come guardia del canary)."""
     return max(0, effective_budget() - usage_today(day)["requests"])
 
 
-def record_api_usage(requests=1, failed=0, batches=0, locations=0, bytes_=0, day=None):
+def record_api_usage(requests=0, failed=0, successful=0, batches=0, locations=0,
+                     bytes_=0, checks=0, canary=0, forecast=0, retries=0, day=None):
+    """OSSERVABILITA' guardrails: contatori telemetrici giornalieri separati per
+    tipo (checks leggeri Metadata, canary Best Match, fetch full forecast, retry,
+    failed, successful). Registra e basta — NON blocca (il blocco è del solo
+    hard ceiling in guard_planned_requests)."""
     st = load_usage_state()
     key = day or usage_day_key()
     d = st.setdefault("days", {}).setdefault(
-        key, {"requests": 0, "failed": 0, "batches": 0, "locations": 0, "bytes": 0})
+        key, {"requests": 0, "successful": 0, "failed": 0, "checks": 0,
+              "canary_requests": 0, "forecast_requests": 0, "retries": 0,
+              "batches": 0, "locations": 0, "bytes": 0})
     d["requests"] += requests
+    d["successful"] += successful
     d["failed"] += failed
+    d["checks"] += checks
+    d["canary_requests"] += canary
+    d["forecast_requests"] += forecast
+    d["retries"] += retries
     d["batches"] += batches
     d["locations"] += locations
     d["bytes"] += bytes_
     save_usage_state(st)
 
 
+def guard_planned_requests(planned_requests):
+    """PRE-FLIGHT GUARDRAIL (anti loop/retry infiniti/fetch duplicati/runaway/
+    richieste massive accidentali): un piano parte se il tetto di sicurezza NON
+    verrebbe superato (usate + pianificate <= ceiling). NON blocca per
+    razionamento preventivo: consumi alti sotto il tetto producono solo WARN
+    (osservabilità), il fetch reale prosegue. Schema ritornato (contratto
+    stabile): {ok, planned, available, worst, reason}."""
+    g = guardrails()
+    used = usage_today()["requests"]
+    ceiling = effective_budget()
+    avail = max(0, ceiling - used)
+    if not g.get("enabled", True):
+        return {"ok": True, "planned": planned_requests, "available": avail,
+                "worst": planned_requests * RETRY_LIMIT, "warned": False, "reason": None}
+    projected = used + planned_requests
+    frac = g.get("warn_threshold_fraction", 0.8) or 0.0
+    warned = frac > 0.0 and used >= ceiling * frac
+    if warned:
+        print("[guardrails] OSSERVAZIONE (nessun blocco): usate oggi=%d >= %.0f%% "
+              "del ceiling %d." % (used, frac * 100, ceiling))
+    blocked = g.get("hard_stop_enabled", True) and projected > ceiling
+    reason = None if not blocked else (
+        "HARD SAFETY CEILING: usate oggi=%d, richieste pianificate=%d, tetto=%d. "
+        "Safe skip (niente fetch oltre il tetto); retry al ciclo successivo." % (
+            used, planned_requests, ceiling))
+    return {"ok": not blocked, "planned": planned_requests, "available": avail,
+            "worst": planned_requests * RETRY_LIMIT, "warned": warned, "reason": reason}
+
+
 def ensure_api_budget(planned_requests):
-    """PRE-FLIGHT: il piano ordinario (senza retry) deve stare sotto il budget
-    effettivo del giorno. Restituisce {ok, planned, available, worst, reason}.
-    NB: il worst-case (planned*RETRY_LIMIT) può eccedere il budget effettivo ma
-    resta coperto dalla riserva di sicurezza: il blocco scatta SOLO se il piano
-    ordinario non rientra (niente avvio di un fetch destinato a fallire)."""
-    avail = available_today()
-    worst = planned_requests * RETRY_LIMIT
-    ok = avail >= planned_requests
-    return {
-        "ok": ok,
-        "planned": planned_requests,
-        "available": avail,
-        "worst": worst,
-        "reason": None if ok else (
-            "budget effettivo insufficiente: piani=%d, disponibili oggi=%d (limite=%d, riserva=%d%%). "
-            "Attendere domani o alzare METEO_RISK_API_DAILY_LIMIT." % (
-                planned_requests, avail, API_DAILY_LIMIT, int(API_SAFETY_RESERVE_FRAC * 100))),
-    }
+    """Alias retro-compatibile di guard_planned_requests (contratto invariato)."""
+    return guard_planned_requests(planned_requests)
 
 
 def unique_coordinates(points, digits=4):
@@ -676,16 +870,63 @@ def fetch_source_batch(lats, lons, models=DUAL_MODELS, forecast_days=FORECAST_DA
             if exc.code == 429 or ("limit" in msg.lower() and "minutely" in msg.lower()):
                 delay = 60.0  # Open-Meteo: "try again in one minute"
             elif exc.code >= 500:
-                delay = RETRY_BACKOFF_BASE_S * (2 ** attempt)
+                delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
             else:
                 raise
         except RuntimeError as exc:  # in-body API error (transient possible)
             last_err = exc
-            delay = RETRY_BACKOFF_BASE_S * (2 ** attempt)
+            delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
         except Exception as exc:  # noqa: BLE001  (network/JSON/timeout)
             last_err = exc
-            delay = RETRY_BACKOFF_BASE_S * (2 ** attempt)
+            delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
     raise RuntimeError("Open-Meteo source fetch failed after %d tentativi: %s" % (RETRY_LIMIT, last_err))
+
+
+def fetch_best_match_check(lats, lons):
+    """Canary LEGGERO Best Match: UNA richiesta multi-location (sentinelle) con
+    SOLO weathercode+precipitation orarie. Piccolo volume, stesso client con
+    pacing e backoff limitato. Conteggiata 1 richiesta forecast nel ceiling."""
+    params = {
+        "latitude": ",".join(str(x) for x in lats),
+        "longitude": ",".join(str(x) for x in lons),
+        "hourly": BEST_MATCH_CHECK_HOURLY,
+        "timezone": TIMEZONE,
+        "forecast_days": str(FORECAST_DAYS),
+        "models": "best_match",
+    }
+    url = OPENMETEO_BASE + "?" + urllib.parse.urlencode(params)
+    last_err = None
+    delay = 0.0
+    for attempt in range(RETRY_LIMIT):
+        if delay > 0:
+            time.sleep(delay)
+        _pace_next_request()
+        try:
+            data = _http_json(url)
+            if isinstance(data, dict) and data.get("error"):
+                raise RuntimeError("Open-Meteo API error: " + str(data.get("reason")))
+            return data
+        except urllib.error.HTTPError as exc:  # HTTP status error
+            last_err = exc
+            body = b""
+            try:
+                body = exc.read()
+            except Exception:  # noqa: BLE001
+                pass
+            msg = body.decode("utf-8", "replace")
+            if exc.code == 429 or ("limit" in msg.lower() and "minutely" in msg.lower()):
+                delay = 60.0  # Open-Meteo: "try again in one minute"
+            elif exc.code >= 500:
+                delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
+            else:
+                raise
+        except RuntimeError as exc:  # in-body API error (transient possible)
+            last_err = exc
+            delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
+        except Exception as exc:  # noqa: BLE001  (network/JSON/timeout)
+            last_err = exc
+            delay = _backoff_delay(RETRY_BACKOFF_BASE_S, attempt)
+    raise RuntimeError("Best Match sentinel check failed after %d tentativi: %s" % (RETRY_LIMIT, last_err))
 
 
 def split_dual_response_element(el):

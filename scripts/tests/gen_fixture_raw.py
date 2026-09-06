@@ -3,7 +3,7 @@
 """
 TEST-ONLY fixture: genera un dataset raw SINTETICO deterministico nella forma
 che produci il fetch_source_data.py, SOLO per testare la pipeline end-to-end
-(build -> validate -> publish) senza consumare il budget Open-Meteo.
+(build -> validate -> publish) senza consumare quota Open-Meteo (nessuna rete).
 
 NON è dato reale: è esplicitamente escluso da data/latest e dal repository di
 pubblicazione. I valori sono plausibili ma inventati (gradiente orografico,
@@ -166,7 +166,8 @@ def _clip(v, lo, hi):
 def main():
     points = common.generate_real_points()
     out = {"fetched_at": "2026-01-01T00:00:00Z", "forecast_days": 3, "timezone": "Europe/Rome",
-           "models": [["italia_meteo_arpae_icon_2i", "italia_meteo_arpae_icon_2i"], ["ecmwf_ifs", "ecmwf_ifs"]],
+           "driver_model": "ecmwf_ifs",
+           "models": ["best_match", "ecmwf_ifs"],
            "points": []}
     # elevation fake deterministica (gradiente orografico sintetico)
     for p in points:
