@@ -1607,6 +1607,7 @@
             'FIX "OGGI" / MAPPING GIORNO-DATASET (1.0.0.9) — il pulsante "Oggi" assumeva giorno-dataset 0 (dayIndex===0) e dopo il reload (o dopo mezzanotte Europe/Rome) mostrava i dati di un giorno scorretto. Ora la selezione mappa l\'etichetta sulla data ISO reale Europe/Rome (dateKeyInTimeZone) e la RICERCA nei giorni disponibili a partire da dataset.day0 (datasetIndexForDayLabelAt): offset calcolato con giorni tra day0 e oggi; se la data non è coperta dal dataset nessun indice viene fabbricato — messaggio onesto "Dati disponibili dal <day0> (oggi non coperto dal dataset)". selectDay/init/caletta auto-slot/DPC usano tutti l\'indice risolto (currentDayOffset/currentDay - currentDayOffset), mai l\'assunzione indice 0.',
             'FIX V3 VISTA CONTINUA RIPRISTINATA AL CONCETTO NATO (1.0.0.9) — la vista continua V3 (sfumatura a colori per celle) era stata riscritta in variante zonale value-space con zone sul reticolo, NON in linea con il concetto originale. Ripristinata la firma nativa renderContinuousV3(points, colorReal) di 10.52.27.0: lattice virtuale ~0,25° SOLO raster senza zone, IDW interpolante i COLORI dei punti campione (radice 38px + nearest adattivo, MAXA=180, MAXN=8), pixel-loop bilineare, maschera terra e blur mask-aware. Alimentata con punti REALI + DENSIFICATI + ANCORE VIRTUALI (colorate con l\'aggregato della propria zona) e con i COLORI costruiti dal MODELLO CORRENTEMENTE visualizzato (merge dual risk-preserving incluso): cambia modello e la sfumatura si adatta. V1/V2 invariati.',
             'PACKAGING (1.0.0.9) — rilascio completo rigenerato da zero (cartella + zip) partendo dall\'edizione 1.0.0.8 e includendo i fix non ancora impacchettati (V3 restore e mapping "Oggi") con i test aggiornati (nuovo test_day_mapping.mjs incluso).',
+            'HOTFIX MAPPING "OGGI" (1.0.0.9) — eliminato lo scarto oggi→domani / domani→dopodomani: quando il dataset derivato parte da un giorno FUTURO rispetto a oggi (Europe/Rome), la mappatura NON "clampa" più l\'offset negativo a 0 (era il clamp a fabbricare "Oggi" → primo giorno del dataset = domani). Ora, se la data selezionata non è coperta dal dataset, compare il messaggio onesto di disponibilità senza cambiare giorno; "Domani"/"Dopodomani" ricadono esattamente sui giorni di calendario richiesti (nessun indice inventato quando la data è prima di day0).',
         ]},
         { version: '1.0.0.8', date: '2026-09-06', changes: [
             'FIX BLITZORTUNG INIT GATED (1.0.0.8) — con PUBLIC_EDITION_FEATURES.lightningBlitzortung=false l\'intero sottosistema fulmini è disabilitato ALL\'INIZIALIZZAZIONE, non più solo nascosto via CSS/rimozione DOM: nuovo entry point unico initBlitzortung() invocato SOLO sotto isFeatureEnabled (schema `if (flag) initBlitzortung();`) da startLivePanel/changeLightningSource/toggleLightning; nessun WebSocket wss://*.blitzortung.org (connectBlitzWs ha il guard interno, il reconnect timer rientra nello stesso punto gated); nessun timer di potatura né di refresh dei tile fulmini avviato a vuoto (liveBlitzRefreshTimer sotto flag); guardia di visibilità del pannello "FULMINI LIVE"+legenda applicata a PARSE-TIME, fuori dal gate di caricamento Leaflet (rimozione immediata dal DOM, idempotente e null-safe, anche se il CDN è lento o bloccato); tile/marker/attribution mai creati (guardie in refreshBlitzTile/refreshLiveLightningMarkers/flashLightningStrike). Il LIVE Panel mostra così solo le sorgenti effettivamente abilitate.',
@@ -16219,6 +16220,9 @@ function renderContinuousOverlay() {
     // datasetDay0 = ISO yyyy-mm-dd della prima giornata del dataset; 'now' = Date (default:
     // ora attuale). L'indice del giorno "Oggi" vale (oggi − day0) in giorni: MAI assumere
     // dayIndex===0 come sinonimo di "Oggi". Fuori da [0,2] → null (giorno non coperto).
+    // NOTA 1.0.0.9-HOTFIX: quando il dataset parte da un giorno FUTURO (off<0) NON si
+    // "clampa" a 0 il primo giorno (sarebbe fabbricare "Oggi"→domani): la data richiesta
+    // semplicemente non è nel dataset → null → messaggio onesto di disponibilità.
     function dateKeyInTimeZone(tz, d) {
         var parts = new Intl.DateTimeFormat('en', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
         var y = '', m = '', dd = '';
@@ -16237,17 +16241,15 @@ function renderContinuousOverlay() {
         if (!datasetDay0) return uiIdx;
         var todayKey = dateKeyInTimeZone('Europe/Rome', now);
         var off = daysBetweenIso(datasetDay0, todayKey);
-        if (off < 0) off = 0;
         var idx = uiIdx + off;
-        return (idx > 2) ? null : idx;
+        return (idx < 0 || idx > 2) ? null : idx;
     }
     //#pure# END dayMapping
     // Wrapper DOM: legge datasetState (day0) e l'ora corrente Europe/Rome.
     function currentDayOffset() {
         var d0 = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
         if (!d0) return 0;
-        var off = daysBetweenIso(d0, dateKeyInTimeZone('Europe/Rome', new Date()));
-        return off < 0 ? 0 : off;
+        return daysBetweenIso(d0, dateKeyInTimeZone('Europe/Rome', new Date()));
     }
     function datasetIndexForDayLabel(uiIdx) {
         var d0 = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
