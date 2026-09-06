@@ -1603,6 +1603,7 @@
     const APP_RELEASE_DATE = '2026-09-06';
     const APP_CHANGELOG = [
         { version: '1.0.0.8', date: '2026-09-06', changes: [
+            'FIX BLITZORTUNG INIT GATED (1.0.0.8) — con PUBLIC_EDITION_FEATURES.lightningBlitzortung=false l\'intero sottosistema fulmini è disabilitato ALL\'INIZIALIZZAZIONE, non più solo nascosto via CSS/rimozione DOM: nuovo entry point unico initBlitzortung() invocato SOLO sotto isFeatureEnabled (schema `if (flag) initBlitzortung();`) da startLivePanel/changeLightningSource/toggleLightning; nessun WebSocket wss://*.blitzortung.org (connectBlitzWs ha il guard interno, il reconnect timer rientra nello stesso punto gated); nessun timer di potatura né di refresh dei tile fulmini avviato a vuoto (liveBlitzRefreshTimer sotto flag); guardia di visibilità del pannello "FULMINI LIVE"+legenda applicata a PARSE-TIME, fuori dal gate di caricamento Leaflet (rimozione immediata dal DOM, idempotente e null-safe, anche se il CDN è lento o bloccato); tile/marker/attribution mai creati (guardie in refreshBlitzTile/refreshLiveLightningMarkers/flashLightningStrike). Il LIVE Panel mostra così solo le sorgenti effettivamente abilitate.',
             'PRODUCTION HARDENING (1.0.0.8) — scheduler ripristinato a check ogni 10 minuti (cron */10 * * * *: rileva SOLO cambiamenti reali, clean exit se ECMWF e Best Match sono invariati); API usage guardrails semplificati (hard safety ceiling centralizzato in data/state/api_usage.json, blocco SOLO oltre il tetto, nessun razionamento preventivo — osservabilità separata da eventuali blocchi); coerenza packaging/percorsi di versione corretta; prerequisiti dei test (real_points.json) auto-generati.',
             'FIX PREVISIONI FASCIA ORARIA (1.0.0.8) — riparato il selettore "Previsioni" delle fasce orarie: il blocco getForecastSlotData era legato all\'array `time` (assente nello schema derivato) e restituiva sempre null per le fasce morning/afternoon/evening/night (solo "Tutto il giorno" popolava i marker). Riscritto con helper puri di fascia (hourlyLength/fasciaIndices) basati SOLO sulle serie orarie del dataset; preview "fascia" riaperta solo quando il dataset contiene ≥48 valori orari (dropdown ricostruito a runtime), senza mai inventare valori fuori range (null onesto, fascia saltata).',
             'BEST MATCH CANARY INDIPENDENTE (1.0.0.8) — la pipeline abbandona la dipendenza dal solo run ECMWF come unico rilevatore: 6 capoluoghi-sentinella (MI, VE, RM, PE, LE, PA — aree orografiche/regime diverse, stesse coordinate dei punti pubblicati) vengono controllati ad ogni ciclo con UNA richiesta forecast multi-location (weathercode+precipitation orarie); fingerprint SHA-256 del SOLO contenuto (nessun generation-time), registrata alla pubblicazione (stato==dataset). Il rinfresco leggero best_match_only consente di aggiornare il leg Best Match senza riscaricare ecmwf_ifs (merge con leg_timestamps espliciti) e le decisioni di ciclo sono gestite da un decision engine 2x2 + bootstrap in decide_cycle.py (priorità 1..5, API usage guardrails: hard safety ceiling, blocco SOLO oltre il tetto).',
@@ -6503,6 +6504,17 @@
         blitzWsConnected = false;
     }
 
+    // --- Inizializzazione Blitzortung controllata dalla feature flag ---
+    // Schema: `if (PUBLIC_EDITION_FEATURES.lightningBlitzortung) initBlitzortung();`
+    // Con flag OFF qui non viene creato alcun WebSocket, alcun timer di potatura
+    // e nessun polling: la flag controlla l'inizializzazione, non solo l'UI.
+    // La guardia interna copre anche eventuali call site che se la dimenticano.
+    function initBlitzortung() {
+        if (!isFeatureEnabled('lightningBlitzortung')) return;
+        if (!blitzWsConnected) connectBlitzWs();
+        if (!blitzWsPruneTimer) { blitzWsPruneTimer = setInterval(pruneBlitzBuffer, 60 * 1000); }
+    }
+
     // --- Potatura del buffer (rimuovi scariche più vecchie di 120 min) ---
     function pruneBlitzBuffer() {
         const cutoff = Date.now() - BLITZ_WS_MAX_AGE_MS;
@@ -7217,10 +7229,11 @@
         syncPreloadActive = false;
         var pBtn = document.getElementById('sync-preload-btn');
         if (pBtn) { pBtn.innerText = '⏬ Preload'; pBtn.disabled = false; }
-        // Avvia WebSocket per blitzortung (old)
-        if (lightningSource === 'blitzortung') {
-            if (!blitzWsConnected) connectBlitzWs();
-            if (!blitzWsPruneTimer) { blitzWsPruneTimer = setInterval(pruneBlitzBuffer, 60 * 1000); }
+        // Avvia WebSocket Blitzortung SOLO se la sorgente e' abilitata in questa
+        // edizione: la feature flag controlla l'inizializzazione (schema
+        // `if (flag) initBlitzortung();`), non solo la visibilita' dell'UI.
+        if (lightningSource === 'blitzortung' && isFeatureEnabled('lightningBlitzortung')) {
+            initBlitzortung();
         }
         // Ricarica frame corrente
         showLightningForFrame(syncTimeline[syncIndex].ms);
@@ -7252,10 +7265,10 @@
             if (pBtn) { pBtn.innerText = '⏬ Preload'; pBtn.disabled = false; }
             var pStat = document.getElementById('sync-preload-status');
             if (pStat) pStat.innerText = '';
-            // Avvia WebSocket per Blitzortung (old)
-            if (lightningSource === 'blitzortung') {
-                if (!blitzWsConnected) connectBlitzWs();
-                if (!blitzWsPruneTimer) { blitzWsPruneTimer = setInterval(pruneBlitzBuffer, 60 * 1000); }
+            // Avvia WebSocket + timer Blitzortung SOLO se abilitato (la flag controlla
+            // l'inizializzazione, schema `if (flag) initBlitzortung();`).
+            if (lightningSource === 'blitzortung' && isFeatureEnabled('lightningBlitzortung')) {
+                initBlitzortung();
                 if (!lightningTileRefreshTimer) {
                     lightningTileCacheTime = Date.now();
                     lightningTileRefreshTimer = setInterval(refreshLightningTiles, 2 * 60 * 1000);
@@ -7380,13 +7393,10 @@
     async function startLivePanel() {
         document.getElementById('status-msg').innerText = '🔴 Avvio LIVE Panel...';
         // Avvia WebSocket Blitzortung per i marker live (condiviso con il player)
-        // — solo se la sorgente fulmini Blitzortung e' abilitata in questa edizione.
-        if (isFeatureEnabled('lightningBlitzortung')) {
-            if (!blitzWsConnected) connectBlitzWs();
-            if (!blitzWsPruneTimer) {
-                blitzWsPruneTimer = setInterval(pruneBlitzBuffer, 60 * 1000);
-            }
-        }
+        // — la feature flag controlla l'inizializzazione, non solo l'UI
+        //   (schema: if (flag) initBlitzortung();). Con flag OFF nessuna
+        //   connessione, nessun timer di potatura, nessun polling fulmini.
+        if (isFeatureEnabled('lightningBlitzortung')) initBlitzortung();
         // Carica radar live — primo provider radar abilitato (indipendente dal provider del player)
         try {
             var rlList = enabledRadarProviderIds();
@@ -7410,9 +7420,14 @@
         // Aggiorna satellite + radar ogni 5 minuti
         if (livePanelTimer) clearInterval(livePanelTimer);
         livePanelTimer = setInterval(refreshLivePanel, 5 * 60 * 1000);
-        // Aggiorna il tile Blitzortung + marker ogni 1.5 minuti (sincronizzati)
+        // Aggiorna il tile Blitzortung + marker ogni 1.5 minuti (sincronizzati).
+        // Con Blitzortung disabilitato NESSUN timer di refresh fulmini viene
+        // avviato (refreshBlitzTile ha il suo early-return, ma evitiamo anche
+        // il polling a vuoto).
         if (liveBlitzRefreshTimer) clearInterval(liveBlitzRefreshTimer);
-        liveBlitzRefreshTimer = setInterval(refreshBlitzTile, LIVE_TILE_REFRESH_MS);
+        if (isFeatureEnabled('lightningBlitzortung')) {
+            liveBlitzRefreshTimer = setInterval(refreshBlitzTile, LIVE_TILE_REFRESH_MS);
+        }
     }
 
     function refreshLivePanel() {
@@ -17413,6 +17428,13 @@ function renderContinuousOverlay() {
         }
         setTimeout(() => startApp(retriesLeft - 1), 200);
     }
+    // Guardia di visibilita' IMMEDIATA, indipendente dal boot della mappa:
+    // con PUBLIC_EDITION_FEATURES.lightningBlitzortung = false il pannello
+    // "FULMINI LIVE" (con legenda) viene rimosso dal DOM alla lettura dello
+    // script, PRIMA di aspettare il CDN Leaflet (nessuna finestra in cui il
+    // pannello è visibile, anche se un taglio di rete rallenta/blocca il boot).
+    // Idempotente e null-safe; applicata di nuovo in applyFeatureFlagConstraints.
+    applyPublicEditionFeatureVisibility();
     startApp(25);
 
     // Versione app mostrata in fondo — usa APP_VERSION completa (MAJOR.MINOR.PATCH.BUILD)

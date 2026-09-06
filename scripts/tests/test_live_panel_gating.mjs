@@ -41,11 +41,14 @@ pure += '\n' + (src.match(/var LIVE_SOURCES = \{[\s\S]*?\n    \};/) || ['var LIV
 const vsl = src.match(/function visibleLiveSources\(\) \{[\s\S]*?\n    \}/);
 failFast('visibleLiveSources non estratta', !!vsl);
 pure += '\n' + vsl[0];
-for (const n of ['function refreshBlitzTile', 'function refreshLiveLightningMarkers', 'function flashLightningStrike', 'function applyPublicEditionFeatureVisibility']) {
+for (const n of ['function refreshBlitzTile', 'function refreshLiveLightningMarkers', 'function flashLightningStrike', 'function applyPublicEditionFeatureVisibility', 'function initBlitzortung']) {
   pure += '\n' + extractFn(n);
 }
 // startLivePanel per grep strutturali sullo stato WS (non eseguito qui)
 const slp = extractFn('async function startLivePanel()');
+// changeLightningSource / toggleLightning: grep strutturali sull'init gated
+const cls = extractFn('function changeLightningSource');
+const tlg = extractFn('function toggleLightning');
 
 // ---------- vm con flag MUTABILI ----------
 const FLAGS = { lightningBlitzortung: false, satelliteEumetsat: true, radarRainViewer: true, lightningLimaps: false, satelliteSat24: false };
@@ -96,6 +99,10 @@ const ctx = {
   enabledSatSourceIds() { return FLAGS.satelliteEumetsat ? ['eumetsat'] : []; },
   enabledLightningSourceIds() { return []; },
   addLayerStub() {},
+  blitzWsConnected: false,
+  blitzWsPruneTimer: null,
+  connectBlitzWs() {},
+  setInterval() { return 1; },
 };
 vm.runInNewContext(pure, ctx);
 
@@ -135,8 +142,12 @@ ok('LAYER: flashLightningStrike non crea layer con flag OFF', layerCalls === 0 &
 // ---------- 4. FETCH/WS: startLivePanel le guardia strutturalmente ----------
 {
   const sslp = src.slice(src.indexOf('async function startLivePanel'), src.indexOf('async function startLivePanel') + slp.length + 2400);
-  ok('FETCH: connectBlitzWs chiamato solo sotto isFeatureEnabled(lightningBlitzortung)',
-    /isFeatureEnabled\('lightningBlitzortung'\)/.test(sslp) && /connectBlitzWs\(\)/.test(sslp));
+  ok('FETCH: connectBlitzWs() è chiamato SOLO dentro initBlitzortung (entry point flag-gated)',
+    /function initBlitzortung\(\) \{[\s\S]*if \(!blitzWsConnected\) connectBlitzWs\(\);/.test(src) &&
+    !/connectBlitzWs\(\);[\s\S]{0,120}function initBlitzortung/.test(src) &&
+    /if \(isFeatureEnabled\('lightningBlitzortung'\)\) initBlitzortung\(\);/.test(sslp));
+  ok('FETCH: reconnect timer (setTimeout connectBlitzWs) resta dentro connectBlitzWs, che ha il guard flag a inizio corpo',
+    /function connectBlitzWs\(\) \{[\s\S]*if \(!isFeatureEnabled\('lightningBlitzortung'\)\) return;[\s\S]*setTimeout\(connectBlitzWs, 5000\)/.test(extractFn('function connectBlitzWs')));
   ok('FETCH: refreshBlitzTile non contiene fetch() (nessun download con flag OFF — early return)',
     !/fetch\(/.test(extractFn('function refreshBlitzTile')));
   ok('FETCH: refreshLiveLightningMarkers non contiene fetch()', !/fetch\(/.test(extractFn('function refreshLiveLightningMarkers') || '{}'));
@@ -159,6 +170,45 @@ ok('LAYER: flashLightningStrike non crea layer con flag OFF', layerCalls === 0 &
   ok('DEAD CODE: panes fulmini creati solo dai path con guardia (liveBlitzTilePane/flashMarkerPane dentro funzioni gated)',
     /pane: 'liveBlitzTilePane'/.test(extractFn('function refreshBlitzTile')) &&
     /pane: 'flashMarkerPane'/.test(extractFn('function flashLightningStrike')));
+}
+
+// ---------- 6. INIT GATED: la flag controlla l'INIZIALIZZAZIONE, non solo l'UI ----------
+{
+  // 6a) Guardia di visibilità a PARSE-TIME, fuori dal gate Leaflet/boot:
+  //     applicata appena lo script viene letto, PRIMA di attendere il CDN.
+  ok('INIT: applyPublicEditionFeatureVisibility eseguita a parse-time prima di startApp',
+    /applyPublicEditionFeatureVisibility\(\);\s*\n\s*startApp\(25\);/.test(src));
+  // 6b) initBlitzortung() esiste, ha la guardia INTERNA alla flag ed è il punto
+  //     unico di avvio WebSocket + timer potatura.
+  ok('INIT: initBlitzortung guarda internamente la flag',
+    /function initBlitzortung\(\) \{\s*\n\s*if \(!isFeatureEnabled\('lightningBlitzortung'\)\) return;/.test(src));
+  // 6c) Comportamentale in vm: flag OFF -> NESSUN WS, NESSUN timer;
+  //     flag ON -> connectBlitzWs + setInterval(prune).
+  let connectCalls = 0, intervalCalls = 0;
+  ctx.connectBlitzWs = () => { connectCalls++; };
+  ctx.setInterval = () => { intervalCalls++; return 1; };
+  ctx.blitzWsConnected = false; ctx.blitzWsPruneTimer = null;
+  FLAGS.lightningBlitzortung = false;
+  ctx.initBlitzortung();
+  ok('INIT: flag OFF -> initBlitzortung NON apre WebSocket', connectCalls === 0);
+  ok('INIT: flag OFF -> initBlitzortung NON avvia timer potatura', intervalCalls === 0);
+  FLAGS.lightningBlitzortung = true;
+  ctx.initBlitzortung();
+  ok('INIT: flag ON -> initBlitzortung apre il WebSocket', connectCalls === 1);
+  ok('INIT: flag ON -> initBlitzortung avvia il timer potatura', intervalCalls === 1);
+  FLAGS.lightningBlitzortung = false;
+  // 6d) Call site: changeLightningSource / toggleLightning / startLivePanel
+  //     invocano initBlitzortung SOLO sotto isFeatureEnabled(...).
+  ok('INIT: changeLightningSource usa initBlitzortung solo con flag ON',
+    /lightningSource === 'blitzortung' && isFeatureEnabled\('lightningBlitzortung'\)[\s\S]{0,140}initBlitzortung\(\);/.test(cls));
+  ok('INIT: toggleLightning usa initBlitzortung solo con flag ON',
+    /lightningSource === 'blitzortung' && isFeatureEnabled\('lightningBlitzortung'\)[\s\S]{0,140}initBlitzortung\(\);/.test(tlg));
+  ok('INIT: startLivePanel usa initBlitzortung solo con flag ON',
+    /if \(isFeatureEnabled\('lightningBlitzortung'\)\) initBlitzortung\(\);/.test(slp));
+  // 6e) Nessun timer di refresh tile fulmini a vuoto: con flag OFF startLivePanel
+  //     NON avvia setInterval(refreshBlitzTile).
+  ok('INIT: liveBlitzRefreshTimer avviato solo con flag ON',
+    /if \(isFeatureEnabled\('lightningBlitzortung'\)\) \{\s*\n\s*liveBlitzRefreshTimer = setInterval\(refreshBlitzTile, LIVE_TILE_REFRESH_MS\);/.test(slp));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

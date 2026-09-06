@@ -118,7 +118,13 @@ precedente; la modalità parziale `best_match_only` è RIMOSSA):
 - **UI**: `mri-light-1.0.0.8.html` — helper puri `//#pure# fasciaIndices`,
   `rebuildForecastSlotOptions`, `getForecastSlotData` senza guard `h.time`,
   call sites in `toggleForecast`/`applyStaticDataset`, `APP_VERSION`,
-  changelog, footer `pipeline 1.0.0.8`; file rinominato da `mri-light-1.0.0.7.html`.
+  changelog, footer `pipeline 1.0.0.8`; **FIX Blitzortung init gated**: nuovo
+  entry point unico `initBlitzortung()` invocato solo sotto
+  `isFeatureEnabled('lightningBlitzortung')` (schema `if (flag) initBlitzortung();`)
+  in `startLivePanel`/`changeLightningSource`/`toggleLightning`, `liveBlitzRefreshTimer`
+  avviato solo con flag ON, guardia di visibilità `#live-panel`+legenda applicata
+  a PARSE-TIME (fuori dal gate Leaflet) e reconnect timer rientrante nel punto gated;
+  file rinominato da `mri-light-1.0.0.7.html`.
 - **Script**: `common.py` (sentinelle, fingerprint, bootstrap helpers,
   `fetch_best_match_check`, Parte H), `check_best_match.py` (nuovo canary),
   `decide_cycle.py` (nuovo; fix shadowing `fetch_mode` → `fetch_mode_for`),
@@ -165,6 +171,8 @@ precedente; la modalità parziale `best_match_only` è RIMOSSA):
 | `test_negative_validation.py` (3 manomissioni + baseline intatto) | PASS |
 | `contract_dataset_loader.mjs` (contratto loader sul baseline) | PASS |
 | `test_fascia_slots.mjs` (helper puri + rebuilding DOM) | PASS |
+| `test_live_panel_gating.mjs` (Blitzortung OFF: UI/LAYER/FETCH/INIT gated) | PASS |
+| `test_color_coherence.mjs` · `test_forecast_slot_e2e.mjs` · `test_mobile_responsive.mjs` | PASS |
 | `node --check` sui 3 blocchi inline dell'HTML | PASS |
 | `py_compile` su tutti gli script della pipeline | PASS |
 
