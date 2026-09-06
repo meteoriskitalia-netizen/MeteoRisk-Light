@@ -8,22 +8,29 @@ Combina i due rilevatori INDIPENDENTI e decide l'azione del ciclo:
   best_changed = Best Match cambiato (canary sentinelle, check_best_match)
   bootstrap    = INITIAL DATASET BOOTSTRAP (state/dataset/fingerprint assenti, G3/G5)
 
-Matrice 2x2 (+ bootstrap, che ha priorità ASSOLUTA):
+Matrice decisionale (STATELESS 1.0.0.8 · FIX PIPELINE — NESSUNA dipendenza dal
+raw di un ciclo precedente; ogni fetch riscarica SEMPRE entrambi i leg):
   ecmwf_new | best_changed | azione
   ----------+--------------+--------------------------------------------------
     true    |   true       | coordinated  = fetch completo entrambi i leg
     true    |   false      | coordinated  = fetch completo entrambi i leg
-    false   |   true       | best_match_only = refresh SOLO leg best_match
+    false   |   true       | coordinated  = fetch completo entrambi i leg
     false   |   false      | none         = clean exit, zero fetch/build/commit
     (bootstrap)            | bootstrap    = fetch reale completo del primo ciclo
+
+  La modalità best_match_only (refresh parziale con merge del raw precedente) è
+  RIMOSSA: richiedeva data/_raw/source_raw.json del ciclo PRECEDENTE, che non
+  sopravvive sui runner GitHub ephemeral. Quando il canary Best Match cambia e
+  l'ECMWF è invariato, il ciclo esegue comunque un fetch completo coordinato
+  (Best Match + ECMWF insieme): pipeline stateless rispetto a data/_raw.
 
 Priority guardrails (NON un razionamento preventivo: i consumi sotto il tetto
 non bloccano mai; solo oltre l'hard safety ceiling il fetch si ferma):
   1. INITIAL BOOTSTRAP            (senza dataset il safe-skip non ha senso -> FATAL)
   2. coordinated (entrambi i leg)
-  3. best_match_only              (refresh leggero)
-  4. canary sentinelle            (già eseguito in check_best_match, 1 richiesta/ciclo)
-  5. retry selettivi              (interni al client, conteggiati nel ceiling)
+  3. canary sentinelle            (già eseguito in check_best_match, 1 richiesta/ciclo)
+  4. retry selettivi              (controllo budget PRIMA di ogni retry, senza
+                                   prenotazione preventiva per retry ipotetici)
 
 Hard safety ceiling (PRE-FLIGHT guardrail, mai oltre il tetto):
   - steady-state -> rc 2: SAFE SKIP, ultimo dataset valido preservato, retry
@@ -49,30 +56,28 @@ import request_planner  # noqa: E402
 
 
 def cycle_mode(ecmwf_new, best_changed, bootstrap):
-    """Decisione pura del ciclo (testabile)."""
+    """Decisione pura del ciclo (testabile). Stateless: qualunque cambiamento
+    reale -> fetch completo coordinato. Nessun best_match_only (refresh parziale)."""
     if bootstrap:
         return "bootstrap"
     if ecmwf_new:
         return "coordinated"
     if best_changed:
-        return "best_match_only"
+        return "coordinated"
     return "none"
 
 
 def fetch_mode_for(mode):
-    """Modalità di fetch associata alla decisione del ciclo (pura)."""
+    """Modalità di fetch associata alla decisione del ciclo (pura). Il fetch è
+    SEMPRE completo coordinato quando c'è lavoro (nessun refresh parziale)."""
     if mode == "none":
         return "none"
-    if mode in ("bootstrap", "coordinated"):
-        return "coordinated"
-    return "best_match_only"
+    return "coordinated"
 
 
 def fetch_request_count(mode, plan):
     if mode in ("none",):
         return 0
-    if mode == "best_match_only":
-        return len(plan["batches"]) * 1
     return len(plan["batches"]) * plan["n_model_legs"]
 
 

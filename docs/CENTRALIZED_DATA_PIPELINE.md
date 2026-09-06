@@ -49,18 +49,23 @@ Pipeline (per run, si veda anche `docs/` e commenti in head di ogni script):
    forecast multi-location (weathercode+precipitation orarie). Fingerprint SHA-256 del solo
    contenuto (giorno0 + sentinelle) confrontata con lo state: exit `0`=cambiato · `10`=invariato ·
    `1`=errore. In bootstrap non esegue richieste (il primo ciclo è sempre coordinated).
-5. `scripts/decide_cycle.py` — **decision engine 2×2 + bootstrap** (1.0.0.8): combina
-   `ecmwf_new` × `best_changed` e sceglie `coordinated` / `best_match_only` / `none` / `bootstrap`
-   (priorità 1..5); **pre-flight guardrails** (hard safety ceiling centralizzato in
-   `data/state/api_usage.json`; blocco SOLO oltre il tetto, nessun razionamento preventivo;
-   osservabilità separata: checks Metadata, canary, fetch, retry, riuscite/fallite per giorno).
+5. `scripts/decide_cycle.py` — **decision engine stateless + bootstrap** (1.0.0.8,
+   FIX PIPELINE): combina `ecmwf_new` × `best_changed` e sceglie `coordinated` /
+   `none` / `bootstrap` (la modalità parziale `best_match_only` è rimossa:
+   qualunque cambiamento reale → fetch completo di entrambi i leg, nessuna
+   dipendenza dal raw di un ciclo precedente); **pre-flight guardrails** (hard
+   safety ceiling centralizzato in `data/state/api_usage.json`; blocco SOLO oltre
+   il tetto, nessun razionamento preventivo; osservabilità separata: checks
+   Metadata, canary, fetch, retry, riuscite/fallite per giorno).
    Steady-state oltre il tetto → exit 2 (safe skip); bootstrap oltre il tetto → exit 3 (FAIL:
    nessun dataset da preservare).
 6. `scripts/fetch_source_data.py` — scarica il **raw temporaneo** in `data/_raw/` (MAI pubblicato)
-   con i due leg `best_match` + `ecmwf_ifs` (`coordinated`, stessa fetched_at) oppure il SOLO
-refresh `best_match` (`--mode best_match_only`, merge con leg_timestamps espliciti che
-    preserva ecmwf dal raw precedente). Se manca un capoluogo (coordIdx 0) → exit 3 (steady) /
-    exit 4 (bootstrap FATAL); hard safety ceiling raggiunto → exit 2 (steady) / 4 (bootstrap FATAL).
+   con i due leg `best_match` + `ecmwf_ifs` **SEMPRE completi** (`coordinated`, stessa fetched_at,
+   STATELESS: il raw è scritto e consumato dentro lo stesso run, mai riletto da un ciclo successivo).
+   Prima del retry selettivo dei batch falliti verifica il **budget residuo** (richiesta → errore
+   retryable → budget → retry/stop; nessuna prenotazione preventiva). Se manca un capoluogo
+   (coordIdx 0) → exit 3 (steady) / exit 4 (bootstrap FATAL); hard safety ceiling raggiunto →
+   exit 2 (steady) / 4 (bootstrap FATAL).
 7. `scripts/build_meteorisk_dataset.py` — METEO-RISK DATA ENGINE: collasso "day-wide" del
    giorno, riepilogo derivato giornaliero (20 campi), serie orarie spogliate dall'envelope API,
    worst-point per provincia (port di `scorePointForProvince`, tie-break primo max in ordine slot).

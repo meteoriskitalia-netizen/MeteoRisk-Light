@@ -11,8 +11,10 @@ Quattro attività indipendenti su `MeteoRisk-Light-1.0.0.7`:
   Sera/Notte) era da ricostruire in modo robusto dopo il refactor dati.
 - **PARTE B — Best Match indipendente**: canary dedicato (`check_best_match.py`)
   + decision engine `decide_cycle.py` che sceglie `cycle_mode` tra
-  `coordinated` / `best_match_only` / `none`; fingerprint di contenuto
-  (`best_match_fingerprint`) registrato in publish.
+  `coordinated` / `none` / `bootstrap` (FIX PIPELINE stateless: la modalità
+  `best_match_only` è rimossa — qualunque cambiamento reale → fetch completo
+  di entrambi i leg, nessuna dipendenza dal raw di un ciclo precedente);
+  fingerprint di contenuto (`best_match_fingerprint`) registrato in publish.
 - **PARTE F — Version bump** 1.0.0.7 → 1.0.0.8 (app, VERSION, README, docs, workflow).
 - **PARTE G — INITIAL DATASET BOOTSTRAP**: il rilascio **non contiene dataset
   live** (`data/latest/*.json` assenti); il primo dataset è generato dal primo
@@ -77,10 +79,13 @@ veniva lasciato "vuoto/tutto il giorno" o popolato in modo incoerente.
 
 ### 4.3 Matrice di decisione (`decide_cycle.py`)
 
+Matrice STATELESS (FIX PIPELINE — nessuna dipendenza dal raw del ciclo
+precedente; la modalità parziale `best_match_only` è RIMOSSA):
+
 | ECMWF nuovo | Best Match cambiato | ciclo |
 |---|---|---|
 | sì | qualunque | `coordinated` |
-| no | sì | `best_match_only` (3 richieste; ECMWF preservato dal raw precedente) |
+| no | sì | `coordinated` (fetch completo Best Match + ECMWF) |
 | no | no | `none` (clean exit) |
 | **bootstrap** | — | override → `coordinated` |
 
@@ -118,7 +123,9 @@ veniva lasciato "vuoto/tutto il giorno" o popolato in modo incoerente.
   `fetch_best_match_check`, Parte H), `check_best_match.py` (nuovo canary),
   `decide_cycle.py` (nuovo; fix shadowing `fetch_mode` → `fetch_mode_for`),
   `check_model_runs.py` (bootstrap-aware + H5), `fetch_source_data.py`
-  (`--mode`, `merge_best_match_only`, `leg_timestamps`, `cycle_mode`, rc 3/4),
+  (STATELESS: rimosso `--mode best_match_only`, `merge_best_match_only` e la
+  lettura del raw del ciclo precedente; fetch SEMPRE completo coordinated;
+  budget check PRIMA di ogni retry selettivo, senza prenotazione preventiva),
   `build_meteorisk_dataset.py` (leg timestamps + `update_strategy`),
   `validate_dataset.py` (strategy/timestamps + day0), `publish_dataset.py`
   (fingerprint solo a dataset valido), `workflow_gate.py` (`classify_best`,
@@ -148,9 +155,10 @@ veniva lasciato "vuoto/tutto il giorno" o popolato in modo incoerente.
 | Suite | esito |
 |---|---|
 | `test_best_match_canary.py` (canary + fingerprint) | PASS |
-| `test_decide_cycle.py` (matrice + pre-flight budget + rc) | PASS |
+| `test_decide_cycle.py` (matrice stateless + pre-flight budget + rc) | PASS |
 | `test_bootstrap.py` (G1/G3/G5/G6) | PASS |
 | `test_metadata_retry.py` (H1-H5) | PASS |
+| `test_fetch_stateless.py` (casi A/C/D/E: stateless + budget-before-retry) | PASS |
 | `test_workflow_gate.py` (A-F + best stage) | PASS |
 | `test_sample_port.py` (golden 265/257, 107 capoluoghi) | PASS |
 | `test_planner_budget.py` (9 test) | PASS |
@@ -168,8 +176,9 @@ veniva lasciato "vuoto/tutto il giorno" o popolato in modo incoerente.
 - matrice decisionale `(ecmwf_new, best_changed)` → cycle_mode;
 - contratto exit code gate (plan rc3 bootstrap, fetch rc4 fatale, best rc
   0/10/1);
-- `fetch --dry-run`: coordinated BOOTSTRAP = 6 richieste; `best_match_only`
-  in bootstrap → rifiutato (rc 1, incoerenza con Parte G);
+- `fetch --dry-run`: coordinated BOOTSTRAP = 6 richieste; `--mode
+  best_match_only` rimosso (argparse lo rifiuta: niente refresh parziale, la
+  pipeline è stateless);
 
 ## 11. Note operative
 

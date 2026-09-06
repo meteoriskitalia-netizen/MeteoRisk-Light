@@ -25,16 +25,22 @@ costituenti non vengono ripubblicati, specchiati o incapsulati.
     capoluoghi mancanti (abort: nessuna pubblicazione parziale) · 1 = errore
     tecnico (coordinate assenti o fallimento residuo).
 
-1.0.0.8 — BEST MATCH ONLY REFRESH + INITIAL BOOTSTRAP (B + G):
-  - --mode best_match_only: refresh SOLO del leg best_match (3 richieste) quando
-    il canary sentinelle rileva un cambiamento e il run ECMWF è invariato. I dati
-    ecmwf_ifs del raw precedente vengono PRESERVATI nel nuovo raw (merge leg):
-    il dataset resta dual con best_match fresca + ecmwf invariata. La coerenza
-    temporale onesta è espressa in leg_timestamps (best_match != ecmwf).
-  - BoOTSTRAP (G5): se non esiste ancora un dataset live, gli esiti che in
+1.0.0.8 — STATELESS FULL COORDINATED FETCH (FIX PIPELINE):
+  - La modalità `best_match_only` (refresh parziale del solo leg best_match con
+    merge dell'ecmwf_ifs dal raw PRECEDENTE) è RIMOSSA: data/_raw non persiste
+    tra i run (runner GitHub ephemeral), quindi quel merge non era riproducibile
+    e rendeva la pipeline dipendente da stato residuale. OGGI ogni ciclo di
+    lavoro scarica SEMPRE entrambi i leg (best_match + ecmwf_ifs) in un fetch
+    completo coordinato: il raw è scritto e consumato DENTRO lo stesso run,
+    MAI riletto da un ciclo successivo (STATELESS rispetto a data/_raw).
+  - BOOTSTRAP (G5): se non esiste ancora un dataset live, gli esiti che in
     steady-state sono "safe skip" diventano FATAL (rc 4): hard ceiling o
     capoluoghi mancanti in bootstrap non hanno alcun last-known-good da
     preservare → workflow FAIL visibile (nessun file falso/parziale, G6).
+  - RETRY + BUDGET (FIX 1.0.0.8): ECCETTO il pre-flight, anche ogni re-tentativo
+    selettivo verifica il budget residuo PRIMA di partire (richiesta → errore
+    retryable → controllo budget → retry/stop). Nessuna prenotazione preventiva
+    per retry ipotetici: si controlla SOLO il momento del retry.
   - Exit codes 1.0.0.8: 0 = raw scritto · 2 = HARD SAFETY CEILING (safe skip) ·
     3 = capoluoghi mancanti (safe skip) · 4 = BOOTSTRAP FATAL (ceiling o
     capoluoghi su primo dataset: FAIL) · 1 = errore tecnico.
@@ -50,19 +56,15 @@ sys.path.insert(0, __file__ and __file__[: __file__.rfind("\\")] or ".")
 import common
 
 
-def fetch_batch(batch, only=None):
+def fetch_batch(batch):
     """Una richiesta batched PER MODELLO leg (le risposte multi-location di
     Open-Meteo non annidano i modelli: arrays piatti per leg). Ricostruisce il
     record dual punto-punto nel formato del builder
     {best_match:{daily,hourly}, ecmwf_ifs:{daily,hourly}, elevation}.
-    `only` limita il leg a "best_match" o "ecmwf_ifs" (refresh parziale 1.0.0.8).
-    Ritorna (records, error)."""
+    Il fetch è SEMPRE completo (entrambi i leg, coordinated). Ritorna
+    (records, error)."""
     records = {}
-    if only:
-        models = [only]
-    else:
-        models = list(common.DUAL_MODELS.split(","))
-    for model in models:
+    for model in common.DUAL_MODELS.split(","):
         data = common.fetch_source_batch(batch["lats"], batch["lons"],
                                          models=model,
                                          forecast_days=common.FORECAST_DAYS)
@@ -82,23 +84,11 @@ def fetch_batch(batch, only=None):
     return [records[k] for k in sorted(records)], None
 
 
-def merge_best_match_only(prev_raw, results, fetched_ts):
-    """MERGE LEG (1.0.0.8): il refresh canary sostituisce SOLO best_match;
-    ecmwf_ifs e elevation restano dal raw precedente (leg_timestamps espliciti).
-    `results` e' {index: {best_match:..., elevation:...}} da fetch_batch(only)."""
-    merged = {}
-    for idx, rec in (prev_raw.get("points") or []):
-        merged[int(idx)] = rec
-    for idx, rec in results.items():
-        if idx not in merged:
-            merged[idx] = {"elevation": None}
-        merged[idx]["best_match"] = rec["best_match"]
-        if merged[idx].get("elevation") is None:
-            merged[idx]["elevation"] = rec.get("elevation")
-    sorted_points = sorted(merged.items())
-    prev_ts = (prev_raw.get("leg_timestamps") or {}).get("ecmwf_fetched_at") or prev_raw.get("fetched_at")
-    leg_ts = {"best_match_fetched_at": fetched_ts, "ecmwf_fetched_at": prev_ts}
-    return sorted_points, leg_ts
+def retry_budget_available(need):
+    """FIX PIPELINE — budget residuo PRIMA di un re-tentativo selettivo
+    (richiesta -> errore retryable -> controllo budget -> retry o stop).
+    Nessuna prenotazione preventiva: si verifica solo al momento del retry."""
+    return common.budget_ok_for(need)
 
 
 def main():
@@ -111,9 +101,10 @@ def main():
                         help="Stampa il PIANO OTTIMIZZATO (dedup+batch+preflight) senza scaricare.")
     parser.add_argument("--skip-preflight", action="store_true",
                         help="Salta il blocco da hard safety ceiling (uso diagnostico, MAI nelle Action).")
-    parser.add_argument("--mode", choices=["coordinated", "best_match_only"], default="coordinated",
-                        help="coordinated (default): ambos i leg. best_match_only: solo best_match "
-                             "(refresh canary 1.0.0.8; ecmwf preservata dal raw precedente).")
+    parser.add_argument("--mode", choices=["coordinated"], default="coordinated",
+                        help="coordinated (default e UNICO): fetch completo di entrambi i leg "
+                             "(best_match + ecmwf_ifs). Niente refresh parziale best_match_only "
+                             "(rimosso: dipendeva dal raw di un ciclo precedente).")
     args = parser.parse_args()
 
     if not os.path.exists(args.points_json):
@@ -125,22 +116,9 @@ def main():
         return 1
 
     bootstrap = common.is_bootstrap_pending()
-    only = None if args.mode == "coordinated" else "best_match"
-    if only and bootstrap:
-        print("[fetch_source_data] ERRORE: best_match_only in stato BOOTSTRAP inconsistente "
-              "(il primo ciclo e' sempre coordinated).")
-        return 1
-    prev_raw = None
-    if only:
-        raw_prev_path = common.DATA_RAW / "source_raw.json"
-        if not os.path.exists(raw_prev_path):
-            print("[fetch_source_data] ERRORE: best_match_only richiede un raw coordinato precedente "
-                  "(assente in %s)." % raw_prev_path)
-            return 1
-        prev_raw = json.load(open(raw_prev_path, encoding="utf-8"))
 
     coords = common.unique_coordinates(points)
-    n_models = len(common.DUAL_MODELS.split(",")) if only is None else 1
+    n_models = len(common.DUAL_MODELS.split(","))
     batches = [{"batch": i, "global_start": i * common.BATCH_MAX_LOCATIONS,
                 "locations": len(chunk),
                 "lats": [c[0] for c in chunk], "lons": [c[1] for c in chunk]}
@@ -149,9 +127,9 @@ def main():
     planned = len(batches) * n_models
     budget = common.guard_planned_requests(planned)
 
-    print("[fetch_source_data] Real points=%d · coordinate uniche=%d (dedup) · batch=%dx%d · %d leg → richieste ottimizzate=%d (era %d) · mode=%s%s"
+    print("[fetch_source_data] Real points=%d · coordinate uniche=%d (dedup) · batch=%dx%d · %d leg → richieste ottimizzate=%d (era %d) · mode=coordinated%s"
           % (len(points), len(coords), len(batches), common.BATCH_MAX_LOCATIONS, n_models, planned, len(coords),
-             args.mode, " · BOOTSTRAP" if bootstrap else ""))
+             " · BOOTSTRAP" if bootstrap else ""))
     usage = common.usage_today()
     print("[fetch_source_data] Guardrails: ceiling=%d usato-oggi=%d disponibile=%d"
           % (common.effective_budget(), usage["requests"], budget["available"]))
@@ -185,7 +163,7 @@ def main():
     def request_policy(batch):
         """Ritorna ({punto->record}, {punto->errore}) per un batch."""
         try:
-            records, err = fetch_batch(batch, only=only)
+            records, err = fetch_batch(batch)
         except Exception as exc:  # noqa: BLE001
             records, err = None, str(exc)
         if err:
@@ -223,21 +201,31 @@ def main():
                                       for k in range(b["locations"])])), batches)
 
     # retry SELETTIVO: un solo re-tentativo dei SOLI batch falliti (l'exponential
-    # backoff interno a fetch_source_batch copre già i transienti su quel batch)
+    # backoff interno a fetch_source_batch copre già i transienti su quel batch).
+    # BUDGET PRIMA DEL RETRY (FIX 1.0.0.8): se il tetto giornaliero sarebbe
+    # superato dai retry, NON si ritenta (nessuna prenotazione preventiva: il
+    # controllo avviene solo a questo punto, dopo i consumi del primo giro).
     failed_batches = [b for b in batches if any(
         pidx in failures for pidx in [coords[b["global_start"] + k][2][0]
                                       for k in range(b["locations"])])]
     if failed_batches:
-        print("[fetch_source_data] retry selettivo di %d batch falliti (primo giro ok per gli altri)..."
-              % len(failed_batches))
-        mm, ee = run_pass(failed_batches)
-        results.update(mm)
-        for k in list(failures.keys()):
-            if k in mm:
-                del failures[k]
-        record_usage(len(failed_batches), sum(1 for b in failed_batches if any(
-            pidx in ee for pidx in [coords[b["global_start"] + j][2][0]
-                                    for j in range(b["locations"])])), failed_batches)
+        retry_need = len(failed_batches) * n_models
+        if not retry_budget_available(retry_need):
+            print("[fetch_source_data] RETRY SKIPPED (budget): serve %d richieste di re-tentativo, ma il "
+                  "tetto giornaliero non lo consente (FIX 1.0.0.8: nessun retry oltre il tetto, nessuna "
+                  "prenotazione preventiva). I batch falliti restano falliti."
+                  % retry_need)
+        else:
+            print("[fetch_source_data] retry selettivo di %d batch falliti (budget residuo OK per %d richieste)..."
+                  % (len(failed_batches), retry_need))
+            mm, ee = run_pass(failed_batches)
+            results.update(mm)
+            for k in list(failures.keys()):
+                if k in mm:
+                    del failures[k]
+            record_usage(len(failed_batches), sum(1 for b in failed_batches if any(
+                pidx in ee for pidx in [coords[b["global_start"] + j][2][0]
+                                        for j in range(b["locations"])])), failed_batches)
 
     print("[fetch_source_data] Completato: ok=%d fail=%d (%.1fs)"
           % (len(results), len(failures), time.time() - t0))
@@ -261,13 +249,9 @@ def main():
         return 3
 
     fetched_ts = common.now_iso()
-    if only:
-        sorted_points, leg_ts = merge_best_match_only(prev_raw, results, fetched_ts)
-        cycle_mode = "best_match_only"
-    else:
-        sorted_points = sorted(results.items())
-        leg_ts = {"best_match_fetched_at": fetched_ts, "ecmwf_fetched_at": fetched_ts}
-        cycle_mode = "coordinated"
+    sorted_points = sorted(results.items())
+    leg_ts = {"best_match_fetched_at": fetched_ts, "ecmwf_fetched_at": fetched_ts}
+    cycle_mode = "coordinated"
 
     payload = {
         "fetched_at": fetched_ts,

@@ -152,7 +152,8 @@ METADATA_MODELS_TRACKED = ["ecmwf_ifs"]        # soli run rilevati
 # reali del dataset, coordIdx 0, coordinate identiche a quelle pubblicate) in UNA
 # richiesta multi-location. Fingerprint indipendente dal generation-time: hash
 # SHA-256 su day0 + weathercode/precipitation orarie best_match dei sentinel.
-# Costo: 1 richiesta forecast/ciclo (96/giorno al peggio, ~1% del ceiling giornaliero).
+# Costo: 1 richiesta forecast/ciclo (144/giorno al peggio con cron */10,
+# ~1,4% del ceiling giornaliero).
 BEST_MATCH_SENTINEL_SIGLAS = ("MI", "VE", "RM", "PE", "LE", "PA")
 BEST_MATCH_SENTINEL_AREAS = {"MI": "NW-Po", "VE": "NE", "RM": "Tirreno-centro",
                              "PE": "Adriatico", "LE": "Sud", "PA": "Isole"}
@@ -746,6 +747,20 @@ def available_today(day=None):
     return max(0, effective_budget() - usage_today(day)["requests"])
 
 
+def budget_ok_for(extra_requests=1):
+    """FIX PIPELINE 1.0.0.8 — budget residuo per richieste AGGIUNTIVE da fare ora
+    (es. un re-tentativo API): True se il tetto di sicurezza NON verrebbe
+    superato. Schema: richiesta -> errore retryable -> CONTROLLO BUDGET PRIMA di
+    ogni retry -> retry o stop. Nessuna prenotazione preventiva: si controlla
+    SOLO al momento del retry. Guardrails disabilitati -> sempre True."""
+    g = guardrails()
+    if not g.get("enabled", True):
+        return True
+    if not g.get("hard_stop_enabled", True):
+        return True
+    return usage_today()["requests"] + int(extra_requests) <= effective_budget()
+
+
 def record_api_usage(requests=0, failed=0, successful=0, batches=0, locations=0,
                      bytes_=0, checks=0, canary=0, forecast=0, retries=0, day=None):
     """OSSERVABILITA' guardrails: contatori telemetrici giornalieri separati per
@@ -851,6 +866,11 @@ def fetch_source_batch(lats, lons, models=DUAL_MODELS, forecast_days=FORECAST_DA
     last_err = None
     delay = 0.0
     for attempt in range(RETRY_LIMIT):
+        if attempt > 0 and not budget_ok_for(1):
+            raise RuntimeError(
+                "Open-Meteo: budget insufficiente per il retry (tetto giornaliero "
+                "raggiunto, FIX 1.0.0.8: nessuna prenotazione preventiva, nessun "
+                "retry oltre il tetto). Errore precedente: %r" % last_err)
         if delay > 0:
             time.sleep(delay)
         _pace_next_request()
@@ -898,6 +918,11 @@ def fetch_best_match_check(lats, lons):
     last_err = None
     delay = 0.0
     for attempt in range(RETRY_LIMIT):
+        if attempt > 0 and not budget_ok_for(1):
+            raise RuntimeError(
+                "Best Match: budget insufficiente per il retry del canary (tetto "
+                "giornaliero raggiunto, FIX 1.0.0.8: nessun retry oltre il tetto). "
+                "Errore precedente: %r" % last_err)
         if delay > 0:
             time.sleep(delay)
         _pace_next_request()

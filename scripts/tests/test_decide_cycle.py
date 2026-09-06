@@ -1,10 +1,14 @@
 """TEST 1.0.0.8 — Decision engine + pre-flight guardrails (decide_cycle.py).
 
-Matrice 2x2 (+ bootstrap, priorita' ASSOLUTA) e contratti rc per workflow_gate:
+Matrice STATELESS (FIX PIPELINE, 3 esiti + bootstrap, priorita' ASSOLUTA per
+bootstrap) e contratti rc per workflow_gate:
   0 = PIANO VALID · 2 = HARD SAFETY CEILING (safe skip) · 3 = HARD SAFETY
   CEILING IN BOOTSTRAP (FAIL: nessun dataset da preservare, G6) · 1 = ERRORE
   TECNICO. I guardrails bloccano SOLO oltre l'hard safety ceiling (nessun
-  razionamento preventivo). SELF-SUFFICIENT: se data/_workdir/real_points.json
+  razionamento preventivo). La modalita' best_match_only (refresh parziale col
+  merge del raw del ciclo precedente) e' RIMOSSA: qualunque cambiamento reale
+  -> fetch completo coordinated; nessuna dipendenza da data/_raw persistente
+  (runner GitHub ephemeral). SELF-SUFFICIENT: se data/_workdir/real_points.json
   non esiste viene generato offline con common.generate_real_points()
   (stesso generatore della pipeline, nessuna rete, nessun dato fake).
 """
@@ -35,11 +39,23 @@ def _ensure_points_json():
 _ensure_points_json()
 
 
-def test_decision_matrix_2x2():
+def test_decision_matrix_stateless():
+    # CASO A: nuovo runner, ECMWF invariato + Best Match cambiato -> fetch
+    # completo coordinato (NON best_match_only: no dipendenza dal raw precedente).
+    assert decide_cycle.cycle_mode(False, True, False) == "coordinated"
+    # CASO C: ECMWF nuovo -> fetch completo coordinato (best_changed o meno).
     assert decide_cycle.cycle_mode(True, True, False) == "coordinated"
     assert decide_cycle.cycle_mode(True, False, False) == "coordinated"
-    assert decide_cycle.cycle_mode(False, True, False) == "best_match_only"
+    # CASO B: entrambi invariati -> clean exit NO-OP (zero fetch/build/commit).
     assert decide_cycle.cycle_mode(False, False, False) == "none"
+
+
+def test_best_match_only_removed():
+    # la matrice stateless NON produce MAI la modalita' parziale best_match_only
+    for a, b in ((False, True), (True, False), (True, True)):
+        assert decide_cycle.cycle_mode(a, b, False) != "best_match_only"
+    assert decide_cycle.fetch_mode_for("coordinated") == "coordinated"
+    assert decide_cycle.fetch_mode_for("none") == "none"
 
 
 def test_bootstrap_overrides_all():
@@ -53,7 +69,6 @@ def test_bootstrap_overrides_all():
 def test_fetch_mode_mapping():
     assert decide_cycle.fetch_mode_for("bootstrap") == "coordinated"
     assert decide_cycle.fetch_mode_for("coordinated") == "coordinated"
-    assert decide_cycle.fetch_mode_for("best_match_only") == "best_match_only"
     assert decide_cycle.fetch_mode_for("none") == "none"
 
 
@@ -62,7 +77,6 @@ def test_fetch_request_count():
     assert decide_cycle.fetch_request_count("none", plan) == 0
     assert decide_cycle.fetch_request_count("coordinated", plan) == 6
     assert decide_cycle.fetch_request_count("bootstrap", plan) == 6
-    assert decide_cycle.fetch_request_count("best_match_only", plan) == 3
 
 
 def _points_json():

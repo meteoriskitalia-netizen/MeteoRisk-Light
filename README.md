@@ -9,10 +9,12 @@ pipeline coordinata (driver ECMWF IFS):
    orarie). La **fingerprint SHA-256 del solo contenuto** (giorno0 + serie
    orarie delle sentinelle, nessun generation-time) è registrata alla
    **pubblicazione** (stato == dataset): atomicità tra check e dataset.
-2. **Decision engine 2×2 + bootstrap** (`decide_cycle.py`): `coordinated` ·
-   `best_match_only` (refresh leggero con merge e `leg_timestamps` espliciti) ·
-   `none` (clean exit, zero lavoro) · `bootstrap` (primo dataset reale). Priorità
-   1..5, **API USAGE GUARDRAILS** pre-flight: hard safety ceiling centralizzato
+2. **Decision engine stateless + bootstrap** (`decide_cycle.py`): matrice a 3
+   esiti (FIX PIPELINE: la modalità parziale `best_match_only` è rimossa, nessuna
+   dipendenza dal raw di un ciclo precedente) — `coordinated` (fetch completo di
+   entrambi i leg: ECMWF nuovo O Best Match cambiato) · `none` (clean exit, zero
+   lavoro) · `bootstrap` (primo dataset reale). Priorità 1..4, **API USAGE
+   GUARDRAILS** pre-flight: hard safety ceiling centralizzato
    (`data/state/api_usage.json`, forse sovrascritto da env), blocco SOLO oltre
    il tetto — nessun razionamento preventivo; osservabilità separata (checks
    Metadata, canary, fetch, retry, riuscite/fallite per giorno).
@@ -71,7 +73,8 @@ docs/                                       # report, budget API, pipeline, lice
 ## Efficienza (invariata)
 257 punti → **6 richieste** Open-Meteo per ciclo coordinato (+97.67%): dedup (0
 duplicati), batch a 100 × 2 leg modello (best_match + ecmwf_ifs). Canary Best
-Match: 1 richiesta aggiuntiva/ciclo. Refresh `best_match_only`: 3 richieste.
+Match: 1 richiesta/ciclo. Fetch SEMPRE completo (stateless): nessun refresh
+parziale del solo best_match; il raw è scritto e consumato nello stesso run.
 
 ## Budget API e protezioni (invariate)
 - Check dei run = Metadata API (non conteggiata); fetch forecast SOLO con
@@ -85,9 +88,10 @@ Match: 1 richiesta aggiuntiva/ciclo. Refresh `best_match_only`: 3 richieste.
 ## Test
 Test 1–8 (documentati in `docs/METEORISK_LIGHT_1.0.0.8_IMPLEMENTATION_REPORT.md`):
 1) fix fascia oraria (helper puri + dropdown) · 2) fingerprint Best Match
-deterministica e content-sensitive · 3) matrice decision engine 2×2 + bootstrap ·
-4) stato bootstrap (G3/G5) · 5) budget: rc 2 safe-skip / rc 3+4 bootstrap FATAL ·
-6) gate best/plan/fetch (rc contract) · 7) merge best_match_only + leg_timestamps ·
+deterministica e content-sensitive · 3) matrice decision engine stateless +
+bootstrap (casi A/B/C) · 4) stato bootstrap (G3/G5) · 5) budget: rc 2 safe-skip /
+rc 3+4 bootstrap FATAL · 6) gate best/plan/fetch (rc contract) · 7) fetch
+stateless + budget-before-retry (casi D/E) ·
 8) workflow bytecheck 1.0.0.8.
 
 Regressioni 1.0.0.7: golden sampling (v1=265/v2=257) · negativi 3/3 · unit

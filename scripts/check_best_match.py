@@ -14,8 +14,9 @@ UNA richiesta forecast multi-location con SOLO weathercode+precipitation orarie.
     - errore     -> rc 1  (errore tecnico VIStibile, mai silenziato)
   - il canary NON scrive la fingerprint (viene registrata da publish_dataset.py
     sul dataset VALIDATO, atomicamente: stato==dataset sempre).
-  - costo: 1 richiesta forecast per ciclo (~96/giorno al peggio, ~1% del
-    ceiling giornaliero). Hard safety ceiling (guardrail PRE-FLIGHT): se oggi è
+  - costo: 1 richiesta forecast per ciclo (~144/giorno al peggio con cron */10,
+    ~1,4% del ceiling giornaliero). Hard safety ceiling (guardrail PRE-FLIGHT):
+    se oggi è
     esaurito il canary NON parte (zero richieste oltre il tetto) -> rc 10 con
     motivo esplicito. NIENTE altro blocca il canary: è già leggero.
 
