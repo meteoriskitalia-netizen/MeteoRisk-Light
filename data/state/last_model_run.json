@@ -2,32 +2,32 @@
   "last_model_runs": {
     "ecmwf_ifs": {
       "model": "ecmwf_ifs",
-      "last_run_initialisation_time": 1788674400,
+      "last_run_initialisation_time": 1788696000,
       "available_time": null,
       "update_interval_seconds": 21600,
       "not_available_before_this_time": null
     },
     "best_match": {
       "model": "best_match",
-      "last_checked_at": "2026-09-06T14:51:04.698147+00:00",
-      "last_changed_at": "2026-09-06T14:51:04.698147+00:00",
-      "last_fingerprint": "46dd5c061ed24ad9b79fe28475327cd2b754826da54bcf80971b2c19c5ab8ec7",
+      "last_checked_at": "2026-09-06T19:23:22.496224+00:00",
+      "last_changed_at": "2026-09-06T19:23:22.496224+00:00",
+      "last_fingerprint": "1c9ec6f1ed530c2201e6b77fb5027563b255b58f31ebad17029ffb9b69dc8ead",
       "fingerprint_source": "sentinel"
     }
   },
   "driver_model": "ecmwf_ifs",
-  "run_key": "1788674400",
-  "run_init_ts": 1788674400,
-  "run_available_ts": 1788696000,
-  "last_processed_key": "1788674400",
+  "run_key": "1788696000",
+  "run_init_ts": 1788696000,
+  "run_available_ts": 1788717600,
+  "last_processed_key": "1788696000",
   "status": "live",
-  "bootstrap_pending": true,
-  "checked_at": "2026-09-06T14:48:31.108434+00:00",
-  "last_processed_at": "2026-09-06T14:51:04.698164+00:00",
+  "bootstrap_pending": false,
+  "checked_at": "2026-09-06T19:20:49.181872+00:00",
+  "last_processed_at": "2026-09-06T19:23:22.496246+00:00",
   "dataset": {
     "point_count": 257,
     "validation_outcome": "OK"
   },
-  "note": "INITIAL DATASET BOOTSTRAP (1.0.0.8): primo ciclo senza dataset live; sara' eseguito il fetch reale del primo dataset (guardrail ceiling -> fetch -> build -> validate -> publish atomico).",
-  "published_at": "2026-09-06T14:51:04.698147+00:00"
+  "note": "Ciclo coordinato: il run ECMWF comanda l'aggiornamento; best_match viene scaricato nello stesso ciclo di fetch. I run non vanno copiati/ripubblicati: Open-Meteo e' SOLO fonte dati. Vengono pubblicati dati DERIVATI MeteoRisk.",
+  "published_at": "2026-09-06T19:23:22.496224+00:00"
 }
