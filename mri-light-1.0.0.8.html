@@ -1609,6 +1609,8 @@
             'BEST MATCH CANARY INDIPENDENTE (1.0.0.8) — la pipeline abbandona la dipendenza dal solo run ECMWF come unico rilevatore: 6 capoluoghi-sentinella (MI, VE, RM, PE, LE, PA — aree orografiche/regime diverse, stesse coordinate dei punti pubblicati) vengono controllati ad ogni ciclo con UNA richiesta forecast multi-location (weathercode+precipitation orarie); fingerprint SHA-256 del SOLO contenuto (nessun generation-time), registrata alla pubblicazione (stato==dataset). Il rinfresco leggero best_match_only consente di aggiornare il leg Best Match senza riscaricare ecmwf_ifs (merge con leg_timestamps espliciti) e le decisioni di ciclo sono gestite da un decision engine 2x2 + bootstrap in decide_cycle.py (priorità 1..5, API usage guardrails: hard safety ceiling, blocco SOLO oltre il tetto).',
             'INITIAL DATASET BOOTSTRAP (1.0.0.8, Parte G) — il rilascio NON include un dataset locale pre-generato: il primo dataset sorge ESCLUSIVAMENTE dal primo run della GitHub Action (stato bootstrap_pending, fetch reale, validazione, publish atomico, commit e Pages). Un eventuale fallimento del primo ciclo fa fallire il workflow senza pubblicare file finti o parziali (G6).',
             'ROBUSTEZZA RETE / METADATA API (1.0.0.8, Parte H) — il check dei run usa ora un client Metadata API resiliente a errori transienti di rete/TLS: timeout esplicito connect/read (15s), retry automatici (4 tentativi totali, mai infiniti) su SSL/keepalive handshake timeout, TimeoutError, connection reset, HTTP 429 e 5xx, con exponential backoff + jitter. NETWORK ERROR != NO NEW RUN: un errore API NON aggiorna mai lo state/fingerprint e NON tocca l\'ultimo dataset (nessun fetch); solo un check riuscito aggiorna lo stato. Il summary della pipeline riporta esplicitamente: "Metadata API unavailable after retries", "No data fetch performed", "Last dataset unchanged".',
+            'FIX "OGGI" / MAPPING GIORNO-DATASET (1.0.0.8) — il pulsante "Oggi" assumeva giorno-dataset 0 (dayIndex===0) e dopo il reload (o dopo mezzanotte Europe/Rome) mostrava i dati di un giorno scorretto. Ora la selezione mappa l\'etichetta sulla data ISO reale Europe/Rome (dateKeyInTimeZone) e la RICERCA nei giorni disponibili a partire da dataset.day0 (datasetIndexForDayLabelAt): offset calcolato con giorni between day0 e oggi; se la data non è coperta dal dataset nessun indice viene fabbricato — messaggio onesto "Dati disponibili dal <day0> (oggi non coperto dal dataset)". selectDay/init/caletta auto-slot/DPC usano tutti l\'indice risolto (currentDayOffset/currentDay - currentDayOffset), mai l\'assunzione indice 0.',
+            'FIX V3 VISTA CONTINUA RIPRISTINATA AL CONCETTO NATO (1.0.0.8) — la vista continua V3 (sfumatura a colori per celle) era stata riscritta in variante zonale value-space con zone sul reticolo, NON in linea con il concetto originale. Ripristinata la firma nativa renderContinuousV3(points, colorReal) di 10.52.27.0: lattice virtuale ~0,25° SOLO raster senza zone, IDW interpolante i COLORI dei punti campione (radice 38px + nearest adattivo, MAXA=180, MAXN=8), pixel-loop bilineare, maschera terra e blur mask-aware. Alimentata con punti REALI + DENSIFICATI + ANCORE VIRTUALI (colorate con l\'aggregato della propria zona) e con i COLORI costruiti dal MODELLO CORRENTEMENTE visualizzato (merge dual risk-preserving incluso): cambia modello e la sfumatura si adatta. V1/V2 invariati.',
             'NO REGRESSION (1.0.0.8) — invariati: logica meteorologica, formule MeteoRisk, soglie, UI, mappa, radar/satellite/METAR, toggle, dataset derivati coerenti (best_match + ecmwf_ifs) e pipeline di dati derivati non riscritta.',
         ]},
         { version: '1.0.0.7', date: '2026-09-06', changes: [
@@ -8235,7 +8237,10 @@
             document.querySelectorAll('.metric-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.metric === 'risk'));
         }
         var statusEl = document.getElementById('status-msg');
-        var dayLabel = currentDay === 0 ? 'oggi' : (currentDay === 1 ? 'domani' : 'dopodomani');
+        // DPC lavora sul CALENDARIO reale (oggi/domani, il bollettino non conosce il day0
+        // del dataset): qui serve l'indice UI (0=Oggi,1=Domani,2=Dopodomani), non quello dataset.
+        var calDay = currentDay - currentDayOffset();
+        var dayLabel = calDay <= 0 ? 'oggi' : (calDay === 1 ? 'domani' : 'dopodomani');
         if (statusEl) statusEl.innerText = 'Caricamento allerte DPC (' + dayLabel + ')...';
         // Guardia anti-race: cattura il giorno richiesto PRIMA dell'await, così al resolve
         // possiamo scartare una risposta fuori ordine (es. l'utente ha cambiato giorno o
@@ -8244,7 +8249,7 @@
         var reqDay = currentDay;
         var provAlerts;
         try {
-            provAlerts = await fetchDpcAlerts(currentDay);
+            provAlerts = await fetchDpcAlerts(Math.max(0, currentDay - currentDayOffset()));
         } catch (err) {
             console.error('Errore toggleDpcAlert:', err);
             provAlerts = null;
@@ -8845,7 +8850,7 @@
         // Per giorni futuri si usa "pranzo" come default.
         // 15:00–23:59 → cena, 00:00–14:59 → pranzo
         var autoSlot;
-        if (currentDay === 0) {
+        if (currentDay === currentDayOffset()) {
             var nowHour = new Date().getHours();
             autoSlot = (nowHour >= 15 && nowHour <= 23) ? 'cena' : 'pranzo';
         } else {
@@ -14741,44 +14746,6 @@
     // Raster "a provincia": ogni cella della griglia V3 riceve l'indice della provincia che
     // la contiene (0 = mare/nessuna), così la superficie parte dal valore ufficiale della
     // poligonale. Stessa proiezione di rasterLandMask (evenodd, stessi anelli).
-    function rasterZoneField(nx, ny, fr) {
-        var fc = provinceGeoJsonData;
-        if (!fc || !fc.features || !fr) return null;
-        var c = document.createElement('canvas');
-        c.width = nx; c.height = ny;
-        var cx = c.getContext('2d');
-        var lonSpan = fr.lonSpan, mSpan = fr.mSpan;
-        function proj(lon, lat) {
-            var m = Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
-            return [(lon - fr.minLon) / lonSpan * (nx - 1), (fr.mxM - m) / mSpan * (ny - 1)];
-        }
-        for (var f = 0; f < fc.features.length; f++) {
-            var props = fc.features[f].properties || {};
-            var sigla = props.SIGLA || '';
-            var zi = (sigla && provinceSiglaMap[sigla] !== undefined && provinceSiglaMap[sigla] !== null) ? provinceSiglaMap[sigla] : -1;
-            if (zi < 0) continue;
-            var geom = fc.features[f].geometry;
-            if (!geom || !geom.coordinates) continue;
-            var polys = geom.type === 'MultiPolygon' ? geom.coordinates : [geom.coordinates];
-            cx.beginPath();
-            for (var p = 0; p < polys.length; p++) {
-                for (var r = 0; r < polys[p].length; r++) {
-                    var ring = polys[p][r];
-                    for (var i = 0; i < ring.length; i++) {
-                        var ll = proj(ring[i][0], ring[i][1]);
-                        if (i === 0) cx.moveTo(ll[0], ll[1]); else cx.lineTo(ll[0], ll[1]);
-                    }
-                    cx.closePath();
-                }
-            }
-            cx.fillStyle = 'rgb(' + ((zi + 1) % 256) + ',0,0)';
-            cx.fill('evenodd');
-        }
-        var img = cx.getImageData(0, 0, nx, ny).data;
-        var ids = new Int16Array(nx * ny);
-        for (var k = 0; k < ids.length; k++) ids[k] = img[k * 4] - 1;
-        return ids;
-    }
     function buildVirtualLattice() {
         continuousLattice = [];
         if (!provinceGeoJsonData || !provinceGeoJsonData.features) { continuousLatticeReady = true; return; }
@@ -14788,16 +14755,13 @@
         var ny = Math.max(2, Math.round(fr.H * nx / fr.W));
         var m = rasterLandMask({ W: nx, H: ny, minLat: fr.minLat, maxLat: fr.maxLat,
                                  minLon: fr.minLon, maxLon: fr.maxLon, mnM: fr.mnM, mxM: fr.mxM });
-        var zoneIds = rasterZoneField(nx, ny, fr);
         var cells = new Array(nx * ny);
         for (var j = 0; j < ny; j++) {
             var mj = fr.mxM - (j + 0.5) / ny * fr.mSpan;
             var lat = (2 * Math.atan(Math.exp(mj)) - Math.PI / 2) * 180 / Math.PI;
             for (var i = 0; i < nx; i++) {
                 var lon = fr.minLon + (i + 0.5) / nx * fr.lonSpan;
-                var cell = { lat: lat, lon: lon };
-                if (zoneIds) cell.zone = zoneIds[j * nx + i];
-                cells[j * nx + i] = cell;
+                cells[j * nx + i] = { lat: lat, lon: lon };
             }
         }
         continuousLattice = cells;
@@ -14806,53 +14770,41 @@
         continuousLatticeReady = true;
     }
     var continuousLatticeNx = 0, continuousLatticeNy = 0;
-    // Pure helper per il valore metrico delle celle V3 (niente canvas/DOM: testabile).
-    // Le ANCRE provinciali diventano una mappa zone→valore UFFICIALE (identico ai
-    // poligoni); ogni cella che cade dentro una provincia parte da quel valore (peso base
-    // PZ) e i punti reali dell'intorno lo modulano SOLO localmente (peso distanza). Senza
-    // GeoJSON le celle non hanno zona: si ripiega sull'IDW reale+ancore (vecchia semantica).
-    function computeV3CellValues(lattice, fr, points, valueReal, flagsReal, anchors) {
+    // Render V3 (concetto nato 10.52.1.1, ripristinato da 10.52.27.0): reticolo VIRTUALE
+    // ~0,25° SOLO raster. Ogni cella prende colore con IDW dei COLORI dei punti campione
+    // (base 38px + nearest adattivo, fino a 8 vicini); i punti sono reali + densificati +
+    // ANCORE VIRTUALI di provincia (color della provincia). I colori arrivano dal modello
+    // correntemente visualizzato (punto-per-punto, con merge dual in modalita DUAL), quindi
+    // il raster si ridisegna a ogni cambio modello. Palette e soglie identiche a V1/V2,
+    // le previsioni a pannelli/badge restano invariate.
+    function renderContinuousV3(points, colorReal) {
+        if (!continuousV3Frame) continuousV3Frame = computeContinuousFrame(points);
+        var fr = continuousV3Frame;
+        if (!fr) { hideContinuousOverlay(); return; }
+        if (!continuousLatticeReady) buildVirtualLattice();
+        if (!continuousLattice.length) { hideContinuousOverlay(); return; }
+        var nx = continuousLatticeNx, ny = continuousLatticeNy;
         var W = fr.W, H = fr.H;
-        var anchorsList = anchors || [];
-        var nPts = points.length;
-        var nS = nPts + anchorsList.length;
-        var sx = new Array(nS), sy = new Array(nS), sv = new Array(nS), sf = new Array(nS);
-        for (var r = 0; r < nPts; r++) {
-            var mpr = Math.log(Math.tan(Math.PI / 4 + points[r].lat * Math.PI / 360));
-            sx[r] = (points[r].lon - fr.minLon) / fr.lonSpan * (W - 1);
-            sy[r] = (fr.mxM - mpr) / fr.mSpan * (H - 1);
-            sv[r] = (valueReal[r] == null) ? null : valueReal[r];
-            sf[r] = !!flagsReal[r];
+        // Proiezione (identica a buildContinuousGeo) dei punti reali sul frame
+        var nR = points.length, px = new Array(nR), py = new Array(nR);
+        for (var r = 0; r < nR; r++) {
+            var mp = Math.log(Math.tan(Math.PI / 4 + points[r].lat * Math.PI / 360));
+            px[r] = (points[r].lon - fr.minLon) / fr.lonSpan * (W - 1);
+            py[r] = (fr.mxM - mp) / fr.mSpan * (H - 1);
         }
-        var provVals = {};
-        for (var a = 0; a < anchorsList.length; a++) {
-            var an = anchorsList[a];
-            var idxA = nPts + a;
-            var mpa2 = Math.log(Math.tan(Math.PI / 4 + an.lat * Math.PI / 360));
-            sx[idxA] = (an.lon - fr.minLon) / fr.lonSpan * (W - 1);
-            sy[idxA] = (fr.mxM - mpa2) / fr.mSpan * (H - 1);
-            sv[idxA] = (an.value == null) ? null : an.value;
-            sf[idxA] = !!an.filtered;
-            if (an.zone != null && an.zone >= 0 && an.value != null && provVals[an.zone] === undefined) {
-                provVals[an.zone] = { value: an.value, filtered: !!an.filtered };
-            }
-        }
-        var R2 = 38 * 38, MAXA = 180, MAXN = 8, PZ = 3, nC = lattice.length;
-        var cellv = new Array(nC), cellf = new Array(nC);
+        // Colore di ogni cella: IDW dei colori reali (raggio base + nearest adattivo)
+        var R2 = 38 * 38, MAXA = 180, MAXN = 8, nC = continuousLattice.length;
+        var cellc = new Array(nC), cmin = new Array(nC);
         for (var ci = 0; ci < nC; ci++) {
-            var C = lattice[ci];
+            var C = continuousLattice[ci];
             if (!C) continue;
             var mpc = Math.log(Math.tan(Math.PI / 4 + C.lat * Math.PI / 360));
             var ccx = (C.lon - fr.minLon) / fr.lonSpan * (W - 1);
             var ccy = (fr.mxM - mpc) / fr.mSpan * (H - 1);
-            var zoned = (C.zone != null && C.zone >= 0 && provVals[C.zone]) ? provVals[C.zone] : null;
             var best = null, dmin2 = -1, imin = -1;
-            for (var q = 0; q < nS; q++) {
-                if (sv[q] == null) continue;
-                // In modalità zonale le ancore valgono SOLO come base provincia, non come
-                // campioni di modulazione (evita il "tiro" da punti/ancore di province lontane).
-                if (zoned && q >= nPts) continue;
-                var dx = sx[q] - ccx, dy = sy[q] - ccy;
+            for (var q = 0; q < nR; q++) {
+                if (!colorReal[q]) continue;
+                var dx = px[q] - ccx, dy = py[q] - ccy;
                 var d2 = dx * dx + dy * dy;
                 if (d2 <= R2) {
                     if (!best) best = [];
@@ -14863,10 +14815,9 @@
             if (!best && dmin2 >= 0) {
                 var rl = Math.min(MAXA, Math.max(38, Math.sqrt(dmin2) * 2.05));
                 var rl2 = rl * rl;
-                for (var q2 = 0; q2 < nS; q2++) {
-                    if (sv[q2] == null) continue;
-                    if (zoned && q2 >= nPts) continue;
-                    var dx2 = sx[q2] - ccx, dy2 = sy[q2] - ccy;
+                for (var q2 = 0; q2 < nR; q2++) {
+                    if (!colorReal[q2]) continue;
+                    var dx2 = px[q2] - ccx, dy2 = py[q2] - ccy;
                     var dd2 = dx2 * dx2 + dy2 * dy2;
                     if (dd2 <= rl2) {
                         if (!best) best = [];
@@ -14875,52 +14826,18 @@
                 }
                 if (!best) best = [[imin, dmin2]];
             }
-            if (best) {
-                best.sort(function(a, b) { return a[1] - b[1]; });
-                if (best.length > MAXN) best.length = MAXN;
-                var sum = 0, vAcc = 0, fAcc = 0;
-                for (var wj = 0; wj < best.length; wj++) {
-                    var w = 1 / Math.pow(1 + best[wj][1], 1.6);
-                    vAcc += w * sv[best[wj][0]];
-                    if (sf[best[wj][0]]) fAcc += w;
-                    sum += w;
-                }
-                if (zoned) {
-                    // Base provinciale (peso PZ) + modulazione punti reali (peso distanza):
-                    // l'interno della provincia resta sul colore della poligonale.
-                    cellv[ci] = (zoned.value * PZ + vAcc) / (PZ + sum);
-                    cellf[ci] = ((zoned.filtered ? 1 : 0) * PZ + fAcc) / (PZ + sum);
-                } else if (sum > 0) {
-                    cellv[ci] = vAcc / sum;
-                    cellf[ci] = fAcc / sum;
-                }
-            } else if (zoned) {
-                // Nessun punto reale nel raggio: la cella resta sul valore della provincia.
-                cellv[ci] = zoned.value;
-                cellf[ci] = zoned.filtered ? 1 : 0;
+            if (!best) continue;
+            best.sort(function(a, b) { return a[1] - b[1]; });
+            if (best.length > MAXN) best.length = MAXN;
+            var sum = 0, cr = 0, cg = 0, cb = 0;
+            for (var wj = 0; wj < best.length; wj++) {
+                var w = 1 / Math.pow(1 + best[wj][1], 1.6);
+                var cc = colorReal[best[wj][0]];
+                cr += w * cc[0]; cg += w * cc[1]; cb += w * cc[2]; sum += w;
             }
+            if (sum > 0) cellc[ci] = [cr / sum, cg / sum, cb / sum];
         }
-        return { cellv: cellv, cellf: cellf };
-    }
-    // Render V3: pixel-loop con bilinear tra le celle del reticolo. Interpola i VALORI
-    // metrici (reali + ANCRE PROVINCIALI = valore aggregato ufficiale della provincia,
-    // identico alla poligonale) e converte il colore UNA volta a fine pixel (mai RGB).
-    function renderContinuousV3(points, valueReal, flagsReal, anchors) {
-        if (!continuousV3Frame) continuousV3Frame = computeContinuousFrame(points);
-        var fr = continuousV3Frame;
-        if (!fr) { hideContinuousOverlay(); return; }
-        if (!continuousLatticeReady) buildVirtualLattice();
-        if (!continuousLattice.length) { hideContinuousOverlay(); return; }
-        var nx = continuousLatticeNx, ny = continuousLatticeNy;
-        var W = fr.W, H = fr.H;
-        // Campioni → computeV3CellValues (pure helper): ogni cella parte dal VALORE AGGREGATO
-        // ufficiale della provincia che la contiene (stesso dei poligoni) e i punti reali
-        // dell'intorno lo modulano localmente — l'interno di ogni provincia colora come la
-        // poligonale, i confini restano sfumati (nessun tiro da punti lontani/altre province).
-        var anchorsList = anchors || [];
-        var cellRes = computeV3CellValues(continuousLattice, fr, points, valueReal, flagsReal, anchorsList);
-        var cellv = cellRes.cellv, cellf = cellRes.cellf;
-        // Pixel-loop: bilinear sul VALORE, poi UNICA conversione colore ufficiale
+        // Pixel-loop: bilinear sulle celle (u/v continui) + maschera terra + sfumatura
         var cv = document.createElement('canvas');
         cv.width = W; cv.height = H;
         var ctx2 = cv.getContext('2d');
@@ -14936,19 +14853,17 @@
             var i0 = Math.floor(u), j0 = Math.floor(v);
             if (i0 < 0 || i0 >= nx || j0 < 0 || j0 >= ny) continue;
             var fu = u - i0, fv = v - j0;
-            var v00 = cellv[j0 * nx + i0];
-            var v10 = (i0 + 1 < nx) ? cellv[j0 * nx + i0 + 1] : null;
-            var v01 = (j0 + 1 < ny) ? cellv[(j0 + 1) * nx + i0] : null;
-            var v11 = (i0 + 1 < nx && j0 + 1 < ny) ? cellv[(j0 + 1) * nx + i0 + 1] : null;
-            var vr = 0, vf = 0, vw = 0;
-            if (v00 != null) { vr += v00 * (1 - fu) * (1 - fv); vf += cellf[j0 * nx + i0] * (1 - fu) * (1 - fv); vw += (1 - fu) * (1 - fv); }
-            if (v10 != null) { vr += v10 * fu * (1 - fv); vf += cellf[j0 * nx + i0 + 1] * fu * (1 - fv); vw += fu * (1 - fv); }
-            if (v01 != null) { vr += v01 * (1 - fu) * fv; vf += cellf[(j0 + 1) * nx + i0] * (1 - fu) * fv; vw += (1 - fu) * fv; }
-            if (v11 != null) { vr += v11 * fu * fv; vf += cellf[(j0 + 1) * nx + i0 + 1] * fu * fv; vw += fu * fv; }
-            if (vw <= 0) continue;
-            var colFinal = surfaceColor(vr / vw, vw > 0 ? vf / vw : 0);
-            var rgbf = hexToRgb(colFinal);
-            d[p2 * 4] = rgbf[0]; d[p2 * 4 + 1] = rgbf[1]; d[p2 * 4 + 2] = rgbf[2]; d[p2 * 4 + 3] = 235;
+            var c00 = cellc[j0 * nx + i0];
+            var c10 = (i0 + 1 < nx) ? cellc[j0 * nx + i0 + 1] : null;
+            var c01 = (j0 + 1 < ny) ? cellc[(j0 + 1) * nx + i0] : null;
+            var c11 = (i0 + 1 < nx && j0 + 1 < ny) ? cellc[(j0 + 1) * nx + i0 + 1] : null;
+            var tr = 0, tg = 0, tb = 0, tw = 0;
+            if (c00) { tr += c00[0] * (1 - fu) * (1 - fv); tg += c00[1] * (1 - fu) * (1 - fv); tb += c00[2] * (1 - fu) * (1 - fv); tw += (1 - fu) * (1 - fv); }
+            if (c10) { tr += c10[0] * fu * (1 - fv); tg += c10[1] * fu * (1 - fv); tb += c10[2] * fu * (1 - fv); tw += fu * (1 - fv); }
+            if (c01) { tr += c01[0] * (1 - fu) * fv; tg += c01[1] * (1 - fu) * fv; tb += c01[2] * (1 - fu) * fv; tw += (1 - fu) * fv; }
+            if (c11) { tr += c11[0] * fu * fv; tg += c11[1] * fu * fv; tb += c11[2] * fu * fv; tw += fu * fv; }
+            if (tw <= 0) continue;
+            d[p2 * 4] = tr / tw; d[p2 * 4 + 1] = tg / tw; d[p2 * 4 + 2] = tb / tw; d[p2 * 4 + 3] = 235;
         }
         maskAwareBlur(d, W, H);
         ctx2.putImageData(img, 0, 0);
@@ -15156,7 +15071,7 @@ function renderContinuousOverlay() {
         // niente ricaduta sul collasso per provincia, ogni coordinata ha il suo valore.
         // I punti senza dati (fetch in corso) non contribuiscono e compaiono via via.
         var pts = rawPointStores[selectedWeatherModel] || {};
-        var value = new Array(points.length), flags = new Array(points.length), found = 0;
+        var value = new Array(points.length), flags = new Array(points.length), colorC = new Array(points.length), found = 0;
         for (var i = 0; i < points.length; i++) {
             var rec = pts[points[i].index];
             if (!rec) continue;
@@ -15175,25 +15090,29 @@ function renderContinuousOverlay() {
             if (agg) {
                 var sv = metricSurfaceValue(currentMetric, agg);
                 if (sv.v != null) { value[i] = sv.v; flags[i] = sv.filtered; found++; }
+                var colC = colorForStoreForCurrentMetric(agg);
+                if (colC) colorC[i] = hexToRgb(colC);
             }
         }
         if (!found) { hideContinuousOverlay(); return; }
-        // v3: reticolo virtuale (~0,25°) che interpola i VALORI e usa le ANCORE provinciali
-        // (valore aggregato ufficiale = quello dei poligoni). La superficie colora a valle.
+        // v3: reticolo virtuale (~0,25°) SOLO raster con IDW dei COLORI dei punti campione
+        // (reali + densificati + ANCORE VIRTUALI di provincia). I colori arrivano dal modello
+        // correntemente visualizzato (punto-per-punto, merge dual incluso) e vengono ricostruiti
+        // a ogni render → il raster si adatta al cambio modello. Palette/soglie invariate.
         if (useV3) {
-            var v3Anchors = [];
-            if (useV2 || useV3) {
-                // centri di provincia presenti (continuousVirtuals già pronti sopra)
-                for (var ai = 0; ai < virtuals.length; ai++) {
-                    var vzA = virtuals[ai];
-                    var aggVA = getAggregateForZone(vzA.zoneIdx);
-                    if (!aggVA) continue;
-                    var svA = metricSurfaceValue(currentMetric, aggVA);
-                    if (svA.v == null) continue;
-                    v3Anchors.push({ lat: vzA.lat, lon: vzA.lon, value: svA.v, filtered: svA.filtered, zone: vzA.zoneIdx });
+            var allPts = points.concat(virtuals);
+            var allColor = new Array(allPts.length);
+            for (var iC = 0; iC < points.length; iC++) allColor[iC] = colorC[iC];
+            var nA = allPts.length;
+            for (var jA = points.length; jA < nA; jA++) {
+                var vzA = virtuals[jA - points.length];
+                var aggVA = getAggregateForZone(vzA.zoneIdx);
+                if (aggVA) {
+                    var colVA = colorForStoreForCurrentMetric(aggVA);
+                    if (colVA) allColor[jA] = hexToRgb(colVA);
                 }
             }
-            renderContinuousV3(points, value, flags, v3Anchors);
+            renderContinuousV3(allPts, allColor);
             return;
         }
         var all = useV2 ? points.concat(virtuals) : points;
@@ -16260,10 +16179,20 @@ function renderContinuousOverlay() {
         }
     }
 
-    function selectDay(dayIdx) {
-        currentDay = dayIdx;
+    function selectDay(uiIdx) {
+        // Mappa l'etichetta UI (0=Oggi,1=Domani,2=Dopodomani) sull'INDICE REALE del
+        // dataset: il primo giorno del dataset (day0) può non essere "Oggi". Se il
+        // dataset non copre il giorno scelto, non falsificare nulla: segnala e basta.
+        var dsIdx = datasetIndexForDayLabel(uiIdx);
+        if (dsIdx === null || dsIdx === undefined) {
+            var _stEl = document.getElementById('status-msg');
+            var _d0el = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
+            if (_stEl) _stEl.innerText = _d0el ? ('Dati disponibili dal ' + _d0el + ': seleziona un giorno coperto dal dataset.') : 'Giorno non coperto dal dataset.';
+            return;
+        }
+        currentDay = dsIdx;
         updateDayButtonLabels();
-        document.querySelectorAll('.day-btn').forEach((btn, idx) => btn.classList.toggle('active', idx === dayIdx));
+        document.querySelectorAll('.day-btn').forEach((btn, i) => btn.classList.toggle('active', i === uiIdx));
         updateUI();
         // Se le allerte DPC sono attive, ricarica per il nuovo giorno
         if (dpcAlertMode === 'on') {
@@ -16281,13 +16210,57 @@ function renderContinuousOverlay() {
         refreshRiskSummary();
     }
 
+    //#pure# BEGIN dayMapping
+    // Mappatura calendario (Europe/Rome) ↔ indici del DATASET. Puro (no DOM): testabile.
+    // datasetDay0 = ISO yyyy-mm-dd della prima giornata del dataset; 'now' = Date (default:
+    // ora attuale). L'indice del giorno "Oggi" vale (oggi − day0) in giorni: MAI assumere
+    // dayIndex===0 come sinonimo di "Oggi". Fuori da [0,2] → null (giorno non coperto).
+    function dateKeyInTimeZone(tz, d) {
+        var parts = new Intl.DateTimeFormat('en', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+        var y = '', m = '', dd = '';
+        for (var i = 0; i < parts.length; i++) {
+            if (parts[i].type === 'year') y = parts[i].value;
+            else if (parts[i].type === 'month') m = parts[i].value;
+            else if (parts[i].type === 'day') dd = parts[i].value;
+        }
+        return y + '-' + m + '-' + dd;
+    }
+    function daysBetweenIso(a, b) {
+        if (!a || !b) return 0;
+        return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+    }
+    function datasetIndexForDayLabelAt(uiIdx, now, datasetDay0) {
+        if (!datasetDay0) return uiIdx;
+        var todayKey = dateKeyInTimeZone('Europe/Rome', now);
+        var off = daysBetweenIso(datasetDay0, todayKey);
+        if (off < 0) off = 0;
+        var idx = uiIdx + off;
+        return (idx > 2) ? null : idx;
+    }
+    //#pure# END dayMapping
+    // Wrapper DOM: legge datasetState (day0) e l'ora corrente Europe/Rome.
+    function currentDayOffset() {
+        var d0 = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
+        if (!d0) return 0;
+        var off = daysBetweenIso(d0, dateKeyInTimeZone('Europe/Rome', new Date()));
+        return off < 0 ? 0 : off;
+    }
+    function datasetIndexForDayLabel(uiIdx) {
+        var d0 = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
+        return datasetIndexForDayLabelAt(uiIdx, new Date(), d0);
+    }
+    function datasetDateKey(dsIdx) {
+        var d0 = (typeof datasetState !== 'undefined' && datasetState) ? datasetState.day0 : '';
+        if (!d0) return '';
+        return dateKeyInTimeZone('Europe/Rome', new Date(Date.parse(d0 + 'T00:00:00Z') + dsIdx * 86400000));
+    }
+
     // Calcola l'etichetta dinamica del giorno (es. "Oggi 27/08")
     function dayLabel(offset, baseLabel) {
         var d = new Date();
         d.setDate(d.getDate() + offset);
-        var dd = String(d.getDate()).padStart(2, '0');
-        var mm = String(d.getMonth() + 1).padStart(2, '0');
-        return baseLabel + ' ' + dd + '/' + mm;
+        var k = dateKeyInTimeZone('Europe/Rome', d);
+        return baseLabel + ' ' + k.slice(8, 10) + '/' + k.slice(5, 7);
     }
 
     function updateDayButtonLabels() {
@@ -17283,15 +17256,23 @@ function renderContinuousOverlay() {
         zonePreview = null;
         updateMapColors();
         if (typeof renderContinuousOverlay === 'function') renderContinuousOverlay();
-        updateUI();
         datasetState.loaded = true;
         rebuildForecastSlotOptions();
         datasetState.generatedAt = meta.generated_at || '';
         datasetState.day0 = meta.day0 || '';
         datasetState.pointCount = points.length;
         datasetState.virtualCount = (DENSIFY._status && DENSIFY._status.virtuals) || 0;
+        // Selezione iniziale "Oggi" → indice REALE del dataset (offset dalla data locale
+        // Europe/Rome al dataset.day0). MAI assumere dayIndex===0 come sinonimo di "Oggi".
+        var initIdx = datasetIndexForDayLabel(0);
+        currentDay = (initIdx === null || initIdx === undefined) ? 0 : initIdx;
+        updateUI();
+        updateDayButtonLabels();
         var statusEl = document.getElementById('status-msg');
-        if (statusEl) statusEl.innerText = 'Dati meteo dal dataset derivato · ' + datasetState.day0 + ' · ' + points.length + ' punti reali + ' + datasetState.virtualCount + ' virtuali (IDW) · generato ' + datasetState.generatedAt;
+        if (statusEl) statusEl.innerText = 'Dati meteo dal dataset derivato · ' + datasetState.day0 + ' · ' + points.length + ' punti reali + ' + datasetState.virtualCount + ' virtuali (IDW) · generato ' + datasetState.generatedAt + ' · oggi=' + dateKeyInTimeZone('Europe/Rome', new Date());
+        if (initIdx === null || initIdx === undefined) {
+            if (statusEl) statusEl.innerText += ' · Dati disponibili dal ' + datasetState.day0 + ' (oggi non coperto dal dataset).';
+        }
         var attrEl = document.querySelector('.attribution-small');
         if (attrEl && attrEl.innerHTML.indexOf('dataset derivato MeteoRisk') < 0) {
             attrEl.innerHTML = attrEl.innerHTML + ' · Dati previsionali: © Open-Meteo → dataset derivato MeteoRisk (pipeline 1.0.0.8).';
