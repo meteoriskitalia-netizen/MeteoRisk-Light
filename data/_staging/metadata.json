@@ -1,0 +1,43 @@
+{
+  "schema_version": 4,
+  "dataset_type": "derived_meteorological_risk_data",
+  "status": "live",
+  "application": "MeteoRisk Light",
+  "source_data": [
+    {
+      "name": "Open-Meteo",
+      "role": "meteorological input data",
+      "license": "CC BY 4.0"
+    }
+  ],
+  "attribution": "Meteorological source data: Open-Meteo.com / Data license: CC BY 4.0 / Processed and aggregated by MeteoRisk Light.",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "models_covered": [
+    "best_match",
+    "ecmwf_ifs"
+  ],
+  "forecast_days": 3,
+  "timezone": "Europe/Rome",
+  "point_count": 257,
+  "province_count": 107,
+  "day0": "2026-09-06",
+  "run_info": {
+    "run_key": null,
+    "driver_model": "ecmwf_ifs",
+    "run_init_ts": null,
+    "run_available_ts": null,
+    "fetched_at": "2026-01-01T00:00:00Z"
+  },
+  "fetch_timestamps": {
+    "dataset_generation_timestamp": "2026-01-01T00:00:00Z",
+    "ecmwf_fetch_timestamp": "2026-01-01T00:00:00Z",
+    "best_match_fetch_timestamp": "2026-01-01T00:00:00Z",
+    "coordinated_cycle": "best_match e ecmwf_ifs scaricati nello stesso ciclo di fetch comandato dal run ECMWF IFS (coerenza temporale del dataset)."
+  },
+  "update_strategy": "coordinated",
+  "files": {
+    "points": "meteorisk-points.json",
+    "provinces": "meteorisk-provinces.json",
+    "validation": "validation.json"
+  }
+}

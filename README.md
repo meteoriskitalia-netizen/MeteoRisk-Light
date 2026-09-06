@@ -1,7 +1,19 @@
-# MeteoRisk Light — edizione 1.0.0.8 (Best Match Canary + Initial Dataset Bootstrap)
+# MeteoRisk Light — edizione 1.0.0.9 (Default V2 vista continua + V3 restore + mapping "Oggi")
 
-Pannello meteorologico statico per le province italiane. La 1.0.0.8 aggiunge alla
-pipeline coordinata (driver ECMWF IFS):
+Pannello meteorologico statico per le province italiane. La 1.0.0.9 mantiene tutte le
+novità della 1.0.0.8 (elencate sotto, pipeline coordinata driver ECMWF IFS) e aggiunge
+lato applicazione:
+- **Vista continua default V2** (uniforme per province: ancore virtuali al centroide +
+  raggio adattivo + nearest + sfumatura a maschera). V3 resta selezionabile nel
+  selettore "Sfumatura"; V1 resta il metodo storico bit-identico.
+- **V3 ripristinata al concetto nato**: firma nativa `renderContinuousV3(points,
+  colorReal)` di 10.52.27.0 (lattice virtuale ~0,25° solo raster, IDW dei COLORI dei
+  punti campione, modulo modello corrente con merge dual incluso).
+- **Mapping "Oggi" ↔ giorno-dataset**: l'etichetta "Oggi" è risolta sulla data ISO reale
+  Europe/Rome e cercata nei giorni del dataset a partire da `dataset.day0` (offset, mai
+  assunzione `dayIndex===0`); giorno non coperto → messaggio onesto, nessun dato finto.
+
+## Novità della 1.0.0.8 (mantenute)
 
 1. **Best Match Canary indipendente** — 6 capoluoghi-sentinella (MI, VE, RM, PE,
    LE, PA), *stesse coordinate* dei punti pubblicati, controllati ad ogni ciclo
@@ -38,14 +50,14 @@ pipeline coordinata (driver ECMWF IFS):
    report "Metadata API unavailable after retries · No data fetch performed ·
    Last dataset unchanged".
 
-- App: `mri-light-1.0.0.8.html` (nessuna dipendenza runtime; solo static assets).
+- App: `mri-light-1.0.0.9.html` (nessuna dipendenza runtime; solo static assets).
 - Dati: dataset derivato in `data/latest/` — al primo deploy generato da GitHub
   Actions (zero dataset locali consegnati, Parte G).
 - Fonti: Open-Meteo (unica fonte meteorologica, input — MAI ripubblicata come tale).
 - Homepage GitHub Pages: `_site/index.html` (micro-fix mantenuto, `cp
-  mri-light-1.0.0.8.html _site/index.html`).
+  mri-light-1.0.0.9.html _site/index.html`).
 
-## Scheduling 1.0.0.8 (coordinato + canary + bootstrap)
+## Scheduling 1.0.0.9 (coordinato + canary + bootstrap, dalla 1.0.0.8)
 1. **Driver run unico = ECMWF IFS**: `check_model_runs.py` interroga SOLO
    `ecmwf_ifs` (Metadata API, non conteggiata nel budget forecast). Exit code:
    `0` = NEW ECMWF RUN · `10` = NO NEW ECMWF RUN · `1+` = TECHNICAL ERROR (FAIL).
@@ -62,7 +74,7 @@ pipeline coordinata (driver ECMWF IFS):
 
 ## Struttura
 ```
-.github/workflows/update-weather-data.yml   # pipeline 1.0.0.8 (exit code audit)
+.github/workflows/update-weather-data.yml   # pipeline 1.0.0.9 (exit code audit, deriva dalla 1.0.0.8)
 scripts/                                    # pipeline + workflow_gate + test
 data/latest/                                # SOLO .gitkeep finché la prima GitHub Action non genera il primo dataset (Parte G)
 data/state/                                 # last_model_run.json (bootstrap_pending iniziale), api_usage.json (solo config)

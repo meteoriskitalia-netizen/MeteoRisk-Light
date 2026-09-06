@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// TEST 1.0.0.8 — PARTE C (FIX2): coerenza poligoni vs vista continua.
-// Verifica il CONTRATTO VALORE METRICO estratto dall'HTML:
-//   getMetricValue(metric, agg) -> colorForMetricValue(metric, value)
-// è l'UNICA scala colore; la surface interpola i VALORI e quantizza a valle
-// (mai RGB), così il colore di una provincia coincide con quello della sua
-// ancora nella vista continua. Casi A-D + invarianza sui colori ufficiali.
+// TEST 1.0.0.8 — PARTE C (V3 RESTORED): coerenza poligoni vs vista continua.
+// Contratto VALORE METRICO per V1/V2: getMetricValue(metric, agg) -> colorForMetricValue
+// è l'UNICA scala colore; la surface interpola i VALORI e quantizza a valle (mai RGB).
+// V3 RIPRISTINATA al concetto nato (10.52.27.0): reticolo virtuale ~0,25° SOLO raster,
+// celle colorate con IDW dei COLORI (punti reali + densificati + ancore provinciali)
+// del modello correntemente visualizzato. Casi A-D + regressioni strutturali.
 'use strict';
 
 import fs from 'fs';
@@ -13,7 +13,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.0.0.8.html');
+const HTML = path.join(ROOT, 'mri-light-1.0.0.9.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -36,14 +36,6 @@ for (const name of [
   'function surfaceColor(value, filteredShare)',
   'function hexToRgb(h)',
 ]) {
-  const re = new RegExp(name.replace(/[()]/g, m => '\\' + m) + ' \\{[\\s\\S]*?\\n    \\}');
-  const m = src.match(re);
-  failFast(`${name} non estratta`, !!m);
-  pure += '\n' + m[0];
-}
-// helper puro del valore celle V3 (no canvas/DOM) estratto dal sorgente
-{
-  const name = 'function computeV3CellValues(lattice, fr, points, valueReal, flagsReal, anchors)';
   const re = new RegExp(name.replace(/[()]/g, m => '\\' + m) + ' \\{[\\s\\S]*?\\n    \\}');
   const m = src.match(re);
   failFast(`${name} non estratta`, !!m);
@@ -188,60 +180,37 @@ vm.runInNewContext(pure, ctx);
   ctx.isHighRiskFilterActive = false;
 }
 
-// ---------- 8. regressioni strutturali (nessuna interpolazione RGB residua) ----------
+// ---------- 8. regressioni strutturali (V1/V2 value-space, V3 color-space nativo) ----------
 {
-  ok('nessun RGB-mix nella cella V3 (cr += w*cc[0] assente)', !/cr \+= w \* cc\[0\]/.test(src));
-  ok('nessun colore in colorAll (solo valori)', !/colorAll\[/ .test(src));
-  ok('V1/V2 pixel-loop: surfaceColor + hexToRgb a valle', /var rgbEnd = hexToRgb\(colEnd\)/.test(src));
-  ok('V3 chiamata con ancore provinciali', /renderContinuousV3\(points, value, flags, v3Anchors\)/.test(src));
+  ok('V3: IDW RGB dei colori delle celle (concetto nato) ripristinato', /cr \+= w \* cc\[0\]/.test(src));
+  ok('V3: colori costruiti dal modello corrente (hexToRgb del punto)', /colorC\[i\] = hexToRgb\(colC\)/.test(src));
+  ok('V1/V2: pixel-loop sui VALORI conservato (valAll/flagAll)', /valAll\[i2\] = value\[i2\]/.test(src) && /surfaceColor\(vR \* inv, fR \* inv\)/.test(src));
+  ok('V3 chiamata con colori reali+virtuali', /renderContinuousV3\(allPts, allColor\)/.test(src));
+  ok('V3: ancora provinciale colorata con aggregato di zona', /allColor\[jA\] = hexToRgb\(colVA\)/.test(src));
   ok('surfaceColor presente e condivisa', /function surfaceColor\(value, filteredShare\)/.test(src));
   ok('metricSurfaceValue presente', /function metricSurfaceValue\(metric, agg\)/.test(src));
+  ok('logica zonale PZ rimossa (nessun rasterZoneField/cell.zone)', !/rasterZoneField/.test(src) && !/cell\.zone = /.test(src));
+  ok('computeV3CellValues rimossa (nuovo contratto V3)', !/computeV3CellValues/.test(src));
 }
 
-// ---------- 9. V3: ogni cella parte dalla provincia che la contiene (sfumatura ≡ poligoni) ----------
+// ---------- 9. V3: contratto nativo (reticolo 0,25° + IDW colori + ancore, modello corrente) ----------
 {
-  const mm = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
-  const fr = { W: 256, H: 316, minLon: 0, maxLon: 12, minLat: 36, maxLat: 47,
-               lonSpan: 12, mSpan: mm(47) - mm(36), mnM: mm(36), mxM: mm(47) };
-  const px = (lon, lat) => ({
-    x: (lon - fr.minLon) / fr.lonSpan * (fr.W - 1),
-    y: (fr.mxM - mm(lat)) / fr.mSpan * (fr.H - 1),
-  });
-  const cellA = { lat: 36.3, lon: 0.3, zone: 5 };   // interno di provincia 5
-  const rawFar = { lat: 36.3, lon: 11.8 };          // punto reale LONTANO (prov. 9, verde)
-  const rawNear = { lat: 36.3, lon: 0.3 };          // punto reale SULLA cella
-  const pC = px(cellA.lon, cellA.lat), pF = px(rawFar.lon, rawFar.lat), pN = px(rawNear.lon, rawNear.lat);
-  const d2Far = (pC.x - pF.x) ** 2 + (pC.y - pF.y) ** 2;
-  const d2Near = (pC.x - pN.x) ** 2 + (pC.y - pN.y) ** 2;
-  ok('9: punto lontano è fuori dal raggio adattivo (>=180px)', d2Far >= 180 * 180, 'd2=' + d2Far.toFixed(0));
-  ok('9: punto sulla cella è a distanza 0', d2Near === 0);
-  const anchors = [
-    { lat: 45.9, lon: 6, value: 4, filtered: false, zone: 5 },  // prov 5: livello 4 (rosso)
-    { lat: 46.5, lon: 6, value: 1, filtered: false, zone: 9 },  // prov 9: livello 1 (verde)
-  ];
-  const resFar = ctx.computeV3CellValues([cellA], fr, [rawFar], [1], [false], anchors);
-  ok('9: cella in provincia 5 lontana da punti → valore 4 (≠ verde del vicino)',
-    Math.abs(resFar.cellv[0] - 4) < 1e-6, 'v=' + resFar.cellv[0].toFixed(6));
-  ok('9: flag filtrato base della provincia (0 senza filtro)', Math.abs(resFar.cellf[0]) < 1e-9);
-  const resOld = ctx.computeV3CellValues([{ lat: cellA.lat, lon: cellA.lon, zone: -1 }], fr,
-    [rawFar], [1], [false], anchors);
-  ok('9: senza zona la cella tirava dal punto più vicino (vecchio bug: verde)',
-    resOld.cellv[0] !== 4 && Math.abs(resOld.cellv[0] - 1) < 1e-9, 'v=' + resOld.cellv[0].toFixed(6));
-  const resMod = ctx.computeV3CellValues([cellA], fr, [rawNear], [1], [false], anchors);
-  const expMod = (4 * 3 + 1 * 1) / (3 + 1);
-  ok('9: punto reale SULLA cella modula localmente (PZ=3) → mix pesato',
-    Math.abs(resMod.cellv[0] - expMod) < 1e-9, 'v=' + resMod.cellv[0].toFixed(4));
-  const resFil = ctx.computeV3CellValues([{ lat: 36.3, lon: 0.3, zone: 5 }], fr,
-    [rawFar], [4], [false],
-    [{ lat: 45.9, lon: 6, value: 4, filtered: true, zone: 5 }]);
-  ok('9: filtro alto rischio della provincia propagato alla cella',
-    Math.abs(resFil.cellf[0] - 1) < 1e-6 && Math.abs(resFil.cellv[0] - 4) < 1e-6);
-  ok('9: V3 usa computeV3CellValues (helper puro a valore provinciale)',
-    /var cellRes = computeV3CellValues\(continuousLattice, fr, points, valueReal, flagsReal, anchorsList\)/.test(src));
-  ok('9: celle del reticolo portano la zona (rasterZoneField)',
-    /function rasterZoneField\(nx, ny, fr\)/.test(src) && /cell\.zone = zoneIds\[j \* nx \+ i\]/.test(src));
-  ok('9: le ancore portano lo zone index (mappa provincia → valore)',
-    /zone: vzA\.zoneIdx/.test(src));
+  ok('9: renderer V3 = firma nativa colorReal (10.52.27.0)', /function renderContinuousV3\(points, colorReal\)/.test(src));
+  ok('9: assente la firma value/anchors della riscrittura FIX2', !/function renderContinuousV3\(points, valueReal, flagsReal, anchors\)/.test(src));
+  ok('9: set campioni = reali + densificati + ancore virtuali (concat)', /var allPts = points\.concat\(virtuals\)/.test(src));
+  ok('9: colore di ogni punto dal modello corrente (merge dual incluso)', /colC = colorForStoreForCurrentMetric\(agg\)/.test(src));
+  ok('9: ancora provinciale -> colore aggregato (block-kriging)', /aggVA = getAggregateForZone\(vzA\.zoneIdx\)/.test(src));
+  ok('9: lattice ~0,25° solo-raster, celle senza zona', /function buildVirtualLattice\(\)/.test(src) && !/cell\.zone/.test(src));
+  ok('9: IDW classe 38px + nearest adattivo + MAXN 8 (parametri nativi)',
+    /R2 = 38 \* 38, MAXA = 180, MAXN = 8/.test(src) && /Math\.max\(38, Math\.sqrt\(dmin2\) \* 2\.05\)/.test(src) && /best\.length = MAXN/.test(src));
+  ok('9: pixel-loop bilinear + maschera terra + blur mask-aware (nativo)', /maskAwareBlur\(d, W, H\)/.test(src));
+}
+
+// ---------- 10. default vista continua = V2 (1.0.0.9) ----------
+{
+  ok('10: continuousStyle di default = v2', /var continuousStyle = 'v2'/.test(src));
+  ok('10: select Sfumatura parte su V2 selezionato (nessun v3 selected)',
+    /<option value="v2" selected>V2<\/option>/.test(src) && !/<option value="v3" selected>/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
