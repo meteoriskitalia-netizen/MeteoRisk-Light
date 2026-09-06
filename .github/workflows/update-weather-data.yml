@@ -150,7 +150,7 @@ jobs:
         if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
         run: |
           mkdir -p _site/data
-          cp mri-light-1.0.0.6.html _site/index.html
+          cp mri-light-1.0.0.8.html _site/index.html
           cp -R data/latest _site/data/latest                    # dataset derivato
           cp -R data/geography _site/data/geography              # boundaries richieste
 
@@ -170,7 +170,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## MeteoRisk Light 1.0.0.6 — Pipeline status"
+            echo "## MeteoRisk Light 1.0.0.8 — Pipeline status"
             echo ""
             echo "**Run check:** \`${{ steps.check.outputs.check_state || 'n/a' }}\` — **Planner:** \`${{ steps.plan.outputs.plan_state || 'skipped' }}\`"
             echo ""
