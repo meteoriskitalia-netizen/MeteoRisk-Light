@@ -140,7 +140,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "[INFO] Nessuna modifica al dataset."
           else
-            git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.0.6)"
+            git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.0.8)"
             git push
           fi
 
