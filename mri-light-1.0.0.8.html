@@ -884,6 +884,125 @@
         }
         #risk-summary .rs-empty { color: #64748b; font-style: italic; }
         #risk-summary .rs-info { color: #94a3b8; font-style: italic; font-weight: normal; }
+
+        /* ============================================================
+           LAYER RESPONSIVE CENTRALIZZATO (mobile visibility & proportions)
+           Breakpoint unici: --bp-sm 360 / --bp-md 767 / --bp-lg 1024.
+           Classi .app-mobile/.app-tablet/.app-desktop aggiornate da JS
+           (updateViewportClasses) per hook testabili e per invalidateSize.
+           Nessuna modifica a logica meteo/pipeline: solo layout/CSS/touch.
+           ============================================================ */
+        :root {
+            --bp-sm: 360px;
+            --bp-md: 767px;
+            --bp-lg: 1024px;
+            --touch-min: 44px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+        }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            padding-left: calc(16px + var(--safe-left));
+            padding-right: calc(16px + var(--safe-right));
+            padding-top: calc(16px + var(--safe-top));
+            padding-bottom: calc(16px + var(--safe-bottom));
+        }
+        .app-mobile, .app-tablet, .app-desktop { /* agganci semantici gestiti da JS */ }
+
+        @media (max-width: 1024px) {
+            body { padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left)); }
+            .app-header { gap: 8px; }
+            .app-title h1 { font-size: 18px; }
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            #leaflet-map, #radar-embed-container, #pretemp-container { height: clamp(380px, 60vh, 640px); }
+        }
+
+        /* ---- Smartphone (<= 767px) ---- */
+        @media (max-width: 767px) {
+            body { padding: calc(10px + var(--safe-top)) calc(10px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(10px + var(--safe-left)); }
+            .app-header, .toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+            .app-title h1 { font-size: 16px; flex-wrap: wrap; line-height: 1.25; }
+            .app-title p { font-size: 11px; line-height: 1.45; }
+            .time-controls { width: 100%; }
+            .day-selector { flex: 1; }
+            .day-btn { flex: 1; text-align: center; min-height: var(--touch-min); }
+            .toolbar .tool-btn { min-height: var(--touch-min); padding: 10px 14px; font-size: 12px; flex: 1 1 auto; justify-content: center; }
+            .controls { gap: 6px; }
+            .controls > *, .btn-timeline { min-height: var(--touch-min); }
+            .btn-timeline { padding: 6px 12px; }
+            .metric-tab { min-height: var(--touch-min); padding: 10px 14px; font-size: 12px; }
+            .mp-switch, .mp-select { min-height: var(--touch-min); height: auto; width: auto; padding: 6px 12px; }
+            .legend-row { gap: 8px; }
+            .legend-swatch { width: 14px; height: 14px; }
+            .caletta-toggle button { padding: 10px 16px; }
+            .search-input { font-size: 16px; min-height: var(--touch-min); }
+            .search-item { min-height: 44px; display: flex; align-items: center; }
+            .hour-slider { flex-wrap: wrap; gap: 8px; }
+            .hour-slider input[type="range"] { flex: 1; min-width: 160px; width: auto; }
+            .metric-grid { gap: 8px; }
+            .chart-box { height: 150px; }
+            .model-table { font-size: 10px; }
+            .details-card { padding: 12px; }
+            .map-card { padding: 10px; border-radius: 10px; }
+
+            /* Mappa DOMINANTE: 45-65dvh sul viewport, con minimo utilizzabile.
+               I valori in dvh tengono la mappa dentro il range anche su schermi
+               molto bassi (min-height 300px = max ~62% su 480px di altezza). */
+            #leaflet-map, #radar-embed-container, #pretemp-container { height: clamp(45dvh, 56dvh, 66dvh); min-height: 300px; border-radius: 8px; }
+
+            /* Selettore fascia previsioni: dentro il viewport, non a straripare */
+            #forecast-slot-container { left: 8px; right: 8px; top: 8px; transform: none; max-width: calc(100% - 16px); justify-content: flex-start; }
+            #forecast-slot-container label { font-size: 11px; }
+            #forecast-slot { flex: 1; min-width: 0; font-size: 12px; padding: 8px 6px; }
+
+            .map-corner-switches { right: 8px; top: 8px; gap: 8px; }
+
+            /* Legende: piena larghezza, colonna singola nei blocchi */
+            .forecast-legend-panel, .panel-live, .metric-tabs { max-width: 100%; }
+            .forecast-legend-panel .fl-section, .sources-panel .fl-section { flex: 1 1 100%; min-width: 0; }
+            .badge-legend-bar { grid-template-columns: 1fr; max-height: 50vh; }
+            .legend { justify-content: flex-start; gap: 8px; }
+
+            /* Live Panel + timeline: impilati, slider a larghezza piena */
+            .panel-live { padding: 10px 12px; }
+            .live-header { flex-wrap: wrap; font-size: 12px; }
+            .panel-timeline { padding: 8px 10px; gap: 8px; align-items: stretch; }
+            .panel-timeline .time-display { min-width: 0; order: 5; flex: 1; }
+            .slider-timeline { min-width: 100%; order: 6; }
+            #tile-load-box { min-width: 0; }
+            #sync-caption { white-space: normal; }
+
+            /* Barra riepilogo sticky: dentro la safe-area inferiore */
+            #risk-summary { padding-bottom: calc(10px + var(--safe-bottom)); }
+
+            /* Popup e tooltip: mai oltre i bordi viewport */
+            .caletta-popup { left: 12px; right: 12px; transform: none; min-width: 0; bottom: 96px; padding: 14px 16px; }
+            .bl-tip { max-width: calc(100vw - 24px); }
+            .leaflet-popup, .leaflet-popup-content-wrapper, .leaflet-popup-content { max-width: calc(100vw - 24px) !important; }
+            .leaflet-popup-content { font-size: 12px; font-family: system-ui, sans-serif; }
+        }
+
+        /* ---- 320px (entry-level) ---- */
+        @media (max-width: 359px) {
+            .metric-grid { grid-template-columns: 1fr; }
+            .tool-btn { font-size: 11px; padding: 10px 10px; }
+            .day-btn { padding: 8px 6px; font-size: 11px; }
+            .metric-tab { font-size: 11px; padding: 10px 10px; }
+            .app-title h1 { font-size: 15px; }
+        }
+
+        /* ---- Landscape (high/phone) ---- */
+        @media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+            body { padding: calc(8px + var(--safe-top)) calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left)); }
+            .map-card { padding: 8px; }
+            #leaflet-map, #radar-embed-container, #pretemp-container { height: 48dvh; min-height: 240px; }
+            .metric-tabs { margin-bottom: 8px; }
+            .app-title p { display: none; }
+            .app-header { margin-bottom: 6px; }
+        }
     </style>
 <!-- ================================================================
      VERSION SYSTEM — AI INSTRUCTIONS (READ BEFORE MODIFYING)
@@ -5615,6 +5734,7 @@
     let isRadarPlayerActive = false;
 
     async function toggleRadarPlayer() {
+        scheduleInvalidate();
         const btn = document.getElementById('btn-radar-player');
         if (!isRadarPlayerActive) {
             isRadarPlayerActive = true;
@@ -5808,6 +5928,7 @@
     }
 
     function toggleSatellite() {
+        scheduleInvalidate();
         const btn = document.getElementById('btn-satellite');
         if (!isSatelliteActive) {
             // Nessuna sorgente satellite abilitata in questa edizione: nessuna rete.
@@ -7188,6 +7309,30 @@
     let liveZoomHandler = null;            // Handler zoomend per refresh marker proporzionale
     const LIVE_TILE_REFRESH_MS = 90 * 1000;   // 1.5 min refresh tile Blitzortung + marker (sincronizzati)
 
+    // LIVE_SOURCES: fonti real-time del pannello LIVE valutate in modo LAZY contro i flag
+    // PUBLIC_EDITION_FEATURES. visibleLiveSources() è l'elenco delle fonti davvero attive
+    // in questa edizione (usato anche dal test di avvio per la classificazione FETCH/UI).
+    var LIVE_SOURCES = {
+        lightningBlitzortung: {
+            id: 'blitzortung',
+            label: 'Fulmini Blitzortung (Tile raster + WebSocket)',
+            enabled: function() { return isFeatureEnabled('lightningBlitzortung'); }
+        },
+        satelliteEumetsat: {
+            id: 'eumetsat',
+            label: 'Satellite EUMETSAT (gradiente live)',
+            enabled: function() { return isFeatureEnabled('satelliteEumetsat'); }
+        },
+        radar: {
+            id: 'radar',
+            label: 'Radar (primo provider abilitato)',
+            enabled: function() { return enabledRadarProviderIds().length > 0; }
+        }
+    };
+    function visibleLiveSources() {
+        return Object.keys(LIVE_SOURCES).filter(function(k) { return LIVE_SOURCES[k].enabled(); });
+    }
+
     async function toggleLivePanel() {
         const btn = document.getElementById('btn-live');
         isLivePanelActive = !isLivePanelActive;
@@ -7211,7 +7356,11 @@
             // Svuota la cache dedicata prima di avviare (ripulizia da sessioni precedenti)
             liveStrikeCache = [];
             await startLivePanel();
-            document.getElementById('live-panel').classList.add('active');
+            // #live-panel può essere ASSENTE dal DOM quando Blitzortung è disabilitato
+            // in questa edizione (rimosso da applyPublicEditionFeatureVisibility).
+            var livePanelEl = document.getElementById('live-panel');
+            if (livePanelEl) livePanelEl.classList.add('active');
+            scheduleInvalidate();
             // Handler zoom: aggiorna i marker quando cambia lo zoom (sistema proporzionale)
             liveZoomHandler = function() { refreshLiveLightningMarkers(); };
             map.on('zoomend', liveZoomHandler);
@@ -7221,7 +7370,8 @@
             btn.style.background = '';
             btn.style.color = '';
             stopLivePanel();
-            document.getElementById('live-panel').classList.remove('active');
+            var livePanelEl = document.getElementById('live-panel');
+            if (livePanelEl) livePanelEl.classList.remove('active');
             // Se i livelli timeline sono ancora attivi, riapri il player
             showSyncPanelIfNeeded();
         }
@@ -7319,12 +7469,16 @@
                 }).addTo(map);
             }
         }
-        // Aggiungi tile overlay Blitzortung (sfondo raster fulmini, come maps.blitzortung.org)
-        refreshBlitzTile();
-        // Aggiungi marker live dal buffer WebSocket (sistema cumulativo proporzionale allo zoom)
-        refreshLiveLightningMarkers();
+        // Live Blitzortung SOLO se abilitato in questa edizione (tile raster + marker WS).
+        // refreshBlitzTile ha già la propria guardia; qui evitiamo anche la chiamata.
+        if (LIVE_SOURCES.lightningBlitzortung.enabled()) {
+            refreshBlitzTile();
+            refreshLiveLightningMarkers();
+        }
+        // Testo stato costruito dalle SOLE fonti attive (registro dinamico LIVE_SOURCES).
+        var liveLabels = visibleLiveSources().map(function(k) { return LIVE_SOURCES[k].id.toUpperCase(); });
         document.getElementById('status-msg').innerText =
-            `🔴 LIVE · Sat + Radar + Fulmini · ${now.toLocaleTimeString('it-IT')}`;
+            '🔴 LIVE · ' + liveLabels.join(' + ') + ' · ' + now.toLocaleTimeString('it-IT');
     }
 
     // Refresh del tile Blitzortung + marker (chiamato ogni 1.5 min)
@@ -7357,6 +7511,8 @@
     //   - Campionamento sempre attivo: se i marker superano il max, stride fissa
     function refreshLiveLightningMarkers() {
         if (!isLivePanelActive) return;
+        // Guardia defensiva: mai marker/status fulmini in edizioni con Blitzortung OFF.
+        if (!isFeatureEnabled('lightningBlitzortung')) return;
         // Rimuovi il layer esistente (verrà ricostruito da zero)
         if (liveLightningMarkerLayer) {
             map.removeLayer(liveLightningMarkerLayer);
@@ -7407,6 +7563,8 @@
     // Il marker pulsa (scale + opacity) e ha un anello che si espande, poi viene rimosso
     function flashLightningStrike(lat, lon) {
         if (!isLivePanelActive) return;
+        // Guardia defensiva: nessun flash marker in edizioni con Blitzortung OFF.
+        if (!isFeatureEnabled('lightningBlitzortung')) return;
         // Crea il layer se non esiste
         if (!liveFlashLayer) {
             liveFlashLayer = L.layerGroup();
@@ -10144,6 +10302,20 @@
         // Aggiorna l'etichetta accanto allo switch nel footer
         var lab = document.getElementById('sviluppo-label');
         if (lab) lab.textContent = 'Sviluppo ' + (isSviluppoActive ? 'ON' : 'OFF');
+        // Esponi la pipeline colore in console (solo Sviluppo): niente API in produzione
+        if (typeof window !== 'undefined') {
+            if (isSviluppoActive) {
+                window.__METEORISK_DEBUG__ = {
+                    getMetricValue: getMetricValue,
+                    colorForMetricValue: colorForMetricValue,
+                    metricSurfaceValue: metricSurfaceValue,
+                    surfaceColor: surfaceColor,
+                    debugColorPipeline: debugColorPipeline
+                };
+            } else if (window.__METEORISK_DEBUG__) {
+                delete window.__METEORISK_DEBUG__;
+            }
+        }
     }
 
     // --- Toggle Nuovi Indici: WMAXSHEAR+SHIP vs vecchia logica ---
@@ -10756,6 +10928,7 @@
 
     // ================= ALTE FUNZIONI =================
     function toggleHighRiskFilter() {
+        scheduleInvalidate();
         isHighRiskFilterActive = !isHighRiskFilterActive;
         document.getElementById('btn-high-risk').classList.toggle('active', isHighRiskFilterActive);
         updateMapColors();
@@ -13957,30 +14130,180 @@
                  confidence: dnw.mwpi != null && isFinite(dnw.mwpi) ? 0.7 : 0.4, reasons: reasons, missingInputs: [], peakTimestamp: null };
     }
 
-    function colorForMetric(metric, agg) {
-        if (!agg) return '#334155';
+    //#pure# BEGIN metricValueContract
+    // ===== CONTRATTO VALORE METRICO (poligoni == vista continua) =====
+    // Pipeline UNICA per poligoni e sfumatura:
+    //   AGGREGATO -> getMetricValue() [VALORE puro] -> colorForMetricValue() [COLORE ufficiale]
+    // - Le metriche continue (tempmax/tempmin/humidity/pressure/wind) usano il VALORE
+    //   numerico reale: la sfumatura interpola i VALORI, poi colora UNA volta.
+    // - Le metriche ordinali (risk/thermalrisk/conv) usano l'INDICE della fascia color
+    //   ufficiale (color->index). L'ordinalità resta monotona rispetto alla severità e
+    //   il roundtrip INDICE->COLORE è IDENTITÀ su ogni colore ufficiale emesso dai
+    //   rispettivi profili (anche il livello "escalated" che mantiene il colore base).
+    // - MAI interpolazione di RGB: si interpola il VALORE, il colore si converte a valle.
+    var RISK_BAND_COLORS = ['#22c55e', '#a3e635', '#eab308', '#f97316', '#ef4444', '#a855f7'];
+    // Scale termiche index-dipendenti (identiche a computeThermalRisk): indice 0 = N/D.
+    var THERMALRISK_SCALES = {
+        heatindex:  ['#334155', '#22c55e', '#eab308', '#f97316', '#ef4444', '#7c1d6f'],
+        humidex:    ['#334155', '#22c55e', '#eab308', '#f97316', '#ef4444', '#7c1d6f'],
+        windchill:  ['#334155', '#22c55e', '#38bdf8', '#3b82f6', '#7c3aed', '#7c1d6f', '#3b0764']
+    };
+    // La scala CONV è HAZARD_COLORS: tutte le categorie di convezione la condividono.
+    function indexOfColorIn(arr, color) {
+        for (var i = 0; i < arr.length; i++) { if (arr[i] === color) return i; }
+        return -1;
+    }
+    function getMetricValue(metric, agg) {
+        if (!agg) return null;
+        var o;
         switch (metric) {
-            case 'risk': {
-                if (isNewIndicesActive && agg.hailMetrics) {
-                    return getRiskProfileNew(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices, agg.hailMetrics).color;
-                }
-                return getRiskProfile(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices).color;
+            case 'tempmax':
+                return (agg.tempMax != null) ? agg.tempMax : null;
+            case 'tempmin':
+                return (agg.tempMin != null) ? agg.tempMin : null;
+            case 'humidity':
+                return (agg.humidity != null) ? agg.humidity : null;
+            case 'pressure':
+                return (agg.pressure != null) ? agg.pressure : null;
+            case 'wind': {
+                var gustApp = (agg.gusts != null ? agg.gusts : agg.wind) || 0;
+                return gustApp;
             }
-            case 'tempmax': return agg.tempMax >= 45 ? '#3b0764' : agg.tempMax >= 42 ? '#7c1d6f' : agg.tempMax >= 40 ? '#a21caf' : agg.tempMax >= 38 ? '#92400e' : agg.tempMax >= 35 ? '#dc2626' : agg.tempMax >= 30 ? '#ef4444' : agg.tempMax >= 28 ? '#fb923c' : agg.tempMax >= 25 ? '#f97316' : agg.tempMax >= 22 ? '#f59e0b' : agg.tempMax >= 18 ? '#eab308' : agg.tempMax >= 15 ? '#bef264' : agg.tempMax >= 5 ? '#84cc16' : agg.tempMax >= -5 ? '#22c55e' : agg.tempMax >= -10 ? '#38bdf8' : '#3b82f6';
-            case 'tempmin': return agg.tempMin <= -10 ? '#7c3aed' : agg.tempMin <= -5 ? '#3b82f6' : agg.tempMin <= 0 ? '#38bdf8' : agg.tempMin <= 5 ? '#22c55e' : agg.tempMin <= 10 ? '#84cc16' : agg.tempMin <= 15 ? '#eab308' : agg.tempMin <= 20 ? '#f59e0b' : agg.tempMin <= 25 ? '#f97316' : agg.tempMin <= 30 ? '#ef4444' : '#a21caf';
-            case 'humidity': return agg.humidity >= 85 ? '#ef4444' : agg.humidity >= 65 ? '#f97316' : agg.humidity >= 40 ? '#eab308' : '#22c55e';
-            case 'pressure': return agg.pressure < 1000 ? '#ef4444' : agg.pressure < 1013 ? '#f97316' : agg.pressure < 1020 ? '#eab308' : '#22c55e';
-            case 'wind': var gustApp = (agg.gusts != null ? agg.gusts : agg.wind) || 0; return gustApp >= 60 ? '#ef4444' : gustApp >= 40 ? '#f97316' : gustApp >= 25 ? '#eab308' : '#22c55e';
-            case 'thermalrisk': return computeThermalRisk(agg).color;
-            case 'conv':
-                // La "categoria di convezione" scelta nella tendina decide il layer da mostrare
-                if (convCategory === 'thunderprob') return computeThunderProb(agg).color;
-                if (convCategory === 'mesocicloni') return computeMesocycloneProb(agg).color;
-                if (convCategory === 'vorticosi') return computeVorticosiProb(agg).color;
-                if (convCategory === 'downburst') return computeDownburstProb(agg).color;
-                return computeConvectiveIndex(agg).color;
+            case 'risk': {
+                o = (isNewIndicesActive && agg.hailMetrics)
+                    ? getRiskProfileNew(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices, agg.hailMetrics)
+                    : getRiskProfile(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices);
+                var ri = indexOfColorIn(RISK_BAND_COLORS, o.color);
+                return ri >= 0 ? ri : (o.level || 0);
+            }
+            case 'thermalrisk': {
+                var scTr = THERMALRISK_SCALES[thermalRiskIndex] || THERMALRISK_SCALES.heatindex;
+                var tRet = computeThermalRisk(agg);
+                var tri = indexOfColorIn(scTr, tRet.color);
+                return tri >= 0 ? tri : (tRet.level || 0);
+            }
+            case 'conv': {
+                if (convCategory === 'thunderprob') o = computeThunderProb(agg);
+                else if (convCategory === 'mesocicloni') o = computeMesocycloneProb(agg);
+                else if (convCategory === 'vorticosi') o = computeVorticosiProb(agg);
+                else if (convCategory === 'downburst') o = computeDownburstProb(agg);
+                else o = computeConvectiveIndex(agg);
+                if (!o) return 0;
+                var ci = indexOfColorIn(HAZARD_COLORS, o.color);
+                return ci >= 0 ? ci : (o.level || 0);
+            }
+        }
+        return null;
+    }
+    // UNICA conversione colore: soglie identiche alla vecchia colorForMetric.
+    function colorForMetricValue(metric, value) {
+        if (value == null || !isFinite(value)) return '#334155';
+        switch (metric) {
+            case 'tempmax':
+                return value >= 45 ? '#3b0764' : value >= 42 ? '#7c1d6f' : value >= 40 ? '#a21caf' : value >= 38 ? '#92400e' : value >= 35 ? '#dc2626' : value >= 30 ? '#ef4444' : value >= 28 ? '#fb923c' : value >= 25 ? '#f97316' : value >= 22 ? '#f59e0b' : value >= 18 ? '#eab308' : value >= 15 ? '#bef264' : value >= 5 ? '#84cc16' : value >= -5 ? '#22c55e' : value >= -10 ? '#38bdf8' : '#3b82f6';
+            case 'tempmin':
+                return value <= -10 ? '#7c3aed' : value <= -5 ? '#3b82f6' : value <= 0 ? '#38bdf8' : value <= 5 ? '#22c55e' : value <= 10 ? '#84cc16' : value <= 15 ? '#eab308' : value <= 20 ? '#f59e0b' : value <= 25 ? '#f97316' : value <= 30 ? '#ef4444' : '#a21caf';
+            case 'humidity':
+                return value >= 85 ? '#ef4444' : value >= 65 ? '#f97316' : value >= 40 ? '#eab308' : '#22c55e';
+            case 'pressure':
+                return value < 1000 ? '#ef4444' : value < 1013 ? '#f97316' : value < 1020 ? '#eab308' : '#22c55e';
+            case 'wind':
+                return value >= 60 ? '#ef4444' : value >= 40 ? '#f97316' : value >= 25 ? '#eab308' : '#22c55e';
+            case 'risk': {
+                var ri = Math.max(0, Math.min(RISK_BAND_COLORS.length - 1, Math.round(value)));
+                return RISK_BAND_COLORS[ri];
+            }
+            case 'thermalrisk': {
+                var sc = THERMALRISK_SCALES[thermalRiskIndex] || THERMALRISK_SCALES.heatindex;
+                var ti = Math.max(0, Math.min(sc.length - 1, Math.round(value)));
+                return sc[ti];
+            }
+            case 'conv': {
+                var ci2 = Math.max(0, Math.min(HAZARD_COLORS.length - 1, Math.round(value)));
+                return HAZARD_COLORS[ci2];
+            }
         }
         return '#334155';
+    }
+    //#pure# END metricValueContract
+
+    function colorForMetric(metric, agg) {
+        if (!agg) return '#334155';
+        return colorForMetricValue(metric, getMetricValue(metric, agg));
+    }
+
+    // Valore + flag "filtrato alto rischio" per la SFUMATURA: stessa semantica del
+    // filtro applicato ai poligoni da colorForStoreForCurrentMetric (profilo < 3 => grigio).
+    // Il flag viene mixato con gli stessi pesi IDW dei valori, così la superficie continua
+    // rispetta il filtro senza interpolare MAI RGB.
+    function metricSurfaceValue(metric, agg) {
+        if (!agg) return { v: null, filtered: false };
+        var filtered = false;
+        if (isHighRiskFilterActive) {
+            if (metric === 'thermalrisk') {
+                filtered = computeThermalRisk(agg).level < 3;
+            } else if (metric === 'conv') {
+                var oL;
+                if (convCategory === 'thunderprob') oL = computeThunderProb(agg);
+                else if (convCategory === 'mesocicloni') oL = computeMesocycloneProb(agg);
+                else if (convCategory === 'vorticosi') oL = computeVorticosiProb(agg);
+                else if (convCategory === 'downburst') oL = computeDownburstProb(agg);
+                else oL = computeConvectiveIndex(agg);
+                filtered = oL ? oL.level < 3 : true;
+            } else {
+                var prof = (isNewIndicesActive && agg.hailMetrics)
+                    ? getRiskProfileNew(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices, agg.hailMetrics)
+                    : getRiskProfile(agg.prob, agg.rain, agg.wind, agg.code, agg.cape, agg.severeIndices);
+                filtered = prof.level < 3;
+            }
+        }
+        return { v: getMetricValue(metric, agg), filtered: filtered };
+    }
+    // Colore UNICO della superficie (sfumatura): filtro attivo vince, altrimenti la scala
+    // ufficiale della metrica. Condiviso da V1/V2/V3 a fine interpolazione.
+    function surfaceColor(value, filteredShare) {
+        if (isHighRiskFilterActive && filteredShare >= 0.5) return '#1e293b';
+        return colorForMetricValue(currentMetric, value);
+    }
+
+    // ===== DEBUG PIPELINE COLORE (solo Sviluppo) =====
+    // Confronta per UNA provincia: poligono, valore aggregato, ancore e punti reali,
+    // con i VALORI metrici e i colori finali di entrambe le viste (coerenza FIX2).
+    function debugColorPipeline(zoneIdx) {
+        if (!isSviluppoActive) { console.warn('[DEBUG-PIPELINE] attivo solo in modalità Sviluppo'); return null; }
+        var agg = getAggregateForZone(zoneIdx);
+        var sv = agg ? metricSurfaceValue(currentMetric, agg) : null;
+        var info = {
+            metric: currentMetric,
+            provinceIdx: zoneIdx,
+            provinceAggregate: !!agg,
+            polygonColor: zoneFillColor(zoneIdx),
+            metricValue: sv ? sv.v : null,
+            filtered: sv ? sv.filtered : false,
+            surfaceColorAtProvince: sv ? surfaceColor(sv.v, sv.filtered ? 1 : 0) : '#334155',
+            points: []
+        };
+        var pts = rawPointStores[selectedWeatherModel] || {};
+        for (var j = 0; j < provinceSamplePoints.length; j++) {
+            var pj = provinceSamplePoints[j];
+            if (pj.provinceIdx !== zoneIdx) continue;
+            var recJ = pts[pj.index];
+            if (!recJ) continue;
+            var aJ = computeAggregateForStore(recJ);
+            if (isDualModelMode()) {
+                var ecJ = (modelStores['ecmwf_ifs'] || {})[pj.index];
+                if (ecJ) { var aB = computeAggregateForStore(ecJ); if (aB) aJ = mergeModelAnalyses(aJ, aB, 'best_match', 'ecmwf_ifs'); }
+            }
+            var svJ = metricSurfaceValue(currentMetric, aJ);
+            info.points.push({
+                index: pj.index, lat: pj.lat, lon: pj.lon, virtual: !!pj.is_virtual,
+                value: svJ ? svJ.v : null,
+                filtered: svJ ? svJ.filtered : false,
+                color: svJ ? surfaceColor(svJ.v, svJ.filtered ? 1 : 0) : '#334155'
+            });
+        }
+        console.log('[DEBUG-PIPELINE] provincia=' + zoneIdx + ' metrica=' + currentMetric, info);
+        return info;
     }
 
     // Colore finale del poligono di una provincia (metrica + eventuale filtro
@@ -14424,10 +14747,10 @@
         continuousLatticeReady = true;
     }
     var continuousLatticeNx = 0, continuousLatticeNy = 0;
-    // Render V3: pixel-loop con bilinear tra le celle del reticolo. I colori delle celle
-    // derivano dai soli punti REALI (niente ancore per provincia): la previsione resta
-    // identica a V1/V2, cambia solo la superficie del gradiente (copertura uniforme).
-    function renderContinuousV3(points, colorReal) {
+    // Render V3: pixel-loop con bilinear tra le celle del reticolo. Interpola i VALORI
+    // metrici (reali + ANCRE PROVINCIALI = valore aggregato ufficiale della provincia,
+    // identico alla poligonale) e converte il colore UNA volta a fine pixel (mai RGB).
+    function renderContinuousV3(points, valueReal, flagsReal, anchors) {
         if (!continuousV3Frame) continuousV3Frame = computeContinuousFrame(points);
         var fr = continuousV3Frame;
         if (!fr) { hideContinuousOverlay(); return; }
@@ -14435,16 +14758,30 @@
         if (!continuousLattice.length) { hideContinuousOverlay(); return; }
         var nx = continuousLatticeNx, ny = continuousLatticeNy;
         var W = fr.W, H = fr.H;
-        // Proiezione (identica a buildContinuousGeo) dei punti reali sul frame
-        var nR = points.length, px = new Array(nR), py = new Array(nR);
-        for (var r = 0; r < nR; r++) {
+        // Campioni: punti reali + ancore provinciali (valori ufficiali).
+        var anchorsList = anchors || [];
+        var nS = points.length + anchorsList.length;
+        var sx = new Array(nS), sy = new Array(nS), sv = new Array(nS), sf = new Array(nS);
+        for (var r = 0; r < points.length; r++) {
             var mp = Math.log(Math.tan(Math.PI / 4 + points[r].lat * Math.PI / 360));
-            px[r] = (points[r].lon - fr.minLon) / fr.lonSpan * (W - 1);
-            py[r] = (fr.mxM - mp) / fr.mSpan * (H - 1);
+            sx[r] = (points[r].lon - fr.minLon) / fr.lonSpan * (W - 1);
+            sy[r] = (fr.mxM - mp) / fr.mSpan * (H - 1);
+            sv[r] = (valueReal[r] == null) ? null : valueReal[r];
+            sf[r] = !!flagsReal[r];
         }
-        // Colore di ogni cella: IDW dei colori reali (raggio base + nearest adattivo)
+        for (var a = 0; a < anchorsList.length; a++) {
+            var an = anchorsList[a];
+            var idxA = points.length + a;
+            var mpa = Math.log(Math.tan(Math.PI / 4 + an.lat * Math.PI / 360));
+            sx[idxA] = (an.lon - fr.minLon) / fr.lonSpan * (W - 1);
+            sy[idxA] = (fr.mxM - mpa) / fr.mSpan * (H - 1);
+            sv[idxA] = (an.value == null) ? null : an.value;
+            sf[idxA] = !!an.filtered;
+        }
+        // Valore di ogni cella: IDW sui VALORI (reale + ancorato). Il flag "filtrato" è
+        // mixato con gli stessi pesi, così la superficie rispetta il filtro alto rischio.
         var R2 = 38 * 38, MAXA = 180, MAXN = 8, nC = continuousLattice.length;
-        var cellc = new Array(nC), cmin = new Array(nC);
+        var cellv = new Array(nC), cellf = new Array(nC);
         for (var ci = 0; ci < nC; ci++) {
             var C = continuousLattice[ci];
             if (!C) continue;
@@ -14452,9 +14789,9 @@
             var ccx = (C.lon - fr.minLon) / fr.lonSpan * (W - 1);
             var ccy = (fr.mxM - mpc) / fr.mSpan * (H - 1);
             var best = null, dmin2 = -1, imin = -1;
-            for (var q = 0; q < nR; q++) {
-                if (!colorReal[q]) continue;
-                var dx = px[q] - ccx, dy = py[q] - ccy;
+            for (var q = 0; q < nS; q++) {
+                if (sv[q] == null) continue;
+                var dx = sx[q] - ccx, dy = sy[q] - ccy;
                 var d2 = dx * dx + dy * dy;
                 if (d2 <= R2) {
                     if (!best) best = [];
@@ -14465,9 +14802,9 @@
             if (!best && dmin2 >= 0) {
                 var rl = Math.min(MAXA, Math.max(38, Math.sqrt(dmin2) * 2.05));
                 var rl2 = rl * rl;
-                for (var q2 = 0; q2 < nR; q2++) {
-                    if (!colorReal[q2]) continue;
-                    var dx2 = px[q2] - ccx, dy2 = py[q2] - ccy;
+                for (var q2 = 0; q2 < nS; q2++) {
+                    if (sv[q2] == null) continue;
+                    var dx2 = sx[q2] - ccx, dy2 = sy[q2] - ccy;
                     var dd2 = dx2 * dx2 + dy2 * dy2;
                     if (dd2 <= rl2) {
                         if (!best) best = [];
@@ -14479,15 +14816,19 @@
             if (!best) continue;
             best.sort(function(a, b) { return a[1] - b[1]; });
             if (best.length > MAXN) best.length = MAXN;
-            var sum = 0, cr = 0, cg = 0, cb = 0;
+            var sum = 0, vAcc = 0, fAcc = 0;
             for (var wj = 0; wj < best.length; wj++) {
                 var w = 1 / Math.pow(1 + best[wj][1], 1.6);
-                var cc = colorReal[best[wj][0]];
-                cr += w * cc[0]; cg += w * cc[1]; cb += w * cc[2]; sum += w;
+                vAcc += w * sv[best[wj][0]];
+                if (sf[best[wj][0]]) fAcc += w;
+                sum += w;
             }
-            if (sum > 0) cellc[ci] = [cr / sum, cg / sum, cb / sum];
+            if (sum > 0) {
+                cellv[ci] = vAcc / sum;
+                cellf[ci] = fAcc / sum;
+            }
         }
-        // Pixel-loop: bilinear sulle celle (u/v continui) + maschera terra + sfumatura
+        // Pixel-loop: bilinear sul VALORE, poi UNICA conversione colore ufficiale
         var cv = document.createElement('canvas');
         cv.width = W; cv.height = H;
         var ctx2 = cv.getContext('2d');
@@ -14503,17 +14844,19 @@
             var i0 = Math.floor(u), j0 = Math.floor(v);
             if (i0 < 0 || i0 >= nx || j0 < 0 || j0 >= ny) continue;
             var fu = u - i0, fv = v - j0;
-            var c00 = cellc[j0 * nx + i0];
-            var c10 = (i0 + 1 < nx) ? cellc[j0 * nx + i0 + 1] : null;
-            var c01 = (j0 + 1 < ny) ? cellc[(j0 + 1) * nx + i0] : null;
-            var c11 = (i0 + 1 < nx && j0 + 1 < ny) ? cellc[(j0 + 1) * nx + i0 + 1] : null;
-            var tr = 0, tg = 0, tb = 0, tw = 0;
-            if (c00) { tr += c00[0] * (1 - fu) * (1 - fv); tg += c00[1] * (1 - fu) * (1 - fv); tb += c00[2] * (1 - fu) * (1 - fv); tw += (1 - fu) * (1 - fv); }
-            if (c10) { tr += c10[0] * fu * (1 - fv); tg += c10[1] * fu * (1 - fv); tb += c10[2] * fu * (1 - fv); tw += fu * (1 - fv); }
-            if (c01) { tr += c01[0] * (1 - fu) * fv; tg += c01[1] * (1 - fu) * fv; tb += c01[2] * (1 - fu) * fv; tw += (1 - fu) * fv; }
-            if (c11) { tr += c11[0] * fu * fv; tg += c11[1] * fu * fv; tb += c11[2] * fu * fv; tw += fu * fv; }
-            if (tw <= 0) continue;
-            d[p2 * 4] = tr / tw; d[p2 * 4 + 1] = tg / tw; d[p2 * 4 + 2] = tb / tw; d[p2 * 4 + 3] = 235;
+            var v00 = cellv[j0 * nx + i0];
+            var v10 = (i0 + 1 < nx) ? cellv[j0 * nx + i0 + 1] : null;
+            var v01 = (j0 + 1 < ny) ? cellv[(j0 + 1) * nx + i0] : null;
+            var v11 = (i0 + 1 < nx && j0 + 1 < ny) ? cellv[(j0 + 1) * nx + i0 + 1] : null;
+            var vr = 0, vf = 0, vw = 0;
+            if (v00 != null) { vr += v00 * (1 - fu) * (1 - fv); vf += cellf[j0 * nx + i0] * (1 - fu) * (1 - fv); vw += (1 - fu) * (1 - fv); }
+            if (v10 != null) { vr += v10 * fu * (1 - fv); vf += cellf[j0 * nx + i0 + 1] * fu * (1 - fv); vw += fu * (1 - fv); }
+            if (v01 != null) { vr += v01 * (1 - fu) * fv; vf += cellf[(j0 + 1) * nx + i0] * (1 - fu) * fv; vw += (1 - fu) * fv; }
+            if (v11 != null) { vr += v11 * fu * fv; vf += cellf[(j0 + 1) * nx + i0 + 1] * fu * fv; vw += fu * fv; }
+            if (vw <= 0) continue;
+            var colFinal = surfaceColor(vr / vw, vw > 0 ? vf / vw : 0);
+            var rgbf = hexToRgb(colFinal);
+            d[p2 * 4] = rgbf[0]; d[p2 * 4 + 1] = rgbf[1]; d[p2 * 4 + 2] = rgbf[2]; d[p2 * 4 + 3] = 235;
         }
         maskAwareBlur(d, W, H);
         ctx2.putImageData(img, 0, 0);
@@ -14717,11 +15060,11 @@ function renderContinuousOverlay() {
             if (!continuousVirtualsReady) computeProvinceCentroids();
             virtuals = continuousVirtuals;
         }
-        // Colore di ogni punto SOLO dal proprio dato punto-per-punto (rawPointStores):
-        // niente ricaduta sul collasso per provincia, ogni coordinata ha la sua tinta.
+        // Valore di ogni punto SOLO dal proprio dato punto-per-punto (rawPointStores):
+        // niente ricaduta sul collasso per provincia, ogni coordinata ha il suo valore.
         // I punti senza dati (fetch in corso) non contribuiscono e compaiono via via.
         var pts = rawPointStores[selectedWeatherModel] || {};
-        var color = new Array(points.length), found = 0;
+        var value = new Array(points.length), flags = new Array(points.length), found = 0;
         for (var i = 0; i < points.length; i++) {
             var rec = pts[points[i].index];
             if (!rec) continue;
@@ -14738,14 +15081,29 @@ function renderContinuousOverlay() {
                 }
             }
             if (agg) {
-                var col = colorForStoreForCurrentMetric(agg);
-                if (col) { color[i] = hexToRgb(col); found++; }
+                var sv = metricSurfaceValue(currentMetric, agg);
+                if (sv.v != null) { value[i] = sv.v; flags[i] = sv.filtered; found++; }
             }
         }
         if (!found) { hideContinuousOverlay(); return; }
-        // v3: reticolo virtuale (~0,25°) senza ancore per provincia, SOLO raster: il campo di
-        // colore deriva dai soli punti reali, la previsione ai pannelli resta identica.
-        if (useV3) { renderContinuousV3(points, color); return; }
+        // v3: reticolo virtuale (~0,25°) che interpola i VALORI e usa le ANCORE provinciali
+        // (valore aggregato ufficiale = quello dei poligoni). La superficie colora a valle.
+        if (useV3) {
+            var v3Anchors = [];
+            if (useV2 || useV3) {
+                // centri di provincia presenti (continuousVirtuals già pronti sopra)
+                for (var ai = 0; ai < virtuals.length; ai++) {
+                    var vzA = virtuals[ai];
+                    var aggVA = getAggregateForZone(vzA.zoneIdx);
+                    if (!aggVA) continue;
+                    var svA = metricSurfaceValue(currentMetric, aggVA);
+                    if (svA.v == null) continue;
+                    v3Anchors.push({ lat: vzA.lat, lon: vzA.lon, value: svA.v, filtered: svA.filtered });
+                }
+            }
+            renderContinuousV3(points, value, flags, v3Anchors);
+            return;
+        }
         var all = useV2 ? points.concat(virtuals) : points;
         // Geometria: dipende dal set di punti (reali per V1; reali+virtuali per V2).
         var key = (useV2 ? 'v2:' : 'v1:') + points.length + '|' + points[0].index + '|' + points[points.length - 1].index + '|v' + (useV2 ? virtuals.length : 0);
@@ -14754,15 +15112,15 @@ function renderContinuousOverlay() {
         }
         var geo = continuousGeo;
         var n = all.length;
-        var colorAll = new Array(n);
-        for (var i2 = 0; i2 < points.length; i2++) colorAll[i2] = color[i2];
+        var valAll = new Array(n), flagAll = new Array(n);
+        for (var i2 = 0; i2 < points.length; i2++) { valAll[i2] = value[i2]; flagAll[i2] = flags[i2]; }
         if (useV2) {
             for (var jj = points.length; jj < n; jj++) {
                 var vz = virtuals[jj - points.length];
                 var aggV = getAggregateForZone(vz.zoneIdx);
                 if (aggV) {
-                    var colV = colorForStoreForCurrentMetric(aggV);
-                    if (colV) { colorAll[jj] = hexToRgb(colV); }
+                    var svV = metricSurfaceValue(currentMetric, aggV);
+                    if (svV.v != null) { valAll[jj] = svV.v; flagAll[jj] = svV.filtered; }
                 }
             }
         }
@@ -14779,18 +15137,20 @@ function renderContinuousOverlay() {
                 if (!nc) { d[px2 * 4 + 3] = 0; continue; }
                 // Maschera "solo terra italiana": azzera qualsiasi pixel fuori dai confini
                 if (geo.mask && geo.mask[px2] < 128) { d[px2 * 4 + 3] = 0; continue; }
-                var r = 0, g2 = 0, b = 0, sum = 0;
+                var vR = 0, fR = 0, sum = 0;
                 for (var j = 0; j < nc; j++) {
                     var pid = nidx[px2 * MAXN + j];
-                    var c = colorAll[pid];
-                    if (!c) continue; // punto caricato ma senza colore valido: non conta
+                    var vv = valAll[pid];
+                    if (vv == null) continue; // punto caricato ma senza valore valido: non conta
                     var w2 = nwt[px2 * MAXN + j];
-                    sum += w2; r += w2 * c[0]; g2 += w2 * c[1]; b += w2 * c[2];
+                    sum += w2; vR += w2 * vv; if (flagAll[pid]) fR += w2;
                 }
                 // Peso totale zero solo se nessun vicino caricato nel raggio: pixel trasparente
                 if (sum <= 0) { d[px2 * 4 + 3] = 0; continue; }
                 var inv = 1 / sum;
-                d[px2 * 4] = r * inv; d[px2 * 4 + 1] = g2 * inv; d[px2 * 4 + 2] = b * inv; d[px2 * 4 + 3] = 235;
+                var colEnd = surfaceColor(vR * inv, fR * inv);
+                var rgbEnd = hexToRgb(colEnd);
+                d[px2 * 4] = rgbEnd[0]; d[px2 * 4 + 1] = rgbEnd[1]; d[px2 * 4 + 2] = rgbEnd[2]; d[px2 * 4 + 3] = 235;
             }
         }
         // v2: sfumatura a maschera per togliere l'effetto "pois" residuo (coste nitide)
@@ -15802,6 +16162,10 @@ function renderContinuousOverlay() {
         updateMnwLivePanel(regionsData[index].lat, regionsData[index].lon).catch(function() {});
         // Barra riepilogo sticky: descrizione esaustiva dei rischi della provincia selezionata
         showRiskSummary(selectedIndex);
+        // Debug pipeline colore (solo Sviluppo): poligono vs surface sulla provincia selezionata
+        if (isSviluppoActive) {
+            try { debugColorPipeline(selectedIndex); } catch (e) { console.warn('[DEBUG-PIPELINE] ' + e.message); }
+        }
     }
 
     function selectDay(dayIdx) {
@@ -16103,18 +16467,69 @@ function renderContinuousOverlay() {
     }
     //#pure# END fasciaIndices
 
+    //#pure# BEGIN forecastSlotAvailability
+    // Disponibilità oraria REALE su TUTTI gli store carrieri (weatherStore +
+    // modelStores + rawPointStores): non ci si fida di un solo store, che al
+    // momento della verifica può non essere ancora popolato o ridotto per
+    // provincia. Ritorna la MASSIMA lunghezza oraria effettivamente presente.
+    function getAvailableHourlyLength() {
+        var best = 0;
+        function scan(rec) {
+            if (!rec || !rec.hourly) return;
+            var l = hourlyLength(rec.hourly);
+            if (l > best) best = l;
+        }
+        var keys = null, i = 0;
+        keys = Object.keys(weatherStore);
+        for (i = 0; i < keys.length; i++) scan(weatherStore[keys[i]]);
+        var ms = modelStores[selectedWeatherModel];
+        if (ms) {
+            keys = Object.keys(ms);
+            for (i = 0; i < keys.length; i++) scan(ms[keys[i]]);
+        }
+        var rs = rawPointStores[selectedWeatherModel];
+        if (rs) {
+            keys = Object.keys(rs);
+            for (i = 0; i < keys.length; i++) scan(rs[keys[i]]);
+        }
+        if (isDualModelMode()) {
+            var rsB = rawPointStores['ecmwf_ifs'];
+            if (rsB) {
+                keys = Object.keys(rsB);
+                for (i = 0; i < keys.length; i++) scan(rsB[keys[i]]);
+            }
+            var msB = modelStores['ecmwf_ifs'];
+            if (msB) {
+                keys = Object.keys(msB);
+                for (i = 0; i < keys.length; i++) scan(msB[keys[i]]);
+            }
+        }
+        return best;
+    }
+    // Una fascia è rappresentabile se esiste almeno un giorno (0..maxDay) la cui
+    // finestra di 6 ore cade nei dati orari reali. NIENTE soglia rigida (>=48):
+    // la disponibilità deriva dai dati realmente caricati.
+    function canRepresentSlot(slotKey, hLen) {
+        if (slotKey === 'all') return hLen > 0;
+        if (!hLen) return false;
+        var maxDay = Math.floor((hLen - 6) / 24);
+        if (maxDay < 0) return false;
+        for (var d = 0; d <= maxDay; d++) {
+            if (fasciaIndices(slotKey, d, hLen)) return true;
+        }
+        return false;
+    }
+    //#pure# END forecastSlotAvailability
+
     function rebuildForecastSlotOptions() {
         var sel = document.getElementById('forecast-slot');
         if (!sel) return;
-        var anyHourly = false;
-        var stKeys = Object.keys(weatherStore);
-        for (var k = 0; k < stKeys.length; k++) {
-            if (hourlyLength(weatherStore[stKeys[k]].hourly) >= 48) { anyHourly = true; break; }
-        }
+        var hLen = getAvailableHourlyLength();
         var desired = [['all', 'Tutto il giorno']];
-        if (anyHourly) {
-            desired.push(['morning', '🌅 Mattina'], ['afternoon', '☀️ Pomeriggio'],
-                         ['evening', '🌆 Sera'], ['night', '🌙 Notte']);
+        var slotDefs = [['morning', '🌅 Mattina'], ['afternoon', '☀️ Pomeriggio'],
+                        ['evening', '🌆 Sera'], ['night', '🌙 Notte']];
+        for (var s = 0; s < slotDefs.length; s++) {
+            if (canRepresentSlot(slotDefs[s][0], hLen)) desired.push(slotDefs[s]);
         }
         var same = (sel.options.length === desired.length);
         for (var c = 0; same && c < desired.length; c++) {
@@ -16332,6 +16747,7 @@ function renderContinuousOverlay() {
     }
 
     function toggleForecast() {
+        scheduleInvalidate();
         forecastActive = !forecastActive;
         var btn = document.getElementById('btn-forecast');
         var slotContainer = document.getElementById('forecast-slot-container');
@@ -16600,7 +17016,26 @@ function renderContinuousOverlay() {
     // ================= START =================
     // Riallinea i default di stato e la UI ai feature flags della edizione Light:
     // niente sorgente disabilitata selezionata, opzioni UI delle feature off nascoste.
+    // Central visibility guard: rimuove/nasconde la UI delle feature disabilitate in
+    // questa edizione, SENZA duplicare la logica nei singoli handler. Chiamato dal boot
+    // (in coda ad applyFeatureFlagConstraints). Per il LIVE panel:
+    //   FETCH/WS      -> già bloccati (startLivePanel/refreshBlitzTile ritornano)
+    //   LAYER         -> mai creati (tile/marker solo se flag true)
+    //   UI            -> #live-panel (pannello informativo Blitzortung) rimosso dal DOM
+    //   LEGEND        -> vive dentro #live-panel, quindi rimossa con il pannello
+    //   ATTRIBUTION   -> aggiunta solo quando il tile raster è creato (flag true)
+    function applyPublicEditionFeatureVisibility() {
+        if (!isFeatureEnabled('lightningBlitzortung')) {
+            // Pannello LIVE Blitzortung: UI "orfana" con flag OFF. La rimozione dal DOM
+            // è definitiva e OGNI accesso a getElementById('live-panel') resta null-safe.
+            var livePanelEl = document.getElementById('live-panel');
+            if (livePanelEl && livePanelEl.parentNode) livePanelEl.parentNode.removeChild(livePanelEl);
+        }
+    }
+
     function applyFeatureFlagConstraints() {
+
+        applyPublicEditionFeatureVisibility();
         // --- Radio/satellite/fulmini: default ai soli source abilitati ---
         var rpz = enabledRadarProviderIds();
         if (rpz.length > 0) {
@@ -16811,7 +17246,47 @@ function renderContinuousOverlay() {
         initWeatherData(reason || 'manual');
     }
 
+    // ---- Viewport responsive: classi .app-* centralizzate + invalidateSize ----
+    // Breakpoint unici (---bp-sm 360 / bp-md 767 / bp-lg 1024) condivisi col CSS.
+    // Aggiorna documentElement e body, poi invalida Leaflet (debounced) quando
+    // cambia il CSSOM (resize/orientation/rotazione pannelli). Solo layout: mai
+    // tocca logica meteo, fetch o dataset.
+    function updateViewportClasses() {
+        var w = window.innerWidth || document.documentElement.clientWidth || 0;
+        var d = document.documentElement;
+        var b = document.body;
+        var cls = 'app-desktop';
+        if (w <= 360) cls = 'app-mobile';
+        else if (w <= 767) cls = 'app-mobile';
+        else if (w <= 1024) cls = 'app-tablet';
+        d.className = d.className.split(/\s+/).filter(function(c) {
+            return c.indexOf('app-') !== 0;
+        }).concat([cls]).join(' ').trim();
+        b.className = b.className.split(/\s+/).filter(function(c) {
+            return c.indexOf('app-') !== 0;
+        }).concat([cls]).join(' ').trim();
+        return cls;
+    }
+    var viewportInvalidateTimer = null;
+    function scheduleInvalidate() {
+        if (viewportInvalidateTimer) return;
+        viewportInvalidateTimer = setTimeout(function() {
+            viewportInvalidateTimer = null;
+            if (typeof map !== 'undefined' && map && map.getContainer && map.invalidateSize) {
+                map.invalidateSize();
+            }
+        }, 120);
+    }
+    function onViewportChanged() {
+        var cls = updateViewportClasses();
+        if (cls !== 'app-desktop') window.__appResponsiveClass = cls;
+        scheduleInvalidate();
+    }
+    window.addEventListener('resize', onViewportChanged);
+    window.addEventListener('orientationchange', onViewportChanged);
+
     function startApp(retriesLeft) {
+        updateViewportClasses();
         if (typeof L !== 'undefined') {
             applyFeatureFlagConstraints();
             initMap();

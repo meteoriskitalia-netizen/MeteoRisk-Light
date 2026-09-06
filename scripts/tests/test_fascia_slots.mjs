@@ -27,6 +27,11 @@ const endTag = '//#pure# END fasciaIndices';
 const end = src.indexOf(endTag);
 if (begin < 0 || end < 0) { console.error('blocco //#pure# fasciaIndices non trovato'); process.exit(1); }
 let pure = src.slice(begin, end + endTag.length);
+const fb = src.indexOf('//#pure# BEGIN forecastSlotAvailability');
+const fe = '//#pure# END forecastSlotAvailability';
+const fend = src.indexOf(fe);
+if (fb < 0 || fend < 0) { console.error('blocco forecastSlotAvailability non trovato'); process.exit(1); }
+pure += '\n' + src.slice(fb, fend + fe.length);
 const rb = src.match(/function rebuildForecastSlotOptions\(\) \{[\s\S]*?\n    \}/);
 if (!rb) { console.error('rebuildForecastSlotOptions non trovata'); process.exit(1); }
 pure += '\n' + rb[0];
@@ -69,18 +74,24 @@ function include(ctx) {
 }
 
 // ---------- rebuildForecastSlotOptions (DOM stub) ----------
-{
-  const sel = makeSelect([]);
-  const ctx = {
+function baseCtx(sel, stores) {
+  return Object.assign({
     sel,
     document: {
       getElementById: () => sel,
       createElement() { return { value: '', textContent: '' }; },
     },
-    weatherStore: { a: { hourly: { temperature_2m: new Array(48) } } },
+    modelStores: {},
+    rawPointStores: {},
+    selectedWeatherModel: 'best_match',
+    isDualModelMode() { return false; },
     forecastTimeSlot: 'all', forecastActive: false,
     updateForecastMarkers() {},
-  };
+  }, stores);
+}
+{
+  const sel = makeSelect([]);
+  const ctx = baseCtx(sel, { weatherStore: { a: { hourly: { temperature_2m: new Array(48) } } } });
   const run = include(ctx);
   ok('rebuild: 5 opzioni con dati >=48h',
     JSON.stringify(run(function rebuild() {
@@ -89,23 +100,48 @@ function include(ctx) {
     })) === JSON.stringify(['all', 'morning', 'afternoon', 'evening', 'night']));
 
   const sel3 = makeSelect(['all', 'morning', 'afternoon', 'evening', 'night']);
-  const ctx3 = {
-    sel: sel3,
-    document: {
-      getElementById: () => sel3,
-      createElement() { return { value: '', textContent: '' }; },
-    },
-    weatherStore: { a: { hourly: { temperature_2m: new Array(24) } } },
-    forecastTimeSlot: 'morning', forecastActive: false,
-    updateForecastMarkers() {},
-  };
+  const ctx3 = baseCtx(sel3, { weatherStore: { a: { daily: { temperature_2m_max: [27], weather_code: [1] } } } });
   const run3 = include(ctx3);
   const r3 = run3(function rebuild3() {
     rebuildForecastSlotOptions();
     return { v: Array.from(sel.options).map(o => o.value), t: forecastTimeSlot };
   });
-  ok('rebuild: 1 opzione con dati <48h', JSON.stringify(r3.v) === JSON.stringify(['all']));
+  ok('rebuild: 1 opzione (all) senza dati orari', JSON.stringify(r3.v) === JSON.stringify(['all']));
   ok('rebuild: forecastTimeSlot resettato a all', r3.t === 'all');
+
+  // 24h reali -> la fascia mattina del giorno 0 è rappresentabile (finestra 06-12).
+  const sel24 = makeSelect([]);
+  const ctx24 = baseCtx(sel24, { weatherStore: { a: { hourly: { temperature_2m: new Array(24) } } } });
+  const run24 = include(ctx24);
+  const r24 = run24(function rebuild24() {
+    rebuildForecastSlotOptions();
+    return Array.from(sel.options).map(o => o.value);
+  });
+  ok('rebuild: 24h reali -> all/morning/afternoon/evening (night esclusa)',
+    JSON.stringify(r24) === JSON.stringify(['all', 'morning', 'afternoon', 'evening']), r24.join(','));
+}
+
+// ---------- getAvailableHourlyLength multi-store (regressione root cause) ----------
+{
+  const ctx = {
+    weatherStore: { a: { hourly: { temperature_2m: new Array(24) } } },
+    modelStores: { best_match: { b: { hourly: { temperature_2m: new Array(48) } } } },
+    rawPointStores: { best_match: { c: { hourly: { temperature_2m: new Array(72) } } } },
+    selectedWeatherModel: 'best_match',
+    isDualModelMode() { return false; },
+  };
+  vm.runInNewContext(pure, ctx);
+  ok('getAvailableHourlyLength: weatherStore 24h ma rawPointStores 72h -> 72',
+    ctx.getAvailableHourlyLength() === 72);
+  const ctxEmpty = { weatherStore: { a: { daily: {} } }, modelStores: {}, rawPointStores: {}, selectedWeatherModel: 'best_match', isDualModelMode() { return false; } };
+  vm.runInNewContext(pure, ctxEmpty);
+  ok('getAvailableHourlyLength: 0 senza hourly ovunque', ctxEmpty.getAvailableHourlyLength() === 0);
+  ok('canRepresentSlot(all, 0) -> false', ctx.canRepresentSlot('all', 0) === false);
+  ok('canRepresentSlot(all, 24) -> true', ctx.canRepresentSlot('all', 24) === true);
+  ok('canRepresentSlot(afternoon, 17) -> false (18+6>17)', ctx.canRepresentSlot('afternoon', 17) === false);
+  ok('canRepresentSlot(night, 23) -> false (serve giorno 1)', ctx.canRepresentSlot('night', 23) === false);
+  ok('canRepresentSlot(evening, 24) -> true (finestra giorno 0)', ctx.canRepresentSlot('evening', 24) === true);
+  ok('canRepresentSlot(evening, 48) -> true', ctx.canRepresentSlot('evening', 48) === true);
 }
 
 // ---------- wiring HTML ----------
