@@ -1,23 +1,40 @@
 name: Update Weather Data (Centralized Data Pipeline — Production Hardened)
 
-# 1.0.0.6 — GITHUB PRODUCTION HARDENING
-#   - Distinzione OBBLIGATORIA (workflow_gate.py, fonte unica testabile):
-#       check rc 0  = NEW RUN AVAILABLE  -> la pipeline continua
-#       check rc 10 = NO NEW RUN         -> clean SUCCESS, NESSUN lavoro
-#       check rc 1+ = TECHNICAL ERROR    -> workflow FAIL, errore visibile
-#   - Ordine: punti (if needed) -> CHECK MODEL RUN -> REQUEST PLANNER -> fetch
-#     -> build -> validate -> publish -> commit -> deploy. Niente pianificazione
-#     o analisi prima di sapere se esiste un nuovo run.
-#   - Request Planner: PLAN VALID -> continua · BUDGET BLOCKED (rc 2) -> success
-#     safe skip, last known good preservato · PLAN ERROR (rc 1+) -> FAIL (mai
-#     interpretato come "no new run").
+# 1.0.0.9 — BEST MATCH CANARY + INITIAL DATASET BOOTSTRAP (edizione 1.0.0.8 estesa:
+# default V2 vista continua, V3 ripristinata al concetto nato, mapping "Oggi" ↔ giorno-dataset).
+# rilevatori INDIPENDENTI; primo dataset generato ESCLUSIVAMENTE da GitHub Actions).
+#   - Driver run UNICO per il cambio di run: ECMWF IFS (Metadata API, LEGGERO).
+#       check rc 0  = NEW ECMWF RUN AVAILABLE     -> pipeline continua
+#       check rc 10 = NO NEW ECMWF RUN            -> clean SUCCESS per ECMWF
+#       check rc 1+ = TECHNICAL ERROR             -> workflow FAIL, errore visibile
+#   - Canary BEST MATCH INDIPENDENTE (check_best_match.py): 6 capoluoghi-sentinella
+#     in UNA richiesta forecast multi-location (weathercode+precipitation orarie),
+#     fingerprint SHA-256 del contenuto (NO generation-time), confrontato con lo
+#     state. rc 0 = CAMBIATO -> refresh autorizzato · 10 = invariato · 1+ = FAIL.
+#   - DECISION ENGINE (decide_cycle.py), matrice STATELESS (FIX PIPELINE:
+#     best_match_only con merge del raw del ciclo precedente RIMOSSO — i runner
+#     GitHub sono ephemeral, data/_raw non persiste tra un run e l'altro):
+#       ecmwf_new & best_changed/false -> coordinated (fetch completo 2 leg)
+#       !ecmwf_new & best_changed      -> coordinated (fetch completo 2 leg)
+#       !ecmwf_new & !best_changed     -> none (clean exit, zero lavoro)
+#       bootstrap (state/dataset/fingerprint assenti, G3/G5) -> fetch reale completo
+#   - API USAGE GUARDRAILS (hard safety ceiling, NON razionamento preventivo):
+#     il fetch reale parte quando un rilevatore segnala un cambiamento reale
+#     (o in bootstrap); il pre-flight blocca SOLO oltre la soglia di sicurezza
+#     (effective daily ceiling). Steady-state bloccato = safe skip (last known
+#     good preservato, retry al ciclo successivo). BOOTSTRAP bloccato = FAIL.
 #   - No deploy su no-op: commit e deploy Pages SOLO con nuovo dataset valido
 #     (publish rc 0) oppure force_deploy (bootstrap operatore).
-#   - Log canonici [INFO]/[ERROR] emessi da workflow_gate.py.
+#   - Micro-fix Pages: homepage _site/index.html (cp mri-light-1.0.0.13.html).
+#   - PARTE H (robustezza rete): il client Metadata API usa retry automatici
+#     limitati (4 tentativi) con timeout esplicito (15s) e backoff esponenziale
+#     + jitter su errori transienti (SSL handshake timeout, conn reset, 429, 5xx).
+#     NETWORK ERROR != NO NEW RUN (H4): lo state/fingerprint si aggiorna solo con
+#     check riuscito; dopo i retry -> CHECK FAILED con summary esplicito (H5).
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       force_update:
@@ -65,9 +82,11 @@ jobs:
           fi
           echo "[INFO] Required sample points already present"
 
-      # CHECK MODEL RUN PRIMA DI QUALSIASI PIANO: leggero (Metadata API, non
-      # conteggiata nel budget forecast). exit 10 -> clean success; 1+ -> FAIL.
-      - name: Rileva nuovo run modelli (Metadata API)
+      # CHECK ECMWF (Metadata API, LEGGERO; conteggiata solo in osservabilità
+      # guardrails, mai nel tetto del forecast). Non genera fetch da sola:
+      # i 10 minuti servono a rilevare rapidamente cambiamenti reali.
+      # Bootstrap: rc 10 -> clean SUCCESS (nessun lavoro ECMWF); rc 1+ -> FAIL.
+      - name: Rileva nuovo run ECMWF IFS (Metadata API)
         id: check
         run: |
           rc=0
@@ -79,30 +98,49 @@ jobs:
           python scripts/workflow_gate.py check "$rc"
           exit $?
 
-      # Solo con un NUOVO run: pianificazione (dedup + batching + pre-flight
-      # budget). rc 2 -> success safe-skip; rc 1+ -> FAIL.
-      - name: Request planner (dedup + batch + pre-flight budget)
-        id: plan
-        if: steps.check.outputs.new_run == 'true'
+      # CANARY BEST MATCH (1 richiesta forecast/ciclo: fino a 144/giorno con il
+      # cron */10, ~1,4% del ceiling giornaliero). Esegue SEMPRE (anche quando
+      # ECMWF è invariato): rilevatore indipendente; clean exit quando il
+      # fingerprint è invariato.
+      - name: Canary Best Match (sentinelle, fingerprint contenuto)
+        id: best
         run: |
           rc=0
-          python scripts/request_planner.py --no-write || rc=$?
+          python scripts/check_best_match.py || rc=$?
+          python scripts/workflow_gate.py best "$rc"
+          exit $?
+
+      # DECISION ENGINE + PRE-FLIGHT GUARDRAIL: combina ecmwf_new x best_changed
+      # (+ bootstrap) e decide coordinated/none.
+      # rc 3 (bootstrap, ceiling) -> FAIL; rc 2 (steady, ceiling) -> safe skip.
+      - name: Decide ciclo + pre-flight guardrails
+        id: plan
+        run: |
+          rc=0
+          python scripts/decide_cycle.py \
+            --ecmwf-new "${{ steps.check.outputs.new_run }}" \
+            --best-changed "${{ steps.best.outputs.best_changed }}" \
+            --no-write || rc=$?
           python scripts/workflow_gate.py plan "$rc"
           exit $?
 
-      # Raw TEMPORANEO (data/_raw, mai pubblicato/committato/deployato).
-      - name: Fetch dati sorgente (raw, mai pubblicato)
+      # Raw TEMPORANEO (data/_raw, mai pubblicato/committato/deployato, STATELESS:
+      # scritto e consumato DENTRO lo stesso run, mai riletto da un ciclo
+      # precedente). Fetch SEMPRE completo coordinated (2 leg); prima del retry
+      # selettivo il budget residuo viene verificato (nessun retry oltre il tetto).
+      # In bootstrap il primo fetch è sempre il reale completo (requisiti G2/G5).
+      - name: Fetch sorgente (coordinated, completo 2 leg — raw temporaneo)
         id: fetch
-        if: steps.check.outputs.new_run == 'true' && steps.plan.outputs.plan_state == 'ok'
+        if: steps.plan.outputs.plan_state == 'ok'
         run: |
           rc=0
-          python scripts/fetch_source_data.py || rc=$?
+          python scripts/fetch_source_data.py --mode "${{ steps.plan.outputs.fetch_mode }}" || rc=$?
           python scripts/workflow_gate.py fetch "$rc"
           exit $?
 
       - name: Build dataset derivato (staging)
         id: build
-        if: steps.check.outputs.new_run == 'true' && steps.fetch.outputs.fetch_ok == 'true'
+        if: steps.fetch.outputs.fetch_ok == 'true'
         run: |
           rc=0
           python scripts/build_meteorisk_dataset.py || rc=$?
@@ -113,7 +151,7 @@ jobs:
       # (nessun commit, nessun deploy; data/latest resta intatto).
       - name: Valida dataset (staging)
         id: validate
-        if: steps.check.outputs.new_run == 'true' && steps.build.outputs.build_ok == 'true'
+        if: steps.build.outputs.build_ok == 'true'
         run: |
           rc=0
           python scripts/validate_dataset.py --staging || rc=$?
@@ -121,16 +159,18 @@ jobs:
           exit $?
 
       # Publish atomico (swap staging -> latest, last known good preservato).
+      # Registra la fingerprint Best Match dal dataset VALIDATO (stato==dataset).
       - name: Pubblica dataset valido (atomico)
         id: publish
-        if: steps.check.outputs.new_run == 'true' && steps.build.outputs.build_ok == 'true' && steps.validate.outputs.validate_ok == 'true'
+        if: steps.validate.outputs.validate_ok == 'true'
         run: |
           rc=0
           python scripts/publish_dataset.py || rc=$?
           python scripts/workflow_gate.py publish "$rc"
           exit $?
 
-      # Commit SOLO con nuovo dataset valido pubblicato.
+      # Commit SOLO con nuovo dataset valido pubblicato (primo dataset incluso,
+      # generato DALL'Action: le commit data/latest nascono da GitHub).
       - name: Commit nuovo dataset valido
         if: steps.publish.outputs.new_dataset == 'true'
         run: |
@@ -172,23 +212,33 @@ jobs:
           {
             echo "## MeteoRisk Light 1.0.0.13 — Pipeline status"
             echo ""
-            echo "**Run check:** \`${{ steps.check.outputs.check_state || 'n/a' }}\` — **Planner:** \`${{ steps.plan.outputs.plan_state || 'skipped' }}\`"
+            echo "**Bootstrap pending:** \`${{ steps.plan.outputs.bootstrap_pending || 'n/a' }}\` — **Ciclo:** \`${{ steps.plan.outputs.cycle_mode || 'n/a' }}\`"
+            echo ""
+            echo "**Run check (ECMWF):** \`${{ steps.check.outputs.check_state || 'n/a' }}\` — **Canary Best Match:** \`${{ steps.best.outputs.best_changed || 'n/a' }}\`"
+            echo "**Planner:** \`${{ steps.plan.outputs.plan_state || 'skipped' }}\`"
             echo ""
             echo "**Fetch:** \`${{ steps.fetch.outputs.fetch_ok || 'skipped' }}\` ${{ steps.fetch.outputs.fetch_reason || '' }}"
             echo "**Build:** \`${{ steps.build.outputs.build_ok || 'skipped' }}\`"
             echo "**Validate:** \`${{ steps.validate.outputs.validate_ok || 'skipped' }}\`"
             echo "**Publish (new dataset):** \`${{ steps.publish.outputs.new_dataset || 'false' }}\`"
             echo ""
-            if [ "${{ steps.check.outputs.check_state }}" = "failed" ]; then
-              echo "⚠️ **CHECK FAILED:** errore Metadata API non silenziato — workflow FAIL."
-            elif [ "${{ steps.check.outputs.new_run }}" = "false" ]; then
-              echo "ℹ️ **No new model run — clean exit:** nessun fetch/build/commit/deploy (comportamento atteso)."
+            if [ "${{ steps.check.outputs.check_state }}" = "failed" ] || [ "${{ steps.plan.outputs.plan_state }}" = "bootstrap_budget_blocked" ]; then
+              if [ "${{ steps.check.outputs.check_state }}" = "failed" ]; then
+                echo "❌ **CHECK FAILED — Metadata API unavailable after retries** (Parte H5)."
+                echo "No data fetch performed."
+                echo "Last dataset unchanged."
+                echo "State not updated (NETWORK ERROR != NO NEW RUN — H4)."
+              else
+                echo "⚠️ **CHECK/PLAN FAILED** — errore visibile, nessun file falso/parziale (requisito G6)."
+              fi
+            elif [ "${{ steps.plan.outputs.bootstrap_pending }}" = "true" ] && [ "${{ steps.publish.outputs.new_dataset }}" = "true" ]; then
+              echo "✅ **INITIAL DATASET BOOTSTRAP COMPLETED:** primo dataset reale generato da GitHub Actions, committato e deployato."
+            elif [ "${{ steps.check.outputs.new_run }}" = "false" ] && [ "${{ steps.best.outputs.best_changed }}" = "false" ]; then
+              echo "ℹ️ **Rilevatori invariati — clean exit:** nessun fetch/build/commit/deploy (comportamento atteso)."
             elif [ "${{ steps.publish.outputs.new_dataset }}" = "true" ]; then
               echo "✅ Nuovo dataset valido pubblicato e deployato."
-            elif [ "${{ steps.fetch.outputs.fetch_reason }}" = "budget_blocked" ]; then
-              echo "⚠️ **Budget blocked:** safe skip, ultimo dataset valido preservato, nessun deploy."
-            elif [ "${{ steps.plan.outputs.plan_state }}" = "budget_blocked" ]; then
-              echo "⚠️ **Budget blocked:** safe skip, ultimo dataset valido preservato, nessun deploy."
+            elif [ "${{ steps.fetch.outputs.fetch_reason }}" = "budget_blocked" ] || [ "${{ steps.plan.outputs.plan_state }}" = "budget_blocked" ]; then
+              echo "⚠️ **Guardrail (hard safety ceiling):** safe skip, ultimo dataset valido preservato, nessun deploy."
             else
               echo "⚠️ Pipeline non completata senza nuovo dataset pubblicato (dettagli nei log sopra)."
             fi
