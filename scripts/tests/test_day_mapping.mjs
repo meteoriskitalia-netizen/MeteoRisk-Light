@@ -70,7 +70,31 @@ const t12 = (iso) => new Date(iso + 'T12:00:00Z'); // mezzogiorno UTC → fermo 
   const d3 = ctx.datasetIndexForDayLabelAt(2, t12('2026-09-08'), '2026-09-05');
   ok('dataset scaduto: Domani/Dopodomani fuori range → null', d3 === null, 'idx=' + d3);
   const neg = ctx.datasetIndexForDayLabelAt(0, t12('2026-09-04'), '2026-09-05');
-  ok('day0 futuro (oggi prima del dataset): clamp al primo giorno → 0', neg === 0, 'idx=' + neg);
+  ok('day0 futuro (oggi prima del dataset): Oggi NON coperto → null (no clamp 0, no fabbricazione)',
+    neg === null, 'idx=' + neg);
+  const negD1 = ctx.datasetIndexForDayLabelAt(1, t12('2026-09-04'), '2026-09-05');
+  ok('day0 futuro: Domani → primo giorno del dataset (indice 0 = giorno di calendario domani)',
+    negD1 === 0, 'idx=' + negD1);
+  const negD2 = ctx.datasetIndexForDayLabelAt(2, t12('2026-09-04'), '2026-09-05');
+  ok('day0 futuro: Dopodomani → indice 1 (= giorno di calendario dopodomani)', negD2 === 1, 'idx=' + negD2);
+}
+
+// ---------- 3b. REGRESSIONE SCARTO +1 (oggi→domani, domani→dopodomani) ----------
+{
+  // Dataset che parte da DOMANI rispetto a oggi (day0 successivo): con il vecchio
+  // clamp "Oggi" = primo giorno (domani) e "Domani" = secondo (dopodomani) = esattamente
+  // lo scarto segnalato online. Ora: Oggi → null (messaggio disponibilità), e
+  // Domani/Dopodomani ricadono ESATTAMENTE sui giorni di calendario richiesti.
+  const oggi7 = t12('2026-09-07');
+  const day0Domani = '2026-09-08';
+  const o = ctx.datasetIndexForDayLabelAt(0, oggi7, day0Domani);
+  ok('day0=08 now=07: Oggi → null (non il clamp "Oggi=domani")', o === null, 'idx=' + o);
+  const dm = ctx.datasetIndexForDayLabelAt(1, oggi7, day0Domani);
+  ok('day0=08 now=07: Domani → indice 0 = 2026-09-08 (domani vero)', dm === 0, 'idx=' + dm);
+  const dp = ctx.datasetIndexForDayLabelAt(2, oggi7, day0Domani);
+  ok('day0=08 now=07: Dopodomani → indice 1 = 2026-09-09 (dopodomani vero)', dp === 1, 'idx=' + dp);
+  ok('nessun clamp: /if \(off < 0\) off = 0;/ ASSENTE nel sorgente', !/if \(off < 0\) off = 0;/.test(src));
+  ok('currentDayOffset NON clampa negativi', !/off < 0 \? 0 : off;/.test(src));
 }
 
 // ---------- 4. regressioni strutturali: selectDay e init usano la mappatura ----------
@@ -86,6 +110,44 @@ const t12 = (iso) => new Date(iso + 'T12:00:00Z'); // mezzogiorno UTC → fermo 
   ok('DPC usa l indice calendario (currentDay - currentDayOffset())',
     /var calDay = currentDay - currentDayOffset\(\);/.test(src) &&
     /fetchDpcAlerts\(Math\.max\(0, currentDay - currentDayOffset\(\)\)\)/.test(src));
+}
+
+// ---------- 5. ALLINEAMENTO METADATA↔PAYLOAD (scarto +1/slider da cache mista) ----------
+// Le due fetch indipendenti potevano servire generazioni diverse di metadata.json (day0)
+// e meteorisk-points.json (dati): con metadata di una generazione (day0 più vecchio) e
+// payload di un'altra si riproduce "Oggi"→"Domani". Contratto: UNA generazione possiede
+// tutti gli array → metadata sempre no-store (fonte di verità) + payload con URL
+// cache-busted legato a generated_at; difese: bounds-check reale in updateUI e
+// try/catch nello slider.
+{
+  ok('datasetFetchJson accetta opzioni di fetch',
+    /async function datasetFetchJson\(url, opts\)/.test(src));
+  ok('metadata.json caricato con cache no-store',
+    /datasetFetchJson\(DATASET_PREFIX \+ 'metadata\.json', \{ cache: 'no-store' \}\)/ .test(src));
+  ok('payload cache-bustato con ?v= generato da generated_at',
+    /meteorisk-points\.json\?v=' \+ encodeURIComponent\(meta\.generated_at \|\| meta\.day0 \|\| ''\)/ .test(src));
+  ok('updateUI: guardia corrente su currentDay (_dailyLen)',
+    /if \(_dailyLen > 0 && \(currentDay < 0 \|\| currentDay >= _dailyLen\)\)/.test(src));
+  ok('updateUI: guardia corrente sull ora (_hourlyLen)',
+    /const _hourIdx = currentDay \* 24 \+ \(currentHour !== 'all' \? parseInt\(currentHour, 10\) : 23\);/.test(src) &&
+    /if \(_hourlyLen > 0 && _hourIdx >= _hourlyLen\)/.test(src));
+  ok('updateUI: messaggio onesto in status-msg quando non allineato',
+    /'Giorno non disponibile nei dati caricati \(dataset non allineato\) — aggiorna la pagina\.'/.test(src) &&
+    /'Ora non disponibile nei dati caricati \(dataset non allineato\) — aggiorna la pagina\.'/.test(src));
+  ok('selectHourFromSlider protetto da try/catch con status-msg',
+    /function selectHourFromSlider\(value\) \{/.test(src) &&
+    /catch \(err\) \{/.test(src) &&
+    /'Aggiornamento orario non riuscito: ' \+ err\.message/.test(src));
+  // Scenario semantico: generazione mista vecchio meta + nuovo payload ⇒ indice sbagliato.
+  // Con la nuova mappatura il clamo non c'è più; riproduciamo il caso "meta giovane + payload
+  // vecchio di 1 ciclo" (oggi=07, meta.day0=08, payload ha ancora 08/09/10 → coerente per
+  // costruzione grazie a ?v: il payload "vecchio" non può più essere riusato da un URL nuovo).
+  {
+    const oggi7 = t12('2026-09-07');
+    const coerente = ctx.datasetIndexForDayLabelAt(0, oggi7, '2026-09-08');
+    ok('base semantica: meta day0=08 + oggi 07 ⇒ Oggi null (niente fabbricazione)',
+      coerente === null, 'idx=' + coerente);
+  }
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

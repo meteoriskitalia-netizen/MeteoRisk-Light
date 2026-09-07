@@ -12,6 +12,16 @@ lato applicazione:
 - **Mapping "Oggi" ↔ giorno-dataset**: l'etichetta "Oggi" è risolta sulla data ISO reale
   Europe/Rome e cercata nei giorni del dataset a partire da `dataset.day0` (offset, mai
   assunzione `dayIndex===0`); giorno non coperto → messaggio onesto, nessun dato finto.
+- **Hotfix mapping (scarto +1)**: rimosso il clamp dell'offset negativo — se il dataset
+  parte da un giorno futuro "Oggi" NON mostra più il primo giorno (domani); compare il
+  messaggio di disponibilità e "Domani"/"Dopodomani" ricadono esattamente sui giorni.
+- **Hotfix cache/alveo (scarto +1 persistente + slider)**: metadata.json è SEMPRE letto
+  con `cache: 'no-store'` (fonte di verità per `day0`) e `meteorisk-points.json` è caricato
+  con URL cache-busted legato a `generated_at` (`?v=...`) — le due risorse non possono più
+  essere servite da generazioni diverse, che era la causa dello scarto +1 online.
+  Difesa in profondità: `updateUI()` valida `currentDay`/ora sulla lunghezza REALE degli
+  array caricati (messaggio esplicito, nessuna eccezione silenziosa) e lo slider orario è
+  protetto da try/catch.
 
 ## Novità della 1.0.0.8 (mantenute)
 

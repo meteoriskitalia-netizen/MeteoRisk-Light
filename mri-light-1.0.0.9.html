@@ -1607,6 +1607,7 @@
             'FIX "OGGI" / MAPPING GIORNO-DATASET (1.0.0.9) — il pulsante "Oggi" assumeva giorno-dataset 0 (dayIndex===0) e dopo il reload (o dopo mezzanotte Europe/Rome) mostrava i dati di un giorno scorretto. Ora la selezione mappa l\'etichetta sulla data ISO reale Europe/Rome (dateKeyInTimeZone) e la RICERCA nei giorni disponibili a partire da dataset.day0 (datasetIndexForDayLabelAt): offset calcolato con giorni tra day0 e oggi; se la data non è coperta dal dataset nessun indice viene fabbricato — messaggio onesto "Dati disponibili dal <day0> (oggi non coperto dal dataset)". selectDay/init/caletta auto-slot/DPC usano tutti l\'indice risolto (currentDayOffset/currentDay - currentDayOffset), mai l\'assunzione indice 0.',
             'FIX V3 VISTA CONTINUA RIPRISTINATA AL CONCETTO NATO (1.0.0.9) — la vista continua V3 (sfumatura a colori per celle) era stata riscritta in variante zonale value-space con zone sul reticolo, NON in linea con il concetto originale. Ripristinata la firma nativa renderContinuousV3(points, colorReal) di 10.52.27.0: lattice virtuale ~0,25° SOLO raster senza zone, IDW interpolante i COLORI dei punti campione (radice 38px + nearest adattivo, MAXA=180, MAXN=8), pixel-loop bilineare, maschera terra e blur mask-aware. Alimentata con punti REALI + DENSIFICATI + ANCORE VIRTUALI (colorate con l\'aggregato della propria zona) e con i COLORI costruiti dal MODELLO CORRENTEMENTE visualizzato (merge dual risk-preserving incluso): cambia modello e la sfumatura si adatta. V1/V2 invariati.',
             'PACKAGING (1.0.0.9) — rilascio completo rigenerato da zero (cartella + zip) partendo dall\'edizione 1.0.0.8 e includendo i fix non ancora impacchettati (V3 restore e mapping "Oggi") con i test aggiornati (nuovo test_day_mapping.mjs incluso).',
+            'HOTFIX ALLINEAMENTO METADATA↔PAYLOAD / CACHE (1.0.0.9) — lo scarto +1 persistente (oggi→domani, domani→dopodomani) + slider orario muto nasceva da generate DIFFERENTI tra metadata.json (day0) e meteorisk-points.json (dati) quando il browser serviva una delle due risposte da cache (le due fetch erano indipendenti in cache "default"). Ora il caricamento è unificato su UNA sola generazione: metadata.json è sempre letto con cache "no-store" (fonte di verità per day0, file piccolo) e il payload è caricato con URL "cache-busted" legato a generated_at (?v=...) — se i metadati cambiano, l\'URL del payload cambia, quindi la cache non può mai mischiare generazioni. Difesa in profondità: updateUI() valida currentDay/ora contro la lunghezza REALE degli array caricati (messaggio esplicito, non eccezione) e selectHourFromSlider() è protetto da try/catch: niente più crash silenziosi dello slider.',
             'HOTFIX MAPPING "OGGI" (1.0.0.9) — eliminato lo scarto oggi→domani / domani→dopodomani: quando il dataset derivato parte da un giorno FUTURO rispetto a oggi (Europe/Rome), la mappatura NON "clampa" più l\'offset negativo a 0 (era il clamp a fabbricare "Oggi" → primo giorno del dataset = domani). Ora, se la data selezionata non è coperta dal dataset, compare il messaggio onesto di disponibilità senza cambiare giorno; "Domani"/"Dopodomani" ricadono esattamente sui giorni di calendario richiesti (nessun indice inventato quando la data è prima di day0).',
         ]},
         { version: '1.0.0.8', date: '2026-09-06', changes: [
@@ -15970,6 +15971,22 @@ function renderContinuousOverlay() {
         } else { return; }
 
         const daily = dataSource.daily;
+        // Guardia 1.0.0.9-ALIGN: se l'indice giorno/ora è fuori dagli array REALMENTE
+        // caricati (possibile se metadata e payload sono di generazioni diverse, es. cache),
+        // niente eccezione silenziosa che blocca lo slider: messaggio esplicito e rientro.
+        const _dailyLen = (daily && Array.isArray(daily.weathercode)) ? daily.weathercode.length : 0;
+        const _hourlyLen = (dataSource.hourly && Array.isArray(dataSource.hourly.weathercode)) ? dataSource.hourly.weathercode.length : 0;
+        if (_dailyLen > 0 && (currentDay < 0 || currentDay >= _dailyLen)) {
+            const _stEl = document.getElementById('status-msg');
+            if (_stEl) _stEl.innerText = 'Giorno non disponibile nei dati caricati (dataset non allineato) — aggiorna la pagina.';
+            return;
+        }
+        const _hourIdx = currentDay * 24 + (currentHour !== 'all' ? parseInt(currentHour, 10) : 23);
+        if (_hourlyLen > 0 && _hourIdx >= _hourlyLen) {
+            const _stEl = document.getElementById('status-msg');
+            if (_stEl) _stEl.innerText = 'Ora non disponibile nei dati caricati (dataset non allineato) — aggiorna la pagina.';
+            return;
+        }
         const hourData = getHourOrDailyData(dataSource.hourly, currentDay, currentHour);
         const prob = hourData.prob ?? 0;
         const rain = currentHour === 'all' ? (daily.precipitation_sum[currentDay] ?? 0) : (hourData.precip ?? 0);
@@ -16302,12 +16319,18 @@ function renderContinuousOverlay() {
         return 'Ore ' + String(value - 1).padStart(2, '0') + ':00';
     }
     function selectHourFromSlider(value) {
-        var h = sliderValueToHour(value);
-        var dispEl = document.getElementById('hour-slider-disp');
-        if (dispEl) dispEl.innerText = hourSliderDisplay(value);
-        currentHour = h;
-        updateUI();
-        refreshRiskSummary();
+        try {
+            var h = sliderValueToHour(value);
+            var dispEl = document.getElementById('hour-slider-disp');
+            if (dispEl) dispEl.innerText = hourSliderDisplay(value);
+            currentHour = h;
+            updateUI();
+            refreshRiskSummary();
+        } catch (err) {
+            console.warn('[Slider] dati: ' + err.message);
+            var _stEl = document.getElementById('status-msg');
+            if (_stEl) _stEl.innerText = 'Aggiornamento orario non riuscito: ' + err.message;
+        }
     }
     function syncHourSlider() {
         var slider = document.getElementById('hour-slider');
@@ -17190,8 +17213,8 @@ function renderContinuousOverlay() {
     var datasetState = { loaded: false, generatedAt: null, day0: null, pointCount: 0, virtualCount: 0 };
     var datasetLoading = false;
 
-    async function datasetFetchJson(url) {
-        var res = await fetch(url, { cache: 'default' });
+    async function datasetFetchJson(url, opts) {
+        var res = await fetch(url, opts || { cache: 'default' });
         if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
         return await res.json();
     }
@@ -17292,12 +17315,19 @@ function renderContinuousOverlay() {
         var statusEl = document.getElementById('status-msg');
         try {
             if (reason === 'manual' && statusEl) statusEl.innerText = 'Aggiornamento dal dataset derivato...';
-            var meta = await datasetFetchJson(DATASET_PREFIX + 'metadata.json');
+            // 1.0.0.9-ALIGN (fix scarto +1 da cache): metadata SEMPRE fresco, è la fonte di
+            // verità per day0 (piccolo file). Il payload viene poi "legato" alla generazione
+            // dei metadati via query string (?v=generated_at): se meta cambia, l'URL cambia,
+            // quindi la cache non può mai servire una copia di una generazione diversa
+            // (che produceva "Oggi"→"Domani", "Domani"→"Dopodomani" da cache mista).
+            var meta = await datasetFetchJson(DATASET_PREFIX + 'metadata.json', { cache: 'no-store' });
             if (weatherFetchGeneration !== gen) return false;
             if (meta.status !== 'live') throw new Error('dataset status=' + meta.status);
             if (!(meta.point_count > 0)) throw new Error('point_count=0');
-            var payload = await datasetFetchJson(DATASET_PREFIX + 'meteorisk-points.json');
+            var payloadUrl = DATASET_PREFIX + 'meteorisk-points.json?v=' + encodeURIComponent(meta.generated_at || meta.day0 || '');
+            var payload = await datasetFetchJson(payloadUrl);
             if (weatherFetchGeneration !== gen) return false;
+            if (!payload || !payload.points || payload.points.length === 0) throw new Error('payload senza punti');
             if (provinceGeoJsonPromise) { try { await provinceGeoJsonPromise; } catch (e) {} }
             applyStaticDataset(meta, payload);
             return true;
