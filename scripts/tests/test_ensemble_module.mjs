@@ -18,7 +18,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.0.1.1.html');
+const HTML = path.join(ROOT, 'mri-light-1.0.1.2.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -39,8 +39,8 @@ ok('A2b: ENS_MODELS include ECMWF IFS/AIFS, ICON-EU/globale e MOGREPS-G',
   has(/api:\s*'ecmwf_ifs025'/) && has(/api:\s*'ecmwf_aifs025'/) &&
   has(/api:\s*'icon_eu_eps'/) && has(/api:\s*'icon_global_eps'/) &&
   has(/api:\s*'ukmo_global_ensemble_20km'/));
-ok('A2c: 7 modelli complessivi in ENS_MODELS',
-  (src.match(/api:\s*'(ecmwf_ifs025|ecmwf_aifs025|icon_eu_eps|icon_global_eps|ncep_gefs025|ncep_gefs05|ukmo_global_ensemble_20km)'/g) || []).length === 7);
+ok('A2c: 7 modelli complessivi in ENS_MODELS (ogni entry ha days:[...]; la mappa ENS_DET_MODELS non ne ha)',
+  (src.match(/api:\s*'(?:ecmwf_ifs025|ecmwf_aifs025|icon_eu_eps|icon_global_eps|ncep_gefs025|ncep_gefs05|ukmo_global_ensemble_20km)'[\s\S]{0,180}?days:\s*\[/g) || []).length === 7);
 ok('A3: ENS_MODELS con orizzonti per modello (array days)',
   has(/const ENS_MODELS\s*=\s*\{[\s\S]{0,900}days:\s*\[/));
 ok('A4: ENS_VARS contiene le 4 variabili richieste',
@@ -172,9 +172,13 @@ ok('F7: inizializzazione del modulo in startApp (oltre alla definizione)',
   (src.match(/initEnsembleModule\(\)/g) || []).length >= 2);
 
 // ---------- G. VERSIONE ----------
-ok('G1: APP_VERSION = 1.0.1.1', has(/APP_VERSION\s*=\s*['"]1\.0\.1\.1['"]/));
+ok('G1: APP_VERSION = 1.0.1.2', has(/APP_VERSION\s*=\s*['"]1\.0\.1\.2['"]/));
 ok('G2: changelog 1.0.0.15 MODULO ENSEMBLE OPEN-METEO presente',
   has(/MODULO ENSEMBLE OPEN-METEO \(1\.0\.0\.15\)/));
+ok('G3: bump 1.0.1.2 presente — changelog con asse RR adattivo minimo 60 mm (pioggia oraria)',
+  has(/version:\s*'1\.0\.1\.2'/) &&
+  has(/ASSE RR ADATTIVO CON MINIMO 60 MM \(1\.0\.1\.2\)/) &&
+  has(/rrTop\s*=\s*Math\.max\(rrNice\.max,\s*60\)/));
 
 // ---------- H. WHITELIST VARIABILI PER MODELLO (bug: modelli "a vuoto") ----------
 const MODEL_VARS_BLOCK = (src.match(/const ENS_MODEL_VARS\s*=\s*\{[\s\S]*?\n    \};\s*\n/) || [''])[0];
@@ -223,10 +227,81 @@ ok('I5: doppio asse Y (sinistra °C, destra mm) nel disegno del composito',
   has(/isComposite\s*=\s*\(v\.chart\s*===\s*'composite'\)/) &&
   has(/rrY\s*=\s*function\(mm\)/) &&
   has(/ENS_THEME\.composite/));
+ok('I5b: tema composito con struttura annidata t850/t500/rr = { member, mean, band } coerente col disegno',
+  has(/composite:\s*\{\s*t850:\s*\{\s*member:/) &&
+  has(/t500:\s*\{\s*member:/) &&
+  has(/rr:\s*\{\s*member:/) &&
+  has(/ct\.t500/) &&
+  has(/ct\.t850/) &&
+  has(/ct\.rr/) &&
+  has(/theme\.band/) &&
+  has(/theme\.member/) &&
+  has(/theme\.mean/));
+ok('I5c: la pioggia nel grafico composito e\' disegnata a LINEE come le altre variabili (nessuna barra RR)',
+  has(/ensTraceSpaghetti\(v\.subs\.rr,\s*rrY,\s*ct\.rr\)/) &&
+  has(/RR in verde a LINEE/) &&
+  has(/ct\.rr\.mean/) === false &&
+  has(/ct\.rr;\s*ctx\.fillStyle/) === false);
 ok('I6: leggenda + tooltip dedicate al grafico composito',
   has(/v\.chart\s*===\s*'composite'/) &&
   has(/T850 hPa \(membri blu\)/) &&
   has(/RR \(media\):/));
+ok('I7: nel Riepilogo la RR resta la pioggia ORARIA (mai cumulata) e l\'asse destro si adatta ai valori con minimo 60 mm',
+  has(/subs:\s*\{\s*t850:\s*t85,\s*t500:\s*t50,\s*rr:\s*prC\s*\}/) &&
+  has(/mm di pioggia ORARIA, adattivo/) &&
+  has(/rrTop\s*=\s*Math\.max\(rrNice\.max,\s*60\)/) &&
+  has(/RR media \(mm, asse destro\)/) &&
+  has(/rrMax\s*=\s*mv;/) &&
+  (src.indexOf("varsOut['cum_precipitation'] || prC") === -1));
+ok('I8: l\'asse destro considera anche run operativa e massimo membri (episodi intensi mai tagliati), nessuna cumulata residua',
+  has(/const rv = \(rrs\.run && rrs\.run\.values\) \? rrs\.run\.values\[i\] : NaN;/) &&
+  has(/const xv = \(rrs\.stats && rrs\.stats\.max\) \? rrs\.stats\.max\[i\] : NaN;/) &&
+  has(/if \(ensFin\(rv\) && rv > rrMax\) rrMax = rv;/) &&
+  has(/if \(ensFin\(xv\) && xv > rrMax\) rrMax = xv;/) &&
+  (src.indexOf('precipitation_det_cum') === -1));
+
+// ---------- J. RUN OPERATIVA DETERMINISTICA (overlay "principale" su tutti i grafici) ----------
+ok('J1: mappa ENS_DET_MODELS con id deterministico autonomo per OGNI modello ensemble',
+  has(/const ENS_DET_MODELS\s*=\s*\{/) &&
+  has(/ecmwf_ifs025:\s*\{\s*api:\s*'ecmwf_ifs025'/) &&
+  has(/ecmwf_aifs025:\s*\{\s*api:\s*'ecmwf_aifs025'/) &&
+  has(/ncep_gefs025:\s*\{\s*api:\s*'gfs_seamless'/) &&
+  has(/ncep_gefs05:\s*\{\s*api:\s*'gfs_seamless'/) &&
+  has(/icon_eu_eps:\s*\{\s*api:\s*'icon_eu'/) &&
+  has(/icon_global_eps:\s*\{\s*api:\s*'icon_global'/) &&
+  has(/ukmo_global_ensemble_20km:\s*\{\s*api:\s*'ukmo_seamless'/));
+ok('J1b: endpoint forecast (separato dall\'ensemble) per la run deterministica',
+  has(/const ENS_DET_API\s*=\s*'https:\/\/api\.open-meteo\.com\/v1\/forecast';/) &&
+  has(/dq\.set\('models',\s*detCfg\.api\);/));
+ok('J2: fetch BEST-EFFORT in parallelo all\'ensemble, non blocca MAI il render (catch -> null)',
+  has(/Promise\.all\(\[ensChain,\s*ensDetFetch\(ENS_DET_MODELS\[model\.api\],\s*q\)\]\)/) &&
+  has(/function ensDetFetch\(detCfg,\s*q\)/) &&
+  has(/\.catch\(function\s*\(\)\s*\{\s*clearTimeout\(dTimer\);\s*return null;\s*\}\)/) &&
+  has(/if\s*\(!detCfg\)\s*return\s*Promise\.resolve\(null\);/));
+ok('J3: detJson viaggia da ensLoad a ensOnData a ensNormalize (mai usato se null)',
+  has(/function ensOnData\(json,\s*key,\s*model,\s*loc,\s*days,\s*detJson\)/) &&
+  has(/ensNormalize\(json,\s*key,\s*model,\s*loc,\s*days,\s*detJson\)/) &&
+  has(/function ensNormalize\(json,\s*key,\s*model,\s*loc,\s*days,\s*detJson\)/) &&
+  has(/detJson\s*&&\s*typeof\s*detJson\s*===\s*'object'/));
+ok('J4: run operativa allineata per STRINGA tempo e attaccata SOLO alle variabili dirette',
+  has(/const detMap\s*=\s*\{\};/) &&
+  has(/detMap\[detTimes\[j\]\]\s*=\s*dv;/) &&
+  has(/runValues\[i\]\s*=\s*\(x\s*===\s*undefined\)\s*\?\s*null\s*:\s*x;/) &&
+  has(/run:\s*run,\s*\/\/ run operativa deterministica/) &&
+  has(/Solo le variabili DIRETTE: le derivate/));
+ok('J5: il disegno disegna la run in ENTRAMBI i percorsi (spaghetti standard + trace composito)',
+  has(/v\.run\s*&&\s*v\.run\.values/) &&
+  has(/sv\.run\s*&&\s*sv\.run\.values/) &&
+  (src.match(/ctx\.strokeStyle\s*=\s*ENS_THEME\.oper;\s*ctx\.lineWidth\s*=\s*1\.8;/g) || []).length === 2);
+ok('J6: colore dorato della run operativa nel tema (ENS_THEME.oper)',
+  /ENS_THEME\s*=\s*\{[\s\S]*?oper:\s*'#facc15'/.test(src));
+ok('J7: legenda e tooltip con la voce "Run operativa"',
+  has(/Run operativa \(det\.\)/) &&
+  has(/Run operativa:/) &&
+  has(/Run operativa \(T850\):/));
+ok('J8: metadata normalizzato espone runAvailable/runLabel (per eventuali consumatori)',
+  has(/runAvailable:\s*\(runLabel\s*!==\s*null\)/) &&
+  has(/runLabel:\s*runLabel/));
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
 process.exit(failures === 0 ? 0 : 1);

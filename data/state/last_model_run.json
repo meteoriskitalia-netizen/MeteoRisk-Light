@@ -2,32 +2,29 @@
   "last_model_runs": {
     "ecmwf_ifs": {
       "model": "ecmwf_ifs",
-      "last_run_initialisation_time": 1788825600,
+      "last_run_initialisation_time": null,
       "available_time": null,
       "update_interval_seconds": 21600,
       "not_available_before_this_time": null
     },
     "best_match": {
       "model": "best_match",
-      "last_checked_at": "2026-09-08T10:46:43.722499+00:00",
-      "last_changed_at": "2026-09-08T10:46:43.722499+00:00",
-      "last_fingerprint": "33a08baf6c733754909d458145e97b9ba267b00799294c5bec409cfafaa89cb2",
+      "last_checked_at": null,
+      "last_changed_at": null,
+      "last_fingerprint": null,
       "fingerprint_source": "sentinel"
     }
   },
   "driver_model": "ecmwf_ifs",
-  "run_key": "1788825600",
-  "run_init_ts": 1788825600,
-  "run_available_ts": 1788847200,
-  "last_processed_key": "1788825600",
-  "status": "live",
+  "run_key": null,
+  "run_init_ts": null,
+  "run_available_ts": null,
+  "last_processed_key": null,
+  "status": "bootstrap_pending",
   "bootstrap_pending": true,
-  "checked_at": "2026-09-08T09:36:26.240569+00:00",
-  "last_processed_at": "2026-09-08T10:46:43.722517+00:00",
-  "dataset": {
-    "point_count": 257,
-    "validation_outcome": "OK"
-  },
-  "note": "INITIAL DATASET BOOTSTRAP (1.0.0.8): primo ciclo senza dataset live; sara' eseguito il fetch reale del primo dataset (guardrail ceiling -> fetch -> build -> validate -> publish atomico).",
-  "published_at": "2026-09-08T10:46:43.722499+00:00"
+  "checked_at": null,
+  "last_processed_at": null,
+  "published_at": null,
+  "dataset": null,
+  "note": "INITIAL DATASET BOOTSTRAP (1.0.0.8, Parte G): nessun dataset locale consegnato. Il primo dataset reale e' generato ESCLUSIVAMENTE da GitHub Actions (check -> canary -> decide/plan -> fetch -> build -> validate -> publish -> commit -> Pages)."
 }
