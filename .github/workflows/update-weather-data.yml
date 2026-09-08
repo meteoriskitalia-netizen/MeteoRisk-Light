@@ -25,7 +25,7 @@ name: Update Weather Data (Centralized Data Pipeline — Production Hardened)
 #     good preservato, retry al ciclo successivo). BOOTSTRAP bloccato = FAIL.
 #   - No deploy su no-op: commit e deploy Pages SOLO con nuovo dataset valido
 #     (publish rc 0) oppure force_deploy (bootstrap operatore).
-#   - Micro-fix Pages: homepage _site/index.html (cp mri-light-1.0.1.0.html).
+#   - Micro-fix Pages: homepage _site/index.html (cp mri-light-1.0.1.1.html).
 #   - PARTE H (robustezza rete): il client Metadata API usa retry automatici
 #     limitati (4 tentativi) con timeout esplicito (15s) e backoff esponenziale
 #     + jitter su errori transienti (SSL handshake timeout, conn reset, 429, 5xx).
@@ -180,7 +180,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "[INFO] Nessuna modifica al dataset."
           else
-            git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.1.0)"
+            git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.1.1)"
             git push
           fi
 
@@ -190,7 +190,7 @@ jobs:
         if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
         run: |
           mkdir -p _site/data
-          cp mri-light-1.0.1.0.html _site/index.html
+          cp mri-light-1.0.1.1.html _site/index.html
           cp -R data/latest _site/data/latest                    # dataset derivato
           cp -R data/geography _site/data/geography              # boundaries richieste
 
@@ -210,7 +210,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## MeteoRisk Light 1.0.1.0 — Pipeline status"
+            echo "## MeteoRisk Light 1.0.1.1 — Pipeline status"
             echo ""
             echo "**Bootstrap pending:** \`${{ steps.plan.outputs.bootstrap_pending || 'n/a' }}\` — **Ciclo:** \`${{ steps.plan.outputs.cycle_mode || 'n/a' }}\`"
             echo ""
