@@ -18,7 +18,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.0.1.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.0.1.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -78,9 +78,9 @@ ok('A11: ENS_VARS include le 3 variabili DERIVATE (Iso 0°C, ThetaE 850, Cumul p
   has(/id:\s*'theta_e_850'[\s\S]{0,220}derived:\s*true/) &&
   has(/id:\s*'cum_precipitation'[\s\S]{0,220}derived:\s*true/) &&
   has(/derived:\s*true/));
-ok('A12: 17 variabili complessive (14 dirette + 3 derivate) in ENS_VARS',
+ok('A12: 18 variabili complessive (14 dirette + 4 derivate) in ENS_VARS',
   (src.match(/id:\s*'[a-z_0-9]+'/g) || []).some(() => true) &&
-  (src.match(/derived:\s*true/g) || []).length === 3);
+  (src.match(/derived:\s*true/g) || []).length === 4);
 
 // ---------- B. ON-DEMAND / DEDUPE / TIMEOUT ----------
 ok('B1: pannello accordion chiuso all\'avvio (hidden nel HTML)',
@@ -172,9 +172,61 @@ ok('F7: inizializzazione del modulo in startApp (oltre alla definizione)',
   (src.match(/initEnsembleModule\(\)/g) || []).length >= 2);
 
 // ---------- G. VERSIONE ----------
-ok('G1: APP_VERSION = 1.0.1.0', has(/APP_VERSION\s*=\s*['"]1\.0\.1\.0['"]/));
+ok('G1: APP_VERSION = 1.0.1.1', has(/APP_VERSION\s*=\s*['"]1\.0\.1\.1['"]/));
 ok('G2: changelog 1.0.0.15 MODULO ENSEMBLE OPEN-METEO presente',
   has(/MODULO ENSEMBLE OPEN-METEO \(1\.0\.0\.15\)/));
+
+// ---------- H. WHITELIST VARIABILI PER MODELLO (bug: modelli "a vuoto") ----------
+const MODEL_VARS_BLOCK = (src.match(/const ENS_MODEL_VARS\s*=\s*\{[\s\S]*?\n    \};\s*\n/) || [''])[0];
+ok('H1: whitelist per-modello definita (ENS_MODEL_VARS)',
+  MODEL_VARS_BLOCK !== '' && has(/const ENS_MODEL_VARS\s*=\s*\{/));
+ok('H2: GEFS 0.25° (default) NEGA le variabili a livelli di pressione (T850/T500/Z)',
+  /ncep_gefs025:\s*\[[^\]]*temperature_850hPa/.test(MODEL_VARS_BLOCK) === false &&
+  /ncep_gefs025:\s*\[[^\]]*geopotential_height_500hPa/.test(MODEL_VARS_BLOCK) === false &&
+  has(/ncep_gefs025:\s*\[/));
+ok('H3: ICON globale NEGA raffiche e CAPE (limite superficie)',
+  /icon_global_eps:\s*\[[^\]]*wind_gusts_10m/.test(MODEL_VARS_BLOCK) === false &&
+  /icon_global_eps:\s*\[[^\]]*cape/.test(MODEL_VARS_BLOCK) === false);
+ok('H4: ECMWF IFS e GEFS 0.5° coprono TUTTE le 14 dirette + 3 derivate',
+  /ecmwf_ifs025:\s*\[[^\]]*relative_humidity_850hPa[^\]]*freezing_level/.test(MODEL_VARS_BLOCK) &&
+  /ncep_gefs05:\s*\[[^\]]*relative_humidity_850hPa[^\]]*theta_e_850/.test(MODEL_VARS_BLOCK));
+ok('H5: helper ensModelVarIds + popolamento select filtrato per modello',
+  has(/function ensModelVarIds\(/) &&
+  has(/function ensPopulateVarSelect\(modelKey\)/) &&
+  has(/ENS_MODELS\[ensById\('ens-model'\)\.value\]/));
+ok('H6: cambio modello ripopola il select variabili',
+  has(/mSel\.addEventListener\('change',\s*function\(\)\s*\{\s*ensPopulateRange\(\);\s*ensPopulateVarSelect\(mSel\.value\);\s*ensLoad\(\);\s*\}/));
+ok('H7: render con fallback sulla prima variabile reale ricevuta',
+  has(/Filtro sulla risposta REALE/) &&
+  has(/const firstId\s*=\s*Object\.keys\(ensState\.cache\.vars\)\[0\]/));
+
+// ---------- I. RRA: PRECIPITAZIONI A RIGHE + RIEPILOGO METEOCIEL T850+T500+RR ----------
+ok('I1: precipitation e\' un grafico A LINEE (spaghetti) come le altre variabili (non piu\' barre)',
+  has(/id:\s*'precipitation'[\s\S]{0,220}chart:\s*'spaghetti'/) &&
+  has(/id:\s*'snowfall'[\s\S]{0,220}chart:\s*'bars'/));
+ok('I2: nuova variabile Riepilogo t850_t500_precip in ENS_VARS (chart composite, derived)',
+  has(/id:\s*'t850_t500_precip'[\s\S]{0,240}chart:\s*'composite'[\s\S]{0,220}derived:\s*true/));
+ok('I3: composito in whitelist SOLO per modelli con T a 850/500 hPa (IFS/AIFS/GEFS 0.5°)',
+  MODEL_VARS_BLOCK !== '' &&
+  /ecmwf_ifs025:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) &&
+  /ecmwf_aifs025:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) &&
+  /ncep_gefs05:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) &&
+  /ncep_gefs025:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) === false &&
+  /icon_eu_eps:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) === false &&
+  /icon_global_eps:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) === false &&
+  /ukmo_global_ensemble_20km:\s*\[[^\]]*t850_t500_precip/.test(MODEL_VARS_BLOCK) === false);
+ok('I4: composito costruito solo con dati REALI (helper ensVarHasData + gate in ensComputeDerived)',
+  has(/function ensVarHasData\(/) &&
+  has(/varsOut\['t850_t500_precip'\]\s*=\s*\{/) &&
+  has(/ensVarHasData\(t85\)/));
+ok('I5: doppio asse Y (sinistra °C, destra mm) nel disegno del composito',
+  has(/isComposite\s*=\s*\(v\.chart\s*===\s*'composite'\)/) &&
+  has(/rrY\s*=\s*function\(mm\)/) &&
+  has(/ENS_THEME\.composite/));
+ok('I6: leggenda + tooltip dedicate al grafico composito',
+  has(/v\.chart\s*===\s*'composite'/) &&
+  has(/T850 hPa \(membri blu\)/) &&
+  has(/RR \(media\):/));
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
 process.exit(failures === 0 ? 0 : 1);

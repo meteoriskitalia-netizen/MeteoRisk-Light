@@ -12,7 +12,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.0.1.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.0.1.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -151,7 +151,7 @@ function baseCtx(sel, stores) {
   const body = src.slice(g, nextFn > 0 ? nextFn : g + 6000);
   ok('getForecastSlotData (corpo intero) senza guard h.time', !/\bh\.time\b/.test(body));
   ok('rebuildForecastSlotOptions() chiamata >= 3 volte', (src.match(/rebuildForecastSlotOptions\(\)/g) || []).length >= 3);
-  ok('APP_VERSION = 1.0.1.0', /APP_VERSION\s*=\s*['"]1\.0\.1\.0['"]/.test(src));
+  ok('APP_VERSION = 1.0.1.1', /APP_VERSION\s*=\s*['"]1\.0\.1\.1['"]/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

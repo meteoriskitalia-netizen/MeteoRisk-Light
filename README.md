@@ -60,12 +60,12 @@ lato applicazione:
    report "Metadata API unavailable after retries · No data fetch performed ·
    Last dataset unchanged".
 
-- App: `mri-light-1.0.1.0.html` (nessuna dipendenza runtime; solo static assets).
+- App: `mri-light-1.0.1.1.html` (nessuna dipendenza runtime; solo static assets).
 - Dati: dataset derivato in `data/latest/` — al primo deploy generato da GitHub
   Actions (zero dataset locali consegnati, Parte G).
 - Fonti: Open-Meteo (unica fonte meteorologica, input — MAI ripubblicata come tale).
 - Homepage GitHub Pages: `_site/index.html` (micro-fix mantenuto, `cp
-  mri-light-1.0.1.0.html _site/index.html`).
+  mri-light-1.0.1.1.html _site/index.html`).
 
 ## Scheduling 1.0.0.9 (coordinato + canary + bootstrap, dalla 1.0.0.8)
 1. **Driver run unico = ECMWF IFS**: `check_model_runs.py` interroga SOLO
