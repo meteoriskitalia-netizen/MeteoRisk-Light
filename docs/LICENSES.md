@@ -30,7 +30,9 @@ Nessuna dichiarazione di licenza completa è presente all'interno del file HTML 
 | Windy embed | Nessuna | DA VERIFICARE ESTERNAMENTE |
 | PRETEMP | Link pubblico nel codice; nessuna licenza | DA VERIFICARE ESTERNAMENTE |
 | Proxy CORS terze parti (cors.sh, allorigins, corsproxy.io, codetabs) | Nessuna | DA VERIFICARE ESTERNAMENTE |
-| Meteociel (carte + spaghetti) | Nessuna licenza dichiarata nel codice | DA VERIFICARE ESTERNAMENTE |
+| Open-Meteo Ensemble (spaghetti plots client-side: ECMWF IFS/AIFS, ICON-EPS, GEFS, MOGREPS-G) | Nessuna dichiarata (servizio pubblico `ensemble-api.open-meteo.com`, attribuzione in-app) | DA VERIFICARE ESTERNAMENTE |
+| Meteociel (solo carte modelli, disattivate) | Nessuna licenza dichiarata nel codice | DA VERIFICARE ESTERNAMENTE |
+| ~~Meteociel spaghetti~~ (RIMOSSO in 1.0.0.15) | Integrazione ensemble Meteociel eliminata dal modulo | NON PIÙ UTILIZZATO |
 | Leaflet 1.9.4 (CSS+JS) | Nessuna nel codice (progetto open-source noto) | PROBABILE OPEN — da confermare sul sito ufficiale |
 | Chart.js | Nessuna nel codice (progetto open-source noto) | PROBABILE OPEN — da confermare sul sito ufficiale |
 
