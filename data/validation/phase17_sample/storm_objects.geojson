@@ -1,0 +1,5142 @@
+{
+  "type": "FeatureCollection",
+  "generated_at": "2026-09-08T23:17:12Z",
+  "radar_timestamp": "2026-07-11T19:35:00Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.560409101329682,
+          45.256902493460416
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-00",
+        "track_id": 2,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 3,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-019",
+          "2026-07-11T19:35:00Z-025",
+          "2026-07-11T19:35:00Z-022"
+        ],
+        "area_km2": 13864.0,
+        "equiv_radius_km": 66.43,
+        "centroid_lonlat": [
+          11.56041,
+          45.2569
+        ],
+        "bbox_lonlat": [
+          10.72679,
+          44.66043,
+          12.40996,
+          45.84535
+        ],
+        "convex_hull_lonlat": [
+          [
+            10.96821,
+            45.46925
+          ],
+          [
+            11.56837,
+            45.25289
+          ],
+          [
+            11.1526,
+            45.72591
+          ]
+        ],
+        "max_dbz": 61.5,
+        "mean_dbz": 29.62,
+        "p90_dbz": 43.94,
+        "cell_density": 1,
+        "motion_speed_kmh": 49.6,
+        "motion_direction": 219.7,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.953,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 77,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 10.726788787491941,
+          "south": 44.66043299196083,
+          "east": 12.40995511563905,
+          "north": 45.84534657966394
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          14.463844117134162,
+          45.940726833486295
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-01",
+        "track_id": 5,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 5,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-008",
+          "2026-07-11T19:35:00Z-003",
+          "2026-07-11T19:35:00Z-004",
+          "2026-07-11T19:35:00Z-017",
+          "2026-07-11T19:35:00Z-001"
+        ],
+        "area_km2": 9779.0,
+        "equiv_radius_km": 55.79,
+        "centroid_lonlat": [
+          14.46384,
+          45.94073
+        ],
+        "bbox_lonlat": [
+          13.71284,
+          45.38762,
+          15.18655,
+          46.71275
+        ],
+        "convex_hull_lonlat": [
+          [
+            13.76129,
+            46.67952
+          ],
+          [
+            13.77171,
+            46.1032
+          ],
+          [
+            14.52089,
+            45.85126
+          ],
+          [
+            14.61161,
+            46.51615
+          ]
+        ],
+        "max_dbz": 60.5,
+        "mean_dbz": 22.11,
+        "p90_dbz": 37.66,
+        "cell_density": 1,
+        "motion_speed_kmh": 47.11,
+        "motion_direction": 171.4,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.95,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 88,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 13.712844980856229,
+          "south": 45.38761506165904,
+          "east": 15.186554963523054,
+          "north": 46.71275341516489
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.648882307689712,
+          45.78530127591506
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-02",
+        "track_id": 8,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-012"
+        ],
+        "area_km2": 6654.0,
+        "equiv_radius_km": 46.02,
+        "centroid_lonlat": [
+          9.64888,
+          45.7853
+        ],
+        "bbox_lonlat": [
+          9.05603,
+          45.37188,
+          10.24173,
+          46.19872
+        ],
+        "convex_hull_lonlat": [
+          [
+            9.64888,
+            45.7853
+          ]
+        ],
+        "max_dbz": 52.5,
+        "mean_dbz": 26.49,
+        "p90_dbz": 33.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 90.73,
+        "motion_direction": 222.3,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.973,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 76,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 9.05603468364431,
+          "south": 45.37187957993133,
+          "east": 10.241729931735115,
+          "north": 46.19872297189879
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.182295058938752,
+          46.26430415215401
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-03",
+        "track_id": 49,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 2,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-006",
+          "2026-07-11T19:35:00Z-005"
+        ],
+        "area_km2": 1354.0,
+        "equiv_radius_km": 20.76,
+        "centroid_lonlat": [
+          12.1823,
+          46.2643
+        ],
+        "bbox_lonlat": [
+          11.89411,
+          46.05174,
+          12.53468,
+          46.60416
+        ],
+        "convex_hull_lonlat": [
+          [
+            12.14694,
+            46.22665
+          ],
+          [
+            12.44062,
+            46.53945
+          ]
+        ],
+        "max_dbz": 42.0,
+        "mean_dbz": 25.91,
+        "p90_dbz": 32.29,
+        "cell_density": 1,
+        "motion_speed_kmh": 22.58,
+        "motion_direction": 222.2,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.901,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 75,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 11.894114921415984,
+          "south": 46.05174061462373,
+          "east": 12.534684929716002,
+          "north": 46.60415553026967
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.7316942871966905,
+          43.593933871837365
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-04",
+        "track_id": 12,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-032"
+        ],
+        "area_km2": 431.0,
+        "equiv_radius_km": 11.71,
+        "centroid_lonlat": [
+          6.73169,
+          43.59393
+        ],
+        "bbox_lonlat": [
+          6.58641,
+          43.48872,
+          6.87697,
+          43.69915
+        ],
+        "convex_hull_lonlat": [
+          [
+            6.73169,
+            43.59393
+          ]
+        ],
+        "max_dbz": 23.0,
+        "mean_dbz": 20.91,
+        "p90_dbz": 22.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 50.46,
+        "motion_direction": 140.7,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.616,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 61,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 6.586414540708054,
+          "south": 43.48871576071418,
+          "east": 6.876974033685329,
+          "north": 43.69915198296055
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.482186067711406,
+          44.91441135906191
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-05",
+        "track_id": 1,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-027"
+        ],
+        "area_km2": 347.0,
+        "equiv_radius_km": 10.51,
+        "centroid_lonlat": [
+          7.48219,
+          44.91441
+        ],
+        "bbox_lonlat": [
+          7.34887,
+          44.82,
+          7.6155,
+          45.00882
+        ],
+        "convex_hull_lonlat": [
+          [
+            7.48219,
+            44.91441
+          ]
+        ],
+        "max_dbz": 33.0,
+        "mean_dbz": 26.26,
+        "p90_dbz": 32.0,
+        "cell_density": 1,
+        "motion_speed_kmh": 40.82,
+        "motion_direction": 12.7,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.842,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 66,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 7.34886959373118,
+          "south": 44.82000166215257,
+          "east": 7.615502541691633,
+          "north": 45.00882105597125
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.175814227720114,
+          45.81921276147836
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-06",
+        "track_id": 45,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-020"
+        ],
+        "area_km2": 304.0,
+        "equiv_radius_km": 9.84,
+        "centroid_lonlat": [
+          8.17581,
+          45.81921
+        ],
+        "bbox_lonlat": [
+          8.04902,
+          45.73085,
+          8.30261,
+          45.90758
+        ],
+        "convex_hull_lonlat": [
+          [
+            8.17581,
+            45.81921
+          ]
+        ],
+        "max_dbz": 26.0,
+        "mean_dbz": 22.47,
+        "p90_dbz": 24.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 32.9,
+        "motion_direction": 183.5,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.811,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 70,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 8.049019024865924,
+          "south": 45.73084605721379,
+          "east": 8.302609430574304,
+          "north": 45.907579465742934
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.069200622022295,
+          45.087463120910755
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-07",
+        "track_id": 41,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-026"
+        ],
+        "area_km2": 168.0,
+        "equiv_radius_km": 7.31,
+        "centroid_lonlat": [
+          7.0692,
+          45.08746
+        ],
+        "bbox_lonlat": [
+          6.97616,
+          45.02177,
+          7.16224,
+          45.15315
+        ],
+        "convex_hull_lonlat": [
+          [
+            7.0692,
+            45.08746
+          ]
+        ],
+        "max_dbz": 36.0,
+        "mean_dbz": 26.17,
+        "p90_dbz": 32.0,
+        "cell_density": 1,
+        "motion_speed_kmh": 629.1,
+        "motion_direction": 265.6,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.784,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 69,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 6.97615724244652,
+          "south": 45.021772025048094,
+          "east": 7.162244001598069,
+          "north": 45.153154216773416
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.91843891173,
+          46.14646427405937
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-08",
+        "track_id": 22,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 3,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-013",
+          "2026-07-11T19:35:00Z-016",
+          "2026-07-11T19:35:00Z-009"
+        ],
+        "area_km2": 270.0,
+        "equiv_radius_km": 9.27,
+        "centroid_lonlat": [
+          10.91844,
+          46.14646
+        ],
+        "bbox_lonlat": [
+          10.66627,
+          46.0273,
+          11.19946,
+          46.33502
+        ],
+        "convex_hull_lonlat": [
+          [
+            10.70777,
+            46.30635
+          ],
+          [
+            10.79992,
+            46.16235
+          ],
+          [
+            11.12352,
+            46.07997
+          ]
+        ],
+        "max_dbz": 37.0,
+        "mean_dbz": 25.18,
+        "p90_dbz": 30.02,
+        "cell_density": 3,
+        "motion_speed_kmh": 186.13,
+        "motion_direction": 71.9,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 3,
+          "cost_separation": 0.249,
+          "merge_split": false,
+          "class": "medium",
+          "score": 3
+        },
+        "organization_score": 66,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 10.666272423211081,
+          "south": 46.0273004514743,
+          "east": 11.199456146831588,
+          "north": 46.33501816264389
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.382252402429259,
+          45.579885151958095
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-09",
+        "track_id": 16,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-023"
+        ],
+        "area_km2": 84.0,
+        "equiv_radius_km": 5.17,
+        "centroid_lonlat": [
+          7.38225,
+          45.57989
+        ],
+        "bbox_lonlat": [
+          7.31589,
+          45.53343,
+          7.44862,
+          45.62634
+        ],
+        "convex_hull_lonlat": [
+          [
+            7.38225,
+            45.57989
+          ]
+        ],
+        "max_dbz": 26.5,
+        "mean_dbz": 21.67,
+        "p90_dbz": 24.35,
+        "cell_density": 1,
+        "motion_speed_kmh": 37.92,
+        "motion_direction": 240.1,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.72,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 68,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 7.3158862333239725,
+          "south": 45.53343453261003,
+          "east": 7.448618571534546,
+          "north": 45.62633577130616
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.374506049548517,
+          46.332646028056004
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-10",
+        "track_id": 31,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-007"
+        ],
+        "area_km2": 83.0,
+        "equiv_radius_km": 5.14,
+        "centroid_lonlat": [
+          10.37451,
+          46.33265
+        ],
+        "bbox_lonlat": [
+          10.30763,
+          46.28647,
+          10.44138,
+          46.37882
+        ],
+        "convex_hull_lonlat": [
+          [
+            10.37451,
+            46.33265
+          ]
+        ],
+        "max_dbz": 32.0,
+        "mean_dbz": 26.48,
+        "p90_dbz": 29.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 151.61,
+        "motion_direction": 256.6,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.762,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 61,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 10.307633809990381,
+          "south": 46.2864727283169,
+          "east": 10.441378289106652,
+          "north": 46.37881932779511
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.850644330393116,
+          42.86155398462975
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-11",
+        "track_id": 24,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-035"
+        ],
+        "area_km2": 81.0,
+        "equiv_radius_km": 5.08,
+        "centroid_lonlat": [
+          11.85064,
+          42.86155
+        ],
+        "bbox_lonlat": [
+          11.78842,
+          42.81594,
+          11.91287,
+          42.90717
+        ],
+        "convex_hull_lonlat": [
+          [
+            11.85064,
+            42.86155
+          ]
+        ],
+        "max_dbz": 38.5,
+        "mean_dbz": 29.7,
+        "p90_dbz": 36.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 809.78,
+        "motion_direction": 141.9,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.802,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 41,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 11.788415635226649,
+          "south": 42.81594038193545,
+          "east": 11.912873025559584,
+          "north": 42.907167587324054
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.090150807144203,
+          44.37741299273251
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-12",
+        "track_id": 48,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-030"
+        ],
+        "area_km2": 80.0,
+        "equiv_radius_km": 5.05,
+        "centroid_lonlat": [
+          6.09015,
+          44.37741
+        ],
+        "bbox_lonlat": [
+          6.02673,
+          44.33208,
+          6.15357,
+          44.42274
+        ],
+        "convex_hull_lonlat": [
+          [
+            6.09015,
+            44.37741
+          ]
+        ],
+        "max_dbz": 21.5,
+        "mean_dbz": 20.42,
+        "p90_dbz": 21.0,
+        "cell_density": 1,
+        "motion_speed_kmh": 18.68,
+        "motion_direction": 283.0,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.948,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 27,
+        "score_confidence": "medium",
+        "envelope": {
+          "west": 6.026728265679265,
+          "south": 44.33208182992223,
+          "east": 6.153573348609142,
+          "north": 44.42274415554279
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.332150902650815,
+          46.62298548640131
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-13",
+        "track_id": 38,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-002"
+        ],
+        "area_km2": 36.0,
+        "equiv_radius_km": 3.39,
+        "centroid_lonlat": [
+          11.33215,
+          46.62299
+        ],
+        "bbox_lonlat": [
+          11.28787,
+          46.59258,
+          11.37643,
+          46.65339
+        ],
+        "convex_hull_lonlat": [
+          [
+            11.33215,
+            46.62299
+          ]
+        ],
+        "max_dbz": 27.5,
+        "mean_dbz": 24.99,
+        "p90_dbz": 27.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 21.24,
+        "motion_direction": 164.2,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.677,
+          "merge_split": false,
+          "class": "medium",
+          "score": 2
+        },
+        "organization_score": 61,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 11.287874189299695,
+          "south": 46.592576417938446,
+          "east": 11.376427616001935,
+          "north": 46.65339455486418
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.746465929097734,
+          43.155846217506216
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-14",
+        "track_id": 4,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-033"
+        ],
+        "area_km2": 31.0,
+        "equiv_radius_km": 3.14,
+        "centroid_lonlat": [
+          8.74647,
+          43.15585
+        ],
+        "bbox_lonlat": [
+          8.70778,
+          43.12763,
+          8.78515,
+          43.18406
+        ],
+        "convex_hull_lonlat": [
+          [
+            8.74647,
+            43.15585
+          ]
+        ],
+        "max_dbz": 24.0,
+        "mean_dbz": 22.0,
+        "p90_dbz": 23.5,
+        "cell_density": 1,
+        "motion_speed_kmh": 387.74,
+        "motion_direction": 241.6,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.05,
+          "merge_split": false,
+          "class": "high",
+          "score": 4
+        },
+        "organization_score": 54,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 8.707783847908114,
+          "south": 43.12762779622381,
+          "east": 8.785148010287354,
+          "north": 43.18406463878862
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.380308407642795,
+          45.83035472846934
+        ]
+      },
+      "properties": {
+        "storm_object_id": "SO-031-15",
+        "track_id": 39,
+        "timestamp": "2026-07-11T19:35:00Z",
+        "timestamp_ms": 1783798500000,
+        "frame_index": 31,
+        "cell_count": 1,
+        "cell_ids": [
+          "2026-07-11T19:35:00Z-021"
+        ],
+        "area_km2": 30.0,
+        "equiv_radius_km": 3.09,
+        "centroid_lonlat": [
+          12.38031,
+          45.83035
+        ],
+        "bbox_lonlat": [
+          12.34047,
+          45.8026,
+          12.42015,
+          45.85811
+        ],
+        "convex_hull_lonlat": [
+          [
+            12.38031,
+            45.83035
+          ]
+        ],
+        "max_dbz": 29.0,
+        "mean_dbz": 24.77,
+        "p90_dbz": 28.0,
+        "cell_density": 1,
+        "motion_speed_kmh": 955.21,
+        "motion_direction": 105.4,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "tracking_ambiguity_reason": {
+          "competing": 16,
+          "cell_density": 1,
+          "cost_separation": 0.033,
+          "merge_split": false,
+          "class": "high",
+          "score": 4
+        },
+        "organization_score": 48,
+        "score_confidence": "high",
+        "envelope": {
+          "west": 12.340468935073405,
+          "south": 45.80259517388628,
+          "east": 12.420147880212186,
+          "north": 45.858114283052394
+        },
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7.392601856959589,
+            44.632254941934654
+          ],
+          [
+            7.4097043647239165,
+            44.63760119666751
+          ],
+          [
+            7.435035120467045,
+            44.64457802937463
+          ],
+          [
+            7.790151562824022,
+            44.776079396506056
+          ],
+          [
+            7.802861987049012,
+            44.789594645989666
+          ],
+          [
+            7.813279000369504,
+            44.80081309630758
+          ],
+          [
+            7.820616702885663,
+            44.81126666644837
+          ],
+          [
+            7.8314027762341585,
+            44.81768487674331
+          ],
+          [
+            7.844443712450923,
+            44.8296872045078
+          ],
+          [
+            7.847423359033762,
+            44.83370014089014
+          ],
+          [
+            7.846370815808549,
+            44.834405449476876
+          ],
+          [
+            7.841877911047011,
+            44.83654414388848
+          ],
+          [
+            7.832304371266021,
+            44.83546631693875
+          ],
+          [
+            7.832009531810314,
+            44.837951302738325
+          ],
+          [
+            7.817487197352771,
+            44.84583702178687
+          ],
+          [
+            7.807602435807534,
+            44.85609874883409
+          ],
+          [
+            7.814454020858611,
+            44.87783198785177
+          ],
+          [
+            7.810090061929157,
+            44.87701117506178
+          ],
+          [
+            7.8060587236500645,
+            44.88885077982
+          ],
+          [
+            7.835326588591229,
+            44.90773535742641
+          ],
+          [
+            7.815973313797345,
+            44.877087687453724
+          ],
+          [
+            7.790518907957925,
+            44.86466351380409
+          ],
+          [
+            7.774978594864907,
+            44.888932494439224
+          ],
+          [
+            7.754280061610347,
+            44.90645891784069
+          ],
+          [
+            7.746172716955461,
+            44.908494976001855
+          ],
+          [
+            7.674411657035436,
+            44.954614164190005
+          ],
+          [
+            7.619419092680303,
+            44.97128151339165
+          ],
+          [
+            7.485523026971161,
+            44.99487290783289
+          ],
+          [
+            7.43743402473395,
+            44.992244314633474
+          ],
+          [
+            7.504601645062543,
+            44.9408752519
+          ],
+          [
+            7.493629615547825,
+            44.9248243413597
+          ],
+          [
+            7.482186067711406,
+            44.91441135906191
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 1,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "organization_score": 66,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.78,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.408315691732039,
+            45.979165238106106
+          ],
+          [
+            12.399107872296332,
+            45.963352591811216
+          ],
+          [
+            12.392097270434585,
+            45.947849805410655
+          ],
+          [
+            12.395918994993544,
+            45.93516482924322
+          ],
+          [
+            12.375709982809335,
+            45.92050940768208
+          ],
+          [
+            12.373879606129822,
+            45.90679420390723
+          ],
+          [
+            12.37210767646176,
+            45.88892061690983
+          ],
+          [
+            12.36653509145125,
+            45.86358202387628
+          ],
+          [
+            12.369766889881634,
+            45.847330233159816
+          ],
+          [
+            12.369962878920363,
+            45.82659792915969
+          ],
+          [
+            12.378807584917173,
+            45.811289290617566
+          ],
+          [
+            12.374740473689352,
+            45.789670757642796
+          ],
+          [
+            12.358093677246899,
+            45.76255068360245
+          ],
+          [
+            11.863280640027387,
+            45.46704654762152
+          ],
+          [
+            11.841827508526938,
+            45.46205799191373
+          ],
+          [
+            11.811161552546157,
+            45.47530110435216
+          ],
+          [
+            11.72121196409722,
+            45.41989321525664
+          ],
+          [
+            11.801819975512927,
+            45.42203704261384
+          ],
+          [
+            11.788588860572428,
+            45.409856011287836
+          ],
+          [
+            11.799805097951127,
+            45.367163375110295
+          ],
+          [
+            11.723009686896795,
+            45.34324683388217
+          ],
+          [
+            11.719283981089083,
+            45.34917038304444
+          ],
+          [
+            11.721745949505301,
+            45.340880255536014
+          ],
+          [
+            11.723007209300057,
+            45.33115766868253
+          ],
+          [
+            11.698601645963821,
+            45.324665608223775
+          ],
+          [
+            11.668005143690811,
+            45.309443049765385
+          ],
+          [
+            11.633568847890734,
+            45.29397871667171
+          ],
+          [
+            11.618228975446897,
+            45.28330067553547
+          ],
+          [
+            11.601985605190054,
+            45.284368945001376
+          ],
+          [
+            11.588830806740525,
+            45.27807444786427
+          ],
+          [
+            11.56643858234481,
+            45.27258816127909
+          ],
+          [
+            11.560409101329682,
+            45.256902493460416
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 2,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "organization_score": 77,
+        "classification": "Highly Organized Convective Cell",
+        "mean_cell_count": 3.19,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9.237566535679829,
+            44.815657638688876
+          ],
+          [
+            9.223616118853748,
+            44.817535639489826
+          ],
+          [
+            9.220487383677979,
+            44.81690330862266
+          ],
+          [
+            9.208420946783054,
+            44.82600187693464
+          ],
+          [
+            9.198359154388683,
+            44.824543482073885
+          ],
+          [
+            9.194604992287893,
+            44.827819721877205
+          ],
+          [
+            9.188638859161474,
+            44.83871949158288
+          ],
+          [
+            9.19996478855614,
+            44.854889532263044
+          ],
+          [
+            9.209330754306377,
+            44.87117515317299
+          ],
+          [
+            9.21355910196027,
+            44.88686341775586
+          ],
+          [
+            9.2145403713198,
+            44.89274915881149
+          ],
+          [
+            9.217853217072582,
+            44.909767920847315
+          ],
+          [
+            9.231935670821708,
+            44.92234073443707
+          ],
+          [
+            9.251170037513884,
+            44.92651364826725
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 3,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 81,
+        "classification": "Highly Organized Convective Cell",
+        "mean_cell_count": 1.57,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.966874539640955,
+            45.78572424709356
+          ],
+          [
+            14.955526242899236,
+            45.77317986357349
+          ],
+          [
+            14.947759419315899,
+            45.760894131119386
+          ],
+          [
+            14.937077746139416,
+            45.7474263680927
+          ],
+          [
+            14.921041928749721,
+            45.74819505386506
+          ],
+          [
+            14.94250638663185,
+            45.73893237870018
+          ],
+          [
+            14.958823681290022,
+            45.73350753837427
+          ],
+          [
+            14.975028276927077,
+            45.759945843293856
+          ],
+          [
+            15.003887803539135,
+            45.73675857425038
+          ],
+          [
+            15.034969776809588,
+            45.72864273598761
+          ],
+          [
+            15.065740960833557,
+            45.72084224140082
+          ],
+          [
+            15.081971300856788,
+            45.71970444864688
+          ],
+          [
+            15.085711744024003,
+            45.72669066658068
+          ],
+          [
+            15.091892028539615,
+            45.72594102586265
+          ],
+          [
+            15.113530670701781,
+            45.71574613983522
+          ],
+          [
+            15.115202389560663,
+            45.70151179008318
+          ],
+          [
+            14.990348727454283,
+            45.765778031942936
+          ],
+          [
+            14.894315515896436,
+            45.700474545408056
+          ],
+          [
+            14.955302745402419,
+            45.67604214248041
+          ],
+          [
+            14.99650421207302,
+            45.6592549211306
+          ],
+          [
+            14.999237311400089,
+            45.65026739796081
+          ],
+          [
+            15.003978257918812,
+            45.64882230106575
+          ],
+          [
+            15.021186459407266,
+            45.63695616291169
+          ],
+          [
+            12.1482277982225,
+            44.32857839534957
+          ],
+          [
+            12.1709207223329,
+            44.32431899420419
+          ],
+          [
+            12.201287756791801,
+            44.32716194870197
+          ],
+          [
+            12.227869795379497,
+            44.32360712771025
+          ],
+          [
+            12.254741088365451,
+            44.32009849313408
+          ],
+          [
+            12.272282252800384,
+            44.31759149924666
+          ],
+          [
+            6.782860449363171,
+            44.58355764974071
+          ],
+          [
+            6.788166285261205,
+            44.564167828809204
+          ],
+          [
+            8.746465929097734,
+            43.155846217506216
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 4,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 54,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.84,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.31355652050687,
+            46.63426599962186
+          ],
+          [
+            14.383721672190305,
+            46.59982670643027
+          ],
+          [
+            14.316937591297204,
+            46.611323196035585
+          ],
+          [
+            14.355728217625805,
+            46.60183955874794
+          ],
+          [
+            14.369067260488215,
+            46.58635662795444
+          ],
+          [
+            14.400096528373423,
+            46.575454705245676
+          ],
+          [
+            14.422403520445343,
+            46.55730271151699
+          ],
+          [
+            14.439128600524946,
+            46.539553259255825
+          ],
+          [
+            14.454534863915669,
+            46.51658846952854
+          ],
+          [
+            14.443489892484168,
+            46.48710568278774
+          ],
+          [
+            14.469801905557443,
+            46.46040496177931
+          ],
+          [
+            14.47879800507765,
+            46.44218778527295
+          ],
+          [
+            14.490605512468706,
+            46.42490075757394
+          ],
+          [
+            14.510813564628956,
+            46.398537626386904
+          ],
+          [
+            14.533522021678268,
+            46.37945015693334
+          ],
+          [
+            14.575455474541386,
+            46.35494429408524
+          ],
+          [
+            14.43831497955054,
+            46.20713574865647
+          ],
+          [
+            14.43953586132847,
+            46.19704634532605
+          ],
+          [
+            14.45462205005925,
+            46.16608420786092
+          ],
+          [
+            14.455660777690548,
+            46.14161492184476
+          ],
+          [
+            14.459125030117901,
+            46.1150442635291
+          ],
+          [
+            14.462467634035507,
+            46.092682229016134
+          ],
+          [
+            14.431023558467691,
+            46.06103820828661
+          ],
+          [
+            14.47018519295192,
+            46.0437411256374
+          ],
+          [
+            14.404122913837424,
+            46.069346101928495
+          ],
+          [
+            14.484797171871548,
+            45.965962367913605
+          ],
+          [
+            14.484920695688857,
+            45.95093693320561
+          ],
+          [
+            14.500454223380482,
+            45.94506340657334
+          ],
+          [
+            14.443070233588427,
+            45.9786129578808
+          ],
+          [
+            14.44702800560529,
+            45.968644972778904
+          ],
+          [
+            14.460498397917984,
+            45.957324379849666
+          ],
+          [
+            14.463844117134162,
+            45.940726833486295
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 5,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "organization_score": 88,
+        "classification": "Highly Organized Convective Cell",
+        "mean_cell_count": 2.78,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10.406706218656222,
+            44.503128516320814
+          ],
+          [
+            10.401977281859793,
+            44.5129127261623
+          ],
+          [
+            10.410733771525102,
+            44.506798068845676
+          ],
+          [
+            10.421905530373973,
+            44.50760919270801
+          ],
+          [
+            10.44237934199715,
+            44.501693388465945
+          ],
+          [
+            10.470672860120978,
+            44.48322940131623
+          ],
+          [
+            10.502482186902146,
+            44.46982964721102
+          ],
+          [
+            10.350916782376679,
+            44.53859181476587
+          ],
+          [
+            10.360977605737764,
+            44.53853153249149
+          ],
+          [
+            10.432455746960958,
+            44.53332380721984
+          ],
+          [
+            12.67248261308399,
+            44.64165761420847
+          ],
+          [
+            11.750515287175816,
+            44.45553027022768
+          ],
+          [
+            10.273426516888758,
+            45.20574813381342
+          ],
+          [
+            10.286759778381416,
+            45.20632212793083
+          ],
+          [
+            10.30625005315248,
+            45.21051003449043
+          ],
+          [
+            10.324764572052901,
+            45.21301331403177
+          ],
+          [
+            9.983480485102646,
+            46.41426113655446
+          ],
+          [
+            9.977104346106056,
+            46.404449309193424
+          ],
+          [
+            9.975977927193563,
+            46.388977559425584
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 6,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 61,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.26,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.291337371213217,
+            42.434449475001216
+          ],
+          [
+            14.335129968622986,
+            42.44338132280512
+          ],
+          [
+            14.372458524983706,
+            42.448614012210925
+          ],
+          [
+            14.393025058976743,
+            42.458378899602586
+          ],
+          [
+            14.389546633812884,
+            42.45061888884779
+          ],
+          [
+            14.42108581972143,
+            42.45256932079784
+          ],
+          [
+            14.470585098345166,
+            42.46112636574505
+          ],
+          [
+            14.49583490850009,
+            42.46616984978599
+          ],
+          [
+            11.505048328832705,
+            44.778863138825855
+          ],
+          [
+            11.444884642236993,
+            44.771741640009985
+          ],
+          [
+            11.375130656475937,
+            44.762846007027896
+          ],
+          [
+            11.386146481459797,
+            44.76512366312939
+          ],
+          [
+            11.361232862188974,
+            44.73346305909595
+          ],
+          [
+            11.34151238685587,
+            44.73951681714344
+          ],
+          [
+            11.359249029611535,
+            44.74118320522666
+          ],
+          [
+            11.377869693231805,
+            44.74012839934687
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 7,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 61,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.56,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10.197940415337811,
+            46.20810473733003
+          ],
+          [
+            10.465226203736126,
+            46.25963519493391
+          ],
+          [
+            10.446932046923779,
+            46.241121900320486
+          ],
+          [
+            10.45331103036285,
+            46.22969170259046
+          ],
+          [
+            10.451522116137154,
+            46.222897029111614
+          ],
+          [
+            10.439424760309704,
+            46.208605374555766
+          ],
+          [
+            10.418474394466697,
+            46.192312519699044
+          ],
+          [
+            10.381173872073296,
+            46.180448418149375
+          ],
+          [
+            9.833170129568877,
+            46.06439234364195
+          ],
+          [
+            9.700769334890785,
+            46.20381662668817
+          ],
+          [
+            9.808724232781856,
+            46.01360509601352
+          ],
+          [
+            9.785810956082143,
+            45.994370534836584
+          ],
+          [
+            9.759691540109127,
+            45.97544585898913
+          ],
+          [
+            9.750637757405352,
+            45.95717238297125
+          ],
+          [
+            9.604801730750339,
+            45.62798173585618
+          ],
+          [
+            9.68278983504454,
+            45.93116503587054
+          ],
+          [
+            9.628293072013996,
+            45.89891572515784
+          ],
+          [
+            9.625222287513315,
+            45.87929713307719
+          ],
+          [
+            9.654197787598934,
+            45.89155626951859
+          ],
+          [
+            9.67138666151563,
+            45.88480874337332
+          ],
+          [
+            9.638750680692644,
+            45.87547261327251
+          ],
+          [
+            9.628978300965596,
+            45.86937668374162
+          ],
+          [
+            9.62845438086393,
+            45.84558467000158
+          ],
+          [
+            9.622730069129005,
+            45.83029662904034
+          ],
+          [
+            9.579372369166052,
+            45.79476338726425
+          ],
+          [
+            9.658744429885274,
+            45.792824471925115
+          ],
+          [
+            9.658347494980656,
+            45.788763953327724
+          ],
+          [
+            9.667956735742408,
+            45.78899698249104
+          ],
+          [
+            9.661279196993108,
+            45.784838032396294
+          ],
+          [
+            9.667040113323647,
+            45.78379441113404
+          ],
+          [
+            9.661517888784585,
+            45.783762543812074
+          ],
+          [
+            9.648882307689712,
+            45.78530127591506
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 8,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 76,
+        "classification": "Highly Organized Convective Cell",
+        "mean_cell_count": 4.72,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9.209526956371562,
+            46.29739946617268
+          ],
+          [
+            9.194166183026864,
+            46.274642704835706
+          ],
+          [
+            9.191202298748511,
+            46.302546099360434
+          ],
+          [
+            9.192742260281177,
+            46.281909321890986
+          ],
+          [
+            9.163587752538954,
+            46.258976673470755
+          ],
+          [
+            9.14267286311122,
+            46.21680724224812
+          ],
+          [
+            9.119104267955402,
+            46.19811113685328
+          ],
+          [
+            9.101199756985121,
+            46.056603852871824
+          ],
+          [
+            11.00603288338714,
+            46.337392452078426
+          ],
+          [
+            10.766323537291376,
+            46.13491076538755
+          ],
+          [
+            10.773595396841475,
+            46.11851351805073
+          ],
+          [
+            12.592048335784574,
+            44.58018565694455
+          ],
+          [
+            11.450626176768736,
+            46.04564587718886
+          ],
+          [
+            11.464787274536116,
+            46.03092639310515
+          ],
+          [
+            11.128591703102387,
+            45.90861610853833
+          ],
+          [
+            11.144297967148523,
+            45.90627496509597
+          ],
+          [
+            15.279087326656777,
+            45.5171968310483
+          ],
+          [
+            15.279087326656777,
+            45.5171968310483
+          ],
+          [
+            9.530940933893945,
+            45.110716105397394
+          ],
+          [
+            9.521645540780003,
+            45.1143229198034
+          ],
+          [
+            9.538660655729684,
+            45.152541972137165
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 9,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 58,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 2.29,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.134604886759947,
+            43.581756690164205
+          ],
+          [
+            12.175817634302911,
+            43.5830868437984
+          ],
+          [
+            12.189659632127745,
+            43.57540381469651
+          ],
+          [
+            12.213071681504305,
+            43.58259433330791
+          ],
+          [
+            12.228052915817596,
+            43.57574568413402
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 10,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 27,
+        "classification": "Weak Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            13.443363606958686,
+            46.51214861304822
+          ],
+          [
+            13.42313584245794,
+            46.51622683257801
+          ],
+          [
+            13.442339712095633,
+            46.50221723867732
+          ],
+          [
+            13.466537106983166,
+            46.49290713061621
+          ],
+          [
+            13.478639637975062,
+            46.474757099907094
+          ],
+          [
+            13.493362930628967,
+            46.45724127271788
+          ],
+          [
+            13.50923953722662,
+            46.441789335599395
+          ],
+          [
+            13.543908702905838,
+            46.43314069927921
+          ],
+          [
+            13.554886627703592,
+            46.40897462221025
+          ],
+          [
+            13.549086984376746,
+            46.369260023610096
+          ],
+          [
+            13.561275340267944,
+            46.34693139120018
+          ],
+          [
+            13.57537701384261,
+            46.325027673617164
+          ],
+          [
+            13.584199370960357,
+            46.31454475561139
+          ],
+          [
+            13.583031294480168,
+            46.29260825062407
+          ],
+          [
+            13.567298678244885,
+            46.257139976476786
+          ],
+          [
+            13.582254971546575,
+            46.24189747796668
+          ],
+          [
+            7.688328396232675,
+            46.462801847484776
+          ],
+          [
+            7.702668697925316,
+            46.45234534360898
+          ],
+          [
+            7.671026551988463,
+            46.44554231726053
+          ],
+          [
+            7.656711539769993,
+            46.444935567636804
+          ],
+          [
+            7.646908617507403,
+            46.4287730780297
+          ],
+          [
+            7.643431319265781,
+            46.415966336919915
+          ],
+          [
+            13.00425690471665,
+            46.74718893265398
+          ],
+          [
+            13.016780825112608,
+            46.73247894560575
+          ],
+          [
+            13.042562770531958,
+            46.71788483885287
+          ],
+          [
+            13.053184721413016,
+            46.704539629200276
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 11,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 52,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.08,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.510461852488793,
+            43.78966336552837
+          ],
+          [
+            6.4950405533432,
+            43.78573541939794
+          ],
+          [
+            6.507045229252946,
+            43.77667275572001
+          ],
+          [
+            6.280491648466611,
+            44.140725351811675
+          ],
+          [
+            6.266141512106644,
+            44.109230435955006
+          ],
+          [
+            6.243498822339589,
+            44.10449284643658
+          ],
+          [
+            6.263725592319771,
+            44.083268063817535
+          ],
+          [
+            6.2693334968616865,
+            44.07471564758181
+          ],
+          [
+            6.272714519019008,
+            44.086566184752904
+          ],
+          [
+            6.2856405469576995,
+            44.07635952171179
+          ],
+          [
+            6.2997308759560084,
+            44.05897216066216
+          ],
+          [
+            6.313661005426417,
+            44.039375661917866
+          ],
+          [
+            6.319723517594237,
+            44.02787557534123
+          ],
+          [
+            6.329781957040351,
+            44.03162361926451
+          ],
+          [
+            6.348182250726484,
+            44.013667664919595
+          ],
+          [
+            6.364268008523058,
+            44.00076230989096
+          ],
+          [
+            6.376545137425337,
+            43.99326332533644
+          ],
+          [
+            6.5221284013995,
+            43.774457668194266
+          ],
+          [
+            6.543096266520899,
+            43.76516630751874
+          ],
+          [
+            6.55424541389289,
+            43.75038223242799
+          ],
+          [
+            6.567717239150035,
+            43.735211261486874
+          ],
+          [
+            6.593356672031245,
+            43.70199864988122
+          ],
+          [
+            6.610709942530524,
+            43.68478959443091
+          ],
+          [
+            6.619907556963419,
+            43.66817933153505
+          ],
+          [
+            6.630056582698641,
+            43.66901894191027
+          ],
+          [
+            6.639786977129495,
+            43.66795846357404
+          ],
+          [
+            6.663980410404542,
+            43.66869832375523
+          ],
+          [
+            6.691629314083563,
+            43.67932732764538
+          ],
+          [
+            6.719884091232036,
+            43.66064128489634
+          ],
+          [
+            6.719690928419706,
+            43.64114408993294
+          ],
+          [
+            6.730639408998454,
+            43.629496102537104
+          ],
+          [
+            6.7316942871966905,
+            43.593933871837365
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 12,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 61,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.44,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.695063987913633,
+            42.96538583324566
+          ],
+          [
+            12.705407171358601,
+            42.96961505730876
+          ],
+          [
+            12.72065730828512,
+            42.97467981926413
+          ],
+          [
+            12.794182395193548,
+            42.97597752298545
+          ],
+          [
+            12.816649053333522,
+            42.97914159020411
+          ],
+          [
+            12.845653383184963,
+            42.98159807547196
+          ],
+          [
+            12.830038131903256,
+            42.97724401525428
+          ],
+          [
+            12.850571521179715,
+            42.97678936502583
+          ],
+          [
+            13.016659106123045,
+            42.971122829668225
+          ],
+          [
+            13.02162327274099,
+            42.96775501759077
+          ],
+          [
+            13.02554801484932,
+            42.97085885741327
+          ],
+          [
+            13.03765530209677,
+            42.9638593886384
+          ],
+          [
+            13.053584776479514,
+            42.96340839451629
+          ],
+          [
+            13.069488219899437,
+            42.96106468851481
+          ],
+          [
+            13.096724876948702,
+            42.954152602553975
+          ],
+          [
+            13.11898912761982,
+            42.947494762011424
+          ],
+          [
+            13.1879219945942,
+            42.942553400769505
+          ],
+          [
+            15.219851759774802,
+            45.87036179618654
+          ],
+          [
+            15.208678307603773,
+            45.39330825410159
+          ],
+          [
+            15.145078321983956,
+            45.306960035999104
+          ],
+          [
+            15.17795926133728,
+            45.30265531766151
+          ],
+          [
+            15.208760704460087,
+            45.289031384984085
+          ],
+          [
+            15.230971658503258,
+            45.27374539756604
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 13,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 60,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.13,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.965481753806394,
+            42.22062739433897
+          ],
+          [
+            15.002206429927428,
+            42.217171522792704
+          ],
+          [
+            15.03574791584299,
+            42.21772769176974
+          ],
+          [
+            15.051017388895088,
+            42.22466182835905
+          ],
+          [
+            15.070826614265359,
+            42.227792232771456
+          ],
+          [
+            15.103228264323873,
+            42.23073532627039
+          ],
+          [
+            15.133440087362365,
+            42.23138446837068
+          ],
+          [
+            15.156703072282165,
+            42.229794662952905
+          ],
+          [
+            15.175233829627604,
+            42.24271173102936
+          ],
+          [
+            15.211547583659351,
+            42.23996543875999
+          ],
+          [
+            15.24637239147685,
+            42.2416140687439
+          ],
+          [
+            15.290319390400718,
+            42.24179863849488
+          ],
+          [
+            15.321104644992857,
+            42.277187870081995
+          ],
+          [
+            15.371894683025985,
+            42.28437144783252
+          ],
+          [
+            15.405663299131286,
+            42.2938342870042
+          ],
+          [
+            15.44695999676629,
+            42.304079580444224
+          ],
+          [
+            15.500375835107596,
+            42.30747287325904
+          ],
+          [
+            15.5350414567989,
+            42.32912251735912
+          ],
+          [
+            15.571065670251702,
+            42.33637873143622
+          ],
+          [
+            15.597726700178116,
+            42.3381964796169
+          ],
+          [
+            15.640888413558775,
+            42.33890881597805
+          ],
+          [
+            15.685430703843409,
+            42.348819720062245
+          ],
+          [
+            8.768446774683705,
+            41.10217630937701
+          ],
+          [
+            7.8672186293562225,
+            44.46043922551395
+          ],
+          [
+            6.766198202775606,
+            44.682087236401216
+          ],
+          [
+            6.762974248350992,
+            44.649483314741396
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 14,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 59,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.04,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.033248050456455,
+            44.02910960467234
+          ],
+          [
+            12.011462073554595,
+            44.03644028210146
+          ],
+          [
+            12.006748258057728,
+            44.04324870767483
+          ],
+          [
+            12.019968286367737,
+            44.04414587984132
+          ],
+          [
+            12.040968416279272,
+            44.03629747530873
+          ],
+          [
+            12.071945395342983,
+            44.0219184907822
+          ],
+          [
+            12.105689622212449,
+            44.02534705941028
+          ],
+          [
+            12.127945012168233,
+            44.0155371569958
+          ],
+          [
+            15.197089939268555,
+            46.138665630785695
+          ],
+          [
+            15.21684429056289,
+            46.12734609580848
+          ],
+          [
+            15.202808087702318,
+            46.19103688161996
+          ],
+          [
+            15.171514592283648,
+            46.26462240880963
+          ],
+          [
+            15.190560729260856,
+            46.26567492769017
+          ],
+          [
+            15.197975066586984,
+            46.25766956841224
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 15,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 40,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.07,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.079517913990042,
+            45.86273312410658
+          ],
+          [
+            8.082752798846352,
+            45.85143251569866
+          ],
+          [
+            8.064717239536398,
+            45.83751506246718
+          ],
+          [
+            8.021583460476926,
+            45.84388203354721
+          ],
+          [
+            7.997311770486254,
+            45.83956915912826
+          ],
+          [
+            7.981178576388989,
+            45.855230604305646
+          ],
+          [
+            8.017784510992144,
+            45.83456151692586
+          ],
+          [
+            8.0303647859613,
+            45.813967701692036
+          ],
+          [
+            8.058000570230229,
+            45.79689946345099
+          ],
+          [
+            8.047538170998468,
+            45.79322271292439
+          ],
+          [
+            8.017368472316589,
+            45.79170295654381
+          ],
+          [
+            7.988662151796317,
+            45.80087451049262
+          ],
+          [
+            8.014665473450439,
+            45.836055455110255
+          ],
+          [
+            7.958004518650973,
+            45.7883385860565
+          ],
+          [
+            7.977735106708806,
+            45.79200116381108
+          ],
+          [
+            7.910378648695062,
+            45.755876893769376
+          ],
+          [
+            7.886543752208134,
+            45.745221250876135
+          ],
+          [
+            7.860875905725889,
+            45.744332706502014
+          ],
+          [
+            7.792253896228646,
+            45.76699074164249
+          ],
+          [
+            7.768577019322593,
+            45.7578794862562
+          ],
+          [
+            7.7371458554159735,
+            45.747393927653135
+          ],
+          [
+            7.704985886232087,
+            45.73714686558143
+          ],
+          [
+            7.660707019320568,
+            45.72210569615982
+          ],
+          [
+            7.6227957040069025,
+            45.71859140525879
+          ],
+          [
+            7.508428110411383,
+            45.671743283138966
+          ],
+          [
+            7.511949102494229,
+            45.67639621039036
+          ],
+          [
+            7.473520819386615,
+            45.662728572671874
+          ],
+          [
+            7.4755066902308265,
+            45.66535698391324
+          ],
+          [
+            7.421276019765509,
+            45.641635657848184
+          ],
+          [
+            7.387155105826041,
+            45.62598474315469
+          ],
+          [
+            7.397161768078383,
+            45.58678348799685
+          ],
+          [
+            7.382252402429259,
+            45.579885151958095
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 16,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 68,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 2.22,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.48786322979912,
+            46.32401585964235
+          ],
+          [
+            11.444529646483922,
+            46.26645695407929
+          ],
+          [
+            11.453227844838434,
+            46.24866907675615
+          ],
+          [
+            11.463783875696679,
+            46.22517460479894
+          ],
+          [
+            11.453116653516796,
+            46.20549687076639
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 17,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 41,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.2,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.458047433906618,
+            44.45495175093488
+          ],
+          [
+            11.467278365600981,
+            44.459147721140695
+          ],
+          [
+            11.482733045834237,
+            44.46074800641776
+          ],
+          [
+            11.503528610340036,
+            44.459710028826585
+          ],
+          [
+            11.559882420781593,
+            44.45231354575394
+          ],
+          [
+            11.627623696858544,
+            44.44127458821324
+          ],
+          [
+            11.656333239090715,
+            44.44256283374482
+          ],
+          [
+            11.663818366245636,
+            44.447175908151856
+          ],
+          [
+            11.671848172554594,
+            44.4576510396741
+          ],
+          [
+            11.691856985445568,
+            44.4573118980966
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 19,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 48,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            13.052800290923964,
+            43.42137108124842
+          ],
+          [
+            13.090962784472588,
+            43.41830245048545
+          ],
+          [
+            13.127184188146053,
+            43.416934012817656
+          ],
+          [
+            13.163624909793874,
+            43.42081713181463
+          ],
+          [
+            13.197052539454166,
+            43.41973269568991
+          ],
+          [
+            6.7412113526997475,
+            44.49091302083522
+          ],
+          [
+            11.039905277442758,
+            45.33009053296186
+          ],
+          [
+            11.08186426367286,
+            45.321919198184844
+          ],
+          [
+            11.105242429012264,
+            45.31267881957269
+          ],
+          [
+            11.122650572817859,
+            45.30296055533105
+          ],
+          [
+            10.9557759021088,
+            45.31069951614031
+          ],
+          [
+            10.966535199174333,
+            45.3089278532116
+          ],
+          [
+            10.968015446868923,
+            45.30612478033334
+          ],
+          [
+            10.98774967569007,
+            45.08121519266203
+          ],
+          [
+            11.005099837375031,
+            45.07545134502182
+          ],
+          [
+            10.967372379272526,
+            45.105261891870924
+          ],
+          [
+            10.401861230435028,
+            46.38007418716273
+          ],
+          [
+            10.561926972851476,
+            45.2343323285123
+          ],
+          [
+            10.565883364815491,
+            45.223676793362124
+          ],
+          [
+            10.572410298831784,
+            45.21374778453918
+          ],
+          [
+            10.237618586819877,
+            45.221885991180194
+          ],
+          [
+            10.243078987661892,
+            45.21117534751104
+          ],
+          [
+            10.253392728159996,
+            45.213582393601065
+          ],
+          [
+            10.261608262125058,
+            45.213443849200466
+          ],
+          [
+            7.341470017604158,
+            45.24000578615822
+          ],
+          [
+            11.817329497497672,
+            42.97398344661209
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 21,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 60,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.15,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7.778052423672647,
+            45.47709881050178
+          ],
+          [
+            7.772293530359997,
+            45.46629177536091
+          ],
+          [
+            7.772131511023065,
+            45.4616496735633
+          ],
+          [
+            8.061430887035737,
+            46.38245314091141
+          ],
+          [
+            8.046120466882446,
+            46.372234392834734
+          ],
+          [
+            8.33900842518584,
+            46.17987216027057
+          ],
+          [
+            8.324982923589602,
+            46.176060830576624
+          ],
+          [
+            8.312736580875681,
+            46.179011162951014
+          ],
+          [
+            8.35487452452418,
+            46.09475413362212
+          ],
+          [
+            8.32358362662944,
+            46.088335181304934
+          ],
+          [
+            8.255875002487587,
+            46.14676437135833
+          ],
+          [
+            8.235637978675431,
+            46.138909213439135
+          ],
+          [
+            10.832565459733328,
+            46.50585706644034
+          ],
+          [
+            10.834320954517406,
+            46.571512717099615
+          ],
+          [
+            10.847977770460517,
+            46.546898556558205
+          ],
+          [
+            10.847885518714186,
+            46.48961859584593
+          ],
+          [
+            10.85121304945551,
+            46.48213405439465
+          ],
+          [
+            10.701935612241416,
+            46.439876427071205
+          ],
+          [
+            10.865376914804203,
+            46.469642471916124
+          ],
+          [
+            11.001637118742114,
+            46.33449425620122
+          ],
+          [
+            10.991748778978616,
+            46.339643286523916
+          ],
+          [
+            10.860934190217591,
+            46.42494540838474
+          ],
+          [
+            10.861670469317884,
+            46.405949852292295
+          ],
+          [
+            10.861163546379228,
+            46.388785797312586
+          ],
+          [
+            10.86442708808211,
+            46.37403596729311
+          ],
+          [
+            10.852339801642968,
+            46.35147461269449
+          ],
+          [
+            10.846905369728695,
+            46.32783070646015
+          ],
+          [
+            10.831932016004359,
+            46.316759023819195
+          ],
+          [
+            10.801947602639713,
+            46.291849532765376
+          ],
+          [
+            10.794198531352725,
+            46.247856220090846
+          ],
+          [
+            10.787578420773166,
+            46.217621196074276
+          ],
+          [
+            10.91843891173,
+            46.14646427405937
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 22,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 66,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.72,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.183371098557378,
+            44.40186664104773
+          ],
+          [
+            14.266114999356857,
+            44.39873443342097
+          ],
+          [
+            14.33493104521666,
+            44.39798894556294
+          ],
+          [
+            14.37402834018231,
+            44.40609201540174
+          ],
+          [
+            14.406850767448006,
+            44.40168498864239
+          ],
+          [
+            14.394926202449144,
+            44.405579754108224
+          ],
+          [
+            14.415971828153051,
+            44.39725116226435
+          ],
+          [
+            14.456188439930948,
+            44.41300568510623
+          ],
+          [
+            14.559195475245184,
+            44.479871222794465
+          ],
+          [
+            14.60608219672888,
+            44.47938207881312
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 23,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "high",
+        "organization_score": 42,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.5,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.016402873371455,
+            46.51695222211742
+          ],
+          [
+            14.622543564966968,
+            42.13001996954426
+          ],
+          [
+            14.66572476995695,
+            42.1290927778966
+          ],
+          [
+            14.69241880547275,
+            42.1324737340815
+          ],
+          [
+            14.774051204911276,
+            42.58470466554002
+          ],
+          [
+            14.817821212133568,
+            42.57905946959286
+          ],
+          [
+            14.865351360195001,
+            42.56935535797746
+          ],
+          [
+            14.89273830273171,
+            42.5722123371643
+          ],
+          [
+            14.928392229606917,
+            42.59270250679639
+          ],
+          [
+            6.215838616761339,
+            44.978832703792534
+          ],
+          [
+            6.227644898792623,
+            44.9770110858552
+          ],
+          [
+            6.18395224951504,
+            44.96619926822729
+          ],
+          [
+            6.20038015677267,
+            44.958111925619704
+          ],
+          [
+            6.207135636385195,
+            44.94798775503728
+          ],
+          [
+            6.211447776575512,
+            44.93792374416219
+          ],
+          [
+            6.216542504662104,
+            44.914235280856204
+          ],
+          [
+            6.204445096081714,
+            44.93471766690146
+          ],
+          [
+            6.200952116071072,
+            44.93378025754485
+          ],
+          [
+            6.1841787739952565,
+            44.913481323596805
+          ],
+          [
+            6.170703647917765,
+            44.92272046631215
+          ],
+          [
+            6.168540727928736,
+            44.90406321033179
+          ],
+          [
+            6.136023430405451,
+            44.95212552370318
+          ],
+          [
+            6.146548054752273,
+            44.95590613628046
+          ],
+          [
+            6.139492806311175,
+            44.94202201455056
+          ],
+          [
+            6.152048990187414,
+            44.95827637756424
+          ],
+          [
+            6.144306410072086,
+            44.94594943840286
+          ],
+          [
+            6.11275440070111,
+            44.906198993236266
+          ],
+          [
+            6.117037639661006,
+            44.87421819496759
+          ],
+          [
+            6.111109985745767,
+            44.85964014772973
+          ],
+          [
+            6.103108731387454,
+            44.82623545836304
+          ],
+          [
+            11.857846086147623,
+            42.858248746261594
+          ],
+          [
+            11.850644330393116,
+            42.86155398462975
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 24,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 41,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.09,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.423000956818866,
+            46.29327115656042
+          ],
+          [
+            6.182880891036063,
+            44.74478025166673
+          ],
+          [
+            6.188389582385471,
+            44.72434130157001
+          ],
+          [
+            6.199554428990281,
+            44.69943631387646
+          ],
+          [
+            6.2115065841375205,
+            44.6657760044501
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 29,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 51,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.981945260707288,
+            46.41707513995713
+          ],
+          [
+            15.01879705488205,
+            46.385114461808506
+          ],
+          [
+            15.040733690177143,
+            46.3795043656902
+          ],
+          [
+            15.015173779229654,
+            46.42970835069171
+          ],
+          [
+            15.048222883655122,
+            46.41230351242701
+          ],
+          [
+            15.073540283917932,
+            46.38396042966348
+          ],
+          [
+            15.10467841961317,
+            46.366199955356635
+          ],
+          [
+            15.04920589746805,
+            46.37570236771275
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 30,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 40,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.38,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            13.499641117897339,
+            46.88864190955941
+          ],
+          [
+            13.514422250945252,
+            46.88061524289848
+          ],
+          [
+            13.524608383654984,
+            46.87441389773449
+          ],
+          [
+            13.541960628270582,
+            46.858838192415085
+          ],
+          [
+            13.563302811189441,
+            46.84526068690867
+          ],
+          [
+            13.466226618403526,
+            46.94969614412393
+          ],
+          [
+            13.610848328534654,
+            46.81712206482169
+          ],
+          [
+            13.603632976942654,
+            46.82972098065448
+          ],
+          [
+            13.622229898455384,
+            46.81927894425011
+          ],
+          [
+            13.632510886464596,
+            46.81443852922126
+          ],
+          [
+            13.63489146825597,
+            46.805031174103256
+          ],
+          [
+            13.64688254192855,
+            46.79392120937571
+          ],
+          [
+            13.656750903591112,
+            46.778971538540915
+          ],
+          [
+            13.681117957635482,
+            46.770912658727816
+          ],
+          [
+            13.696881460325873,
+            46.76191368655993
+          ],
+          [
+            13.69989200821051,
+            46.758043120168466
+          ],
+          [
+            13.703325977073064,
+            46.74816986256591
+          ],
+          [
+            13.710606423437513,
+            46.737737008249645
+          ],
+          [
+            13.730483139700002,
+            46.72558623239614
+          ],
+          [
+            13.778994267168851,
+            46.70471591812213
+          ],
+          [
+            13.827345176886965,
+            46.68705240127616
+          ],
+          [
+            13.849385205363783,
+            46.67673433278744
+          ],
+          [
+            10.347983508662237,
+            46.31015960062799
+          ],
+          [
+            10.322478223740088,
+            46.28548003683118
+          ],
+          [
+            10.314539425074395,
+            46.25427713329319
+          ],
+          [
+            10.300883243413566,
+            46.235480179085954
+          ],
+          [
+            10.383091050829826,
+            46.363209108717314
+          ],
+          [
+            10.373665292019242,
+            46.35481324558521
+          ],
+          [
+            10.372360820875235,
+            46.34472484288958
+          ],
+          [
+            10.374506049548517,
+            46.332646028056004
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 31,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 61,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.33,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9.154129599389226,
+            45.47259368043703
+          ],
+          [
+            9.157518378853048,
+            45.464677837399535
+          ],
+          [
+            9.153496429399821,
+            45.46616764009884
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 32,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "medium",
+        "organization_score": 38,
+        "classification": "Convective Cell",
+        "mean_cell_count": 2.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7.7109042481205865,
+            46.35474835286192
+          ],
+          [
+            7.691664862533632,
+            46.34402798070403
+          ],
+          [
+            7.665955134168437,
+            46.348158706589416
+          ],
+          [
+            7.6061776222999615,
+            46.34340526828558
+          ],
+          [
+            7.642187728570493,
+            46.321360769291104
+          ],
+          [
+            7.418528961121883,
+            46.405280944383705
+          ],
+          [
+            7.429140346713252,
+            46.401094785148224
+          ],
+          [
+            7.384603131129661,
+            46.386745441545486
+          ],
+          [
+            7.380242422387667,
+            46.37415320567208
+          ],
+          [
+            7.391028980522644,
+            46.371573094110055
+          ],
+          [
+            7.39159358394431,
+            46.366437916500395
+          ],
+          [
+            7.367756871885816,
+            46.343634677106614
+          ],
+          [
+            7.343534917201323,
+            46.32540875742377
+          ],
+          [
+            7.3376021421068245,
+            46.31189061856559
+          ],
+          [
+            7.347584642730459,
+            46.306789570097706
+          ],
+          [
+            7.359368517655637,
+            46.29363000676636
+          ],
+          [
+            7.361410466796749,
+            46.283943182616504
+          ],
+          [
+            7.370962827894778,
+            46.251022915814666
+          ],
+          [
+            7.387454235116047,
+            46.2286843491318
+          ],
+          [
+            7.356445860477311,
+            46.208567981565636
+          ],
+          [
+            7.343087810097035,
+            46.19869765206169
+          ],
+          [
+            7.447266854389753,
+            46.212387874349055
+          ],
+          [
+            7.5630446555753075,
+            46.2768804374013
+          ],
+          [
+            14.472915884351575,
+            46.665471199117334
+          ],
+          [
+            14.501320731567104,
+            46.641616713248816
+          ],
+          [
+            11.846965761732145,
+            42.89951507624837
+          ],
+          [
+            12.387859107678677,
+            46.59624960531811
+          ],
+          [
+            12.40746243077471,
+            46.57618345340974
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 33,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 48,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.11,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.356457333673232,
+            46.19829569273841
+          ],
+          [
+            12.188180040938724,
+            45.05938630288109
+          ],
+          [
+            12.211417877778926,
+            45.058125966425564
+          ],
+          [
+            12.238953317180947,
+            45.050779282330325
+          ],
+          [
+            13.679181801039572,
+            45.959886970798635
+          ],
+          [
+            13.698900913929,
+            45.9329289521968
+          ],
+          [
+            13.765486768529794,
+            45.917103990957685
+          ],
+          [
+            13.832999070200955,
+            45.89693573291428
+          ],
+          [
+            13.88489232631786,
+            45.87698990382963
+          ],
+          [
+            13.91723327077812,
+            45.866038026328646
+          ],
+          [
+            13.93498430753439,
+            45.863008033634365
+          ],
+          [
+            13.955756773830307,
+            45.85827927904429
+          ],
+          [
+            13.9768025049458,
+            45.84785746960159
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 34,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 73,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.08,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            13.350883570276174,
+            45.997290888999444
+          ],
+          [
+            13.379354557056216,
+            45.99398271442514
+          ],
+          [
+            10.500116736123708,
+            44.78741568820795
+          ],
+          [
+            10.535003727660401,
+            44.77718459747209
+          ],
+          [
+            10.47645044386532,
+            44.77669560491929
+          ],
+          [
+            10.481435208930575,
+            44.77793467213409
+          ],
+          [
+            10.56600898927434,
+            44.77988526036106
+          ],
+          [
+            10.539962455128165,
+            44.80833320308707
+          ],
+          [
+            10.557012660781673,
+            44.80933404973362
+          ],
+          [
+            10.573627508552072,
+            44.799349895055215
+          ],
+          [
+            10.599592518321627,
+            44.794887711189254
+          ],
+          [
+            9.939302376787275,
+            45.32232030264154
+          ],
+          [
+            7.9681662781721325,
+            44.278610402200904
+          ],
+          [
+            12.709398827345716,
+            44.45336594930091
+          ],
+          [
+            8.774664689785487,
+            46.00836288016924
+          ],
+          [
+            8.776521697189317,
+            45.99779234719812
+          ],
+          [
+            9.971981095266642,
+            46.35260588910804
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 35,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 49,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.47,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.833221142022257,
+            45.238808998798206
+          ],
+          [
+            11.852617741121785,
+            45.26617731287287
+          ],
+          [
+            11.892907650991265,
+            45.24045772772746
+          ],
+          [
+            10.706339370523326,
+            44.39808097778037
+          ],
+          [
+            10.758851644392557,
+            44.37492726392758
+          ],
+          [
+            10.787418588647771,
+            44.36745945775085
+          ],
+          [
+            10.812195467179917,
+            44.364538797966695
+          ],
+          [
+            10.854275202422146,
+            44.36060966862
+          ],
+          [
+            10.880838391823998,
+            44.36362271451724
+          ],
+          [
+            10.900014602960338,
+            44.35700785577425
+          ],
+          [
+            10.904607746594664,
+            44.37304578223975
+          ],
+          [
+            10.916163656459414,
+            44.37300812823311
+          ],
+          [
+            16.597790766673793,
+            42.752237794814995
+          ],
+          [
+            16.636719696649475,
+            42.749145699275964
+          ],
+          [
+            8.163079018750885,
+            45.560077188192146
+          ],
+          [
+            7.204219669405798,
+            44.38621229063398
+          ],
+          [
+            7.156164502306796,
+            44.382487913321555
+          ],
+          [
+            7.168219003108129,
+            44.37342178364493
+          ],
+          [
+            7.167124082199081,
+            44.371394843469524
+          ],
+          [
+            7.151765781793883,
+            44.37806965624919
+          ],
+          [
+            7.140741620905049,
+            44.367496502385634
+          ],
+          [
+            7.1388679984078856,
+            44.363243400823734
+          ],
+          [
+            7.144113130310237,
+            44.368910703300664
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 36,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 30,
+        "classification": "Weak Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.31942529688192,
+            42.99864471012539
+          ],
+          [
+            14.359000239986512,
+            42.998240075849125
+          ],
+          [
+            14.40138083838803,
+            43.0044601056816
+          ],
+          [
+            14.447087254921605,
+            43.00929736360985
+          ],
+          [
+            14.47927896841191,
+            43.006153426560715
+          ],
+          [
+            14.515172450697522,
+            43.00466726981996
+          ],
+          [
+            14.556238911107663,
+            43.00002623563207
+          ],
+          [
+            14.591444050684055,
+            43.00129362880948
+          ],
+          [
+            14.627911800215271,
+            42.994823422048235
+          ],
+          [
+            14.669443709763264,
+            42.988035924670676
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 37,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 66,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11.228783644832292,
+            46.87460344921689
+          ],
+          [
+            11.236116090393821,
+            46.86705209901239
+          ],
+          [
+            11.239015513629848,
+            46.85355934129755
+          ],
+          [
+            11.245109443095687,
+            46.842948795710484
+          ],
+          [
+            11.253425289322285,
+            46.83527972086906
+          ],
+          [
+            11.25729486717197,
+            46.82439297393687
+          ],
+          [
+            11.25905699475415,
+            46.81712623105989
+          ],
+          [
+            11.271822470193673,
+            46.765281924515456
+          ],
+          [
+            11.257842872897383,
+            46.74275798899112
+          ],
+          [
+            11.260343968459402,
+            46.71842150532536
+          ],
+          [
+            11.26956134120794,
+            46.703208427772715
+          ],
+          [
+            11.277137064287993,
+            46.690463344393336
+          ],
+          [
+            11.279307427977981,
+            46.68033553701761
+          ],
+          [
+            11.276617234861499,
+            46.679952899756024
+          ],
+          [
+            11.27964703474603,
+            46.67036090664908
+          ],
+          [
+            11.25599916856091,
+            46.68935303876754
+          ],
+          [
+            11.25279993961241,
+            46.69068542072538
+          ],
+          [
+            11.261086129999992,
+            46.69846936033887
+          ],
+          [
+            11.224697290044361,
+            46.72945888005843
+          ],
+          [
+            11.230572319973426,
+            46.71273084044145
+          ],
+          [
+            11.242626055889659,
+            46.701334172608895
+          ],
+          [
+            11.250456510487995,
+            46.68852722996606
+          ],
+          [
+            11.263196294271006,
+            46.66867679663195
+          ],
+          [
+            11.281795492148742,
+            46.65686587527694
+          ],
+          [
+            11.301321101239402,
+            46.6471993961051
+          ],
+          [
+            11.30631549486586,
+            46.63132849457375
+          ],
+          [
+            11.31528684891474,
+            46.626137474932484
+          ],
+          [
+            11.332150902650815,
+            46.62298548640131
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 38,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 61,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.14,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9.112409355864132,
+            46.50533950139403
+          ],
+          [
+            9.113451040757406,
+            46.49577508130586
+          ],
+          [
+            9.106641219669863,
+            46.49790763515246
+          ],
+          [
+            8.979802448146376,
+            46.5413892201566
+          ],
+          [
+            9.019900798345155,
+            46.49177091198904
+          ],
+          [
+            8.995625706011744,
+            46.47743294908641
+          ],
+          [
+            9.00999523414649,
+            46.4607963959329
+          ],
+          [
+            9.033680359190168,
+            46.50401846307023
+          ],
+          [
+            9.133406814727863,
+            46.520454428239304
+          ],
+          [
+            9.073613446325902,
+            46.517751189803604
+          ],
+          [
+            9.07762803028098,
+            46.49551218755072
+          ],
+          [
+            9.078884181749885,
+            46.500339894364295
+          ],
+          [
+            9.080907974874933,
+            46.486029824658296
+          ],
+          [
+            9.0312382803918,
+            46.45109678122913
+          ],
+          [
+            9.030702863701691,
+            46.44805067326862
+          ],
+          [
+            9.026218274785515,
+            46.435027736526955
+          ],
+          [
+            9.03154160554094,
+            46.41877717002596
+          ],
+          [
+            9.180430687110528,
+            46.37969097753787
+          ],
+          [
+            9.167231472369336,
+            46.36613135096241
+          ],
+          [
+            9.168976545788706,
+            46.354889292406114
+          ],
+          [
+            9.16137388489286,
+            46.34050739175224
+          ],
+          [
+            9.159818489500015,
+            46.32939665470728
+          ],
+          [
+            7.559214322872862,
+            39.18387539191433
+          ],
+          [
+            10.300488222737366,
+            46.57866473538028
+          ],
+          [
+            12.380308407642795,
+            45.83035472846934
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 39,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 48,
+        "classification": "Convective Cell",
+        "mean_cell_count": 2.24,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9.695633790761994,
+            46.22309502918718
+          ],
+          [
+            10.001692578681682,
+            46.08069149384858
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 40,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 77,
+        "classification": "Highly Organized Convective Cell",
+        "mean_cell_count": 6.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10.606809256574522,
+            45.33371406696542
+          ],
+          [
+            11.030488084820693,
+            46.372504163275515
+          ],
+          [
+            11.03483711665381,
+            46.377474077614416
+          ],
+          [
+            11.188914305646144,
+            46.26329444419404
+          ],
+          [
+            11.207690052711948,
+            46.2468508715483
+          ],
+          [
+            11.217479372712576,
+            46.22912506658376
+          ],
+          [
+            10.467536423888976,
+            46.00410764695222
+          ],
+          [
+            10.45615699585265,
+            45.98300112214136
+          ],
+          [
+            10.450781054993566,
+            45.95767256665585
+          ],
+          [
+            10.46181598451417,
+            45.93142870676383
+          ],
+          [
+            10.46359536318004,
+            45.92426630730365
+          ],
+          [
+            10.462310059609356,
+            45.90280302002779
+          ],
+          [
+            10.460410778089917,
+            45.88640860333364
+          ],
+          [
+            10.469234925044645,
+            45.871900876133296
+          ],
+          [
+            10.47659363528479,
+            45.87350702449653
+          ],
+          [
+            10.46707793950782,
+            45.88311946667281
+          ],
+          [
+            13.920183605492031,
+            46.5937998925274
+          ],
+          [
+            13.924624589806795,
+            46.578573270525844
+          ],
+          [
+            13.937325738695687,
+            46.56266969060857
+          ],
+          [
+            14.546316852826685,
+            46.596214897039516
+          ],
+          [
+            7.118993869851932,
+            45.10632008999356
+          ],
+          [
+            7.091842091266182,
+            45.08563381837683
+          ],
+          [
+            7.069200622022295,
+            45.087463120910755
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 41,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 69,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.39,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            14.107309609053313,
+            45.79298431331432
+          ],
+          [
+            11.906496320288495,
+            46.64283138776626
+          ],
+          [
+            11.924053420825496,
+            46.623248550605936
+          ],
+          [
+            11.932422579683479,
+            46.60674810566816
+          ],
+          [
+            11.94428898621734,
+            46.59383829273159
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 42,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 70,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            16.4473543124246,
+            42.78713615034979
+          ],
+          [
+            8.71356876118343,
+            45.83820061697679
+          ],
+          [
+            12.727298330348026,
+            44.272595135702
+          ],
+          [
+            6.746513880515394,
+            44.868091208207424
+          ],
+          [
+            6.761384769598582,
+            44.837910058082294
+          ],
+          [
+            14.807571807205102,
+            43.02930991837014
+          ],
+          [
+            14.841269004808696,
+            43.03650778974092
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 43,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 42,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.809012426795809,
+            46.08425900310193
+          ],
+          [
+            12.787579605274578,
+            46.0855779805443
+          ],
+          [
+            12.771803140137166,
+            46.09231326693555
+          ],
+          [
+            12.748971003928652,
+            46.09785815970205
+          ],
+          [
+            13.003469855179898,
+            45.960127533223876
+          ],
+          [
+            12.976195663205859,
+            45.92540121100098
+          ],
+          [
+            12.936156468539087,
+            45.913216901333215
+          ],
+          [
+            12.945107564888936,
+            45.90789695906458
+          ],
+          [
+            12.941163300717156,
+            45.88619140810594
+          ],
+          [
+            12.926990091452986,
+            45.849977368497704
+          ],
+          [
+            12.91743906425993,
+            45.76238423754435
+          ],
+          [
+            13.009062785546536,
+            45.70111531389285
+          ],
+          [
+            12.883914949891908,
+            45.88094618948655
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 44,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 68,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 3.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.201360592574936,
+            46.112602807863375
+          ],
+          [
+            8.19864385124845,
+            46.10594069689624
+          ],
+          [
+            8.34777285713732,
+            45.99361634921426
+          ],
+          [
+            8.323389057231235,
+            45.98910924979726
+          ],
+          [
+            8.290095828864976,
+            45.987320855953826
+          ],
+          [
+            8.293016762967364,
+            45.96564829298093
+          ],
+          [
+            8.299656758852743,
+            45.949929600163486
+          ],
+          [
+            8.282908011339558,
+            45.940383944287476
+          ],
+          [
+            8.23782967003617,
+            45.953809883055435
+          ],
+          [
+            8.240306951692375,
+            45.94105004992115
+          ],
+          [
+            8.218766040419226,
+            45.92503502897667
+          ],
+          [
+            8.204106057851392,
+            45.90992408533679
+          ],
+          [
+            8.20017672478314,
+            45.899698611885086
+          ],
+          [
+            8.188201170817692,
+            45.88931626603607
+          ],
+          [
+            8.167144770249669,
+            45.86931586178934
+          ],
+          [
+            8.167764437410403,
+            45.851661992988234
+          ],
+          [
+            8.16562577609461,
+            45.84361990672104
+          ],
+          [
+            8.160420057119154,
+            45.83386069957084
+          ],
+          [
+            8.175814227720114,
+            45.81921276147836
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 45,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 70,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.63,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10.77218310425539,
+            46.29726501818142
+          ],
+          [
+            10.780225646056794,
+            46.2747192862826
+          ],
+          [
+            9.226985753449407,
+            44.921172347182114
+          ],
+          [
+            9.233549027724056,
+            44.93530647517296
+          ],
+          [
+            9.222134527933562,
+            44.973266158240854
+          ],
+          [
+            9.101346311998487,
+            44.9226923824979
+          ],
+          [
+            9.070957298786986,
+            44.8427634769399
+          ],
+          [
+            10.259871115432345,
+            46.620023744071894
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 46,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 46,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.38,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.39032565466035,
+            44.59263697819444
+          ],
+          [
+            12.51075687481841,
+            44.58176475322643
+          ],
+          [
+            12.464771495250439,
+            44.606356258893015
+          ],
+          [
+            12.46653507222022,
+            44.65307117531083
+          ],
+          [
+            12.44261551062043,
+            44.62955520855634
+          ],
+          [
+            12.348343178629726,
+            44.610190954779924
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 47,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 35,
+        "classification": "Convective Cell",
+        "mean_cell_count": 2.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.174732687661611,
+            44.36353201275668
+          ],
+          [
+            6.194780878075835,
+            44.37104567948852
+          ],
+          [
+            6.230729548213753,
+            44.379592504731185
+          ],
+          [
+            6.240342282788955,
+            44.38269352971048
+          ],
+          [
+            6.227361717055876,
+            44.388753954101524
+          ],
+          [
+            6.205383974673813,
+            44.38511891758854
+          ],
+          [
+            6.174798383490879,
+            44.38832002611611
+          ],
+          [
+            6.154818287856294,
+            44.408748271813636
+          ],
+          [
+            6.11952067156985,
+            44.38241063263808
+          ],
+          [
+            6.104028220204868,
+            44.38214083001085
+          ],
+          [
+            6.100339072101063,
+            44.3812859940812
+          ],
+          [
+            6.105375718818662,
+            44.37673009737738
+          ],
+          [
+            6.102392536437042,
+            44.381418171023796
+          ],
+          [
+            6.091845298028474,
+            44.378408285145504
+          ],
+          [
+            6.090150807144203,
+            44.37741299273251
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 48,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 27,
+        "classification": "Weak Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.267685552959586,
+            46.329406977714385
+          ],
+          [
+            12.282778048299424,
+            46.30239894678368
+          ],
+          [
+            12.282802965550758,
+            46.29212277524204
+          ],
+          [
+            12.286816726927341,
+            46.275789141799905
+          ],
+          [
+            12.277961720375115,
+            46.269670217034935
+          ],
+          [
+            12.265231847678859,
+            46.264850627903584
+          ],
+          [
+            12.261690344588644,
+            46.25815392113642
+          ],
+          [
+            12.2629290949548,
+            46.256243792850604
+          ],
+          [
+            12.27078287845589,
+            46.271859277328915
+          ],
+          [
+            12.275467334054792,
+            46.274774939554234
+          ],
+          [
+            12.275834940511507,
+            46.25890654263083
+          ],
+          [
+            12.244996420578317,
+            46.22427318717167
+          ],
+          [
+            12.199674496463768,
+            46.23247380278648
+          ],
+          [
+            12.204897610296928,
+            46.259123996559104
+          ],
+          [
+            12.182295058938752,
+            46.26430415215401
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 49,
+        "motion_confidence": "high",
+        "tracking_ambiguity": "medium",
+        "organization_score": 75,
+        "classification": "Organized Convective Cell",
+        "mean_cell_count": 1.8,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            12.360403440492261,
+            46.65559836561412
+          ],
+          [
+            11.83519577266271,
+            46.585896745521744
+          ],
+          [
+            11.847846408788635,
+            46.56636567100344
+          ],
+          [
+            11.856267034829322,
+            46.548754761766844
+          ],
+          [
+            11.87125862318405,
+            46.523192103619486
+          ],
+          [
+            10.466143480948313,
+            45.46102708359147
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 51,
+        "motion_confidence": "medium",
+        "tracking_ambiguity": "high",
+        "organization_score": 53,
+        "classification": "Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.100593729357115,
+            44.62519051678053
+          ],
+          [
+            7.591338486641036,
+            46.310257547062086
+          ],
+          [
+            7.572838141323596,
+            46.295311042652216
+          ]
+        ]
+      },
+      "properties": {
+        "feature_type": "storm_track_path",
+        "track_id": 52,
+        "motion_confidence": "low",
+        "tracking_ambiguity": "high",
+        "organization_score": 23,
+        "classification": "Weak Convective Cell",
+        "mean_cell_count": 1.0,
+        "source": "Radar-DPC VMI (GeoTIFF quantitativo)"
+      }
+    }
+  ]
+}

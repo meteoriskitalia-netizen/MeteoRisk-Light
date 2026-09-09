@@ -1,7 +1,7 @@
 {
   "valid": false,
   "outcome": "FAIL",
-  "checked_at": "2026-09-07T12:37:46.010482+00:00",
+  "checked_at": "2026-09-09T05:41:25.078176+00:00",
   "dataset": {
     "status": "live"
   },
@@ -68,12 +68,12 @@
     },
     {
       "check": "run_info.run_key present",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": ""
     },
     {
       "check": "run_info.run_init_ts present",
-      "status": "FAIL",
+      "status": "PASS",
       "detail": ""
     },
     {
@@ -109,7 +109,17 @@
     {
       "check": "day0 presente",
       "status": "PASS",
-      "detail": "got '2026-09-06'"
+      "detail": "got '2026-01-01'"
+    },
+    {
+      "check": "metadata.day0 == time_base[:10] (giorno di partenza array)",
+      "status": "PASS",
+      "detail": "day0=2026-01-01 time_base=2026-01-01T00:00"
+    },
+    {
+      "check": "points.day0 == metadata.day0 (stesso giorno di partenza)",
+      "status": "PASS",
+      "detail": "points=2026-01-01 meta=2026-01-01"
     },
     {
       "check": "ids univoci e contigui 0..N-1",
@@ -18148,12 +18158,10 @@
     }
   ],
   "infos": [
-    "sha256 meteorisk-points.json = c0576b90e76a802c711d93f2e535e37f21978caae084e1250f918a0ae5d2e015 (13812034 byte)",
-    "sha256 meteorisk-provinces.json = 6076147f99a68593e33703c09091cf3230cf37edbeb5d8e57943e4ad8238c1bc (132035 byte)"
+    "sha256 meteorisk-points.json = 77396b2bc1f7d541dd8208cdfb42e482d4ab40f5e98fdcfed953e5de54644b42 (13812034 byte)",
+    "sha256 meteorisk-provinces.json = 2d17978d25ff5dcf9d4fecb5e4ad9eac30dffe62566033002f348fb93631618e (132035 byte)"
   ],
   "errors": [
-    "run_info.run_key present",
-    "run_info.run_init_ts present",
     "hourly numerici"
   ]
 }

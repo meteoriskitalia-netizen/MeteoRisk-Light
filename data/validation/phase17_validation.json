@@ -1,0 +1,570 @@
+{
+  "SIT20260711": {
+    "case": "SIT20260711",
+    "type": "ORGANIZED_MULTICELL",
+    "window": "2026-07-11T17:40:00Z->2026-07-11T18:45:00Z",
+    "frames": 13,
+    "cells_by_frame": [
+      51,
+      53,
+      53,
+      56,
+      53,
+      59,
+      60,
+      57,
+      54,
+      50,
+      49,
+      52,
+      46
+    ],
+    "objects_by_frame": [
+      30,
+      32,
+      28,
+      28,
+      29,
+      33,
+      29,
+      29,
+      27,
+      29,
+      29,
+      26,
+      27
+    ],
+    "aggregation_comparison": {
+      "methods": {
+        "distance_cc": {
+          "object_counts_by_frame": [
+            47,
+            50,
+            51,
+            51,
+            51,
+            56,
+            58,
+            57,
+            52,
+            49,
+            47,
+            49,
+            44
+          ],
+          "total_objects_all_frames": 662,
+          "cells_covered_pct": 100.0,
+          "mean_objects_per_frame": 50.92,
+          "coclustering_coeff": 0.0018,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 57.6,
+          "params": {
+            "method": "distance_cc",
+            "dbscan_eps_km": 15.0
+          }
+        },
+        "dbscan": {
+          "object_counts_by_frame": [
+            4,
+            2,
+            2,
+            5,
+            2,
+            3,
+            2,
+            0,
+            2,
+            1,
+            2,
+            2,
+            2
+          ],
+          "total_objects_all_frames": 29,
+          "cells_covered_pct": 8.66,
+          "mean_objects_per_frame": 2.23,
+          "coclustering_coeff": 0.0018,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 126.46,
+          "params": {
+            "method": "dbscan",
+            "dbscan_eps_km": 15.0,
+            "dbscan_min_cells": 2
+          }
+        },
+        "dilation_overlap": {
+          "object_counts_by_frame": [
+            30,
+            32,
+            28,
+            28,
+            29,
+            33,
+            29,
+            29,
+            27,
+            29,
+            29,
+            26,
+            27
+          ],
+          "total_objects_all_frames": 376,
+          "cells_covered_pct": 100.0,
+          "mean_objects_per_frame": 28.92,
+          "coclustering_coeff": 0.0388,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 164.32,
+          "params": {
+            "method": "dilation_overlap",
+            "merge_gap_km": 5.0,
+            "dilate_km": 8.0
+          }
+        }
+      },
+      "default_method": "dilation_overlap",
+      "frames": 13,
+      "note": "confronto DIAGNOSTICO; la scelta del default resta configurabile e NON è automatica (vedi report Fase 1.7)",
+      "documentation": {
+        "distance_cc": {
+          "pro": "semplice, deterministico, un solo parametro; buono per oggetti ben separati.",
+          "lim": "valuta SOLO i centroidi; celle grandi vicine con centroidi lontani non si uniscono; sensibile all'eps.",
+          "sensitivity": "eps_km in [7.5, 30.0] cambia fortemente il numero di oggetti (see results).",
+          "cost": "O(n^2) distanze, no runtime significativo (decine di celle)."
+        },
+        "dbscan": {
+          "pro": "gestisce il rumore (celle isolate escluse) e la densità variabile con eps/min_cells regolabili.",
+          "lim": "soglie di densità; cluster a catena dipendono da eps; senza sklearn (implementazione interna di riferimento, matrice O(n^2)); il rumore NON diventa storm object.",
+          "sensitivity": "eps_km e min_cells da calibrare per intensità/morfologia della convezione.",
+          "cost": "O(n^2) memoria distanza; costante le osservazioni per frame (10-50 celle)."
+        },
+        "dilation_overlap": {
+          "pro": "usa la GEOMETRIA (cerchi reali da area): unisce celle adiacenti anche se i centroidi distano poco; il default merge_gap/dilate unisce in modo ragionevolmente fisico.",
+          "lim": "solo approssimazione circolare (mask non conservata); due parametri interagiscono; celle a STRISCE dilatate possono fondere oggetti separati.",
+          "sensitivity": "merge_gap_km e dilate_km agiscono insieme; con dilate_km=0 diventa gap-only.",
+          "cost": "O(n^2) come gli altri; nessuna dipendenza esterna."
+        }
+      }
+    },
+    "comparison_metrics": [
+      {
+        "n_frames": 13,
+        "cells": 693,
+        "tracks": 65,
+        "id_switch": {
+          "switches": 307,
+          "compared": 850,
+          "rate": 0.3612
+        },
+        "birth_rate": 0.097,
+        "track_continuity": 0.818,
+        "motion_error_deg": 66.17,
+        "direction_stability_deg": 58.67,
+        "mean_track_duration_min": 48.2
+      },
+      {
+        "n_frames": 13,
+        "objects": 376,
+        "tracks": 39,
+        "id_switch": {
+          "switches": 13,
+          "compared": 308,
+          "rate": 0.0422
+        },
+        "birth_rate": 0.106,
+        "track_continuity": 0.74,
+        "motion_error_deg": 64.2,
+        "direction_stability_deg": 66.02,
+        "mean_track_duration_min": 43.1,
+        "motion_confidence": {
+          "medium": 26,
+          "high": 13,
+          "low": 1
+        },
+        "tracking_ambiguity": {
+          "medium": 19,
+          "high": 21
+        }
+      }
+    ],
+    "success": true,
+    "success_criteria": {
+      "c1_reduced_fragmentation": false,
+      "c2_motion_stability": false,
+      "c3_confidence_dynamic": true
+    },
+    "deltas": {
+      "id_switch_rate_delta": -0.319,
+      "birth_rate_delta": 0.009,
+      "continuity_delta": -0.078,
+      "motion_error_delta_deg": -1.97,
+      "direction_stability_delta_deg": 7.35
+    },
+    "aggregation_summary": {
+      "distance_cc": 50.92,
+      "dbscan": 2.23,
+      "dilation_overlap": 28.92
+    }
+  },
+  "SIT20260908": {
+    "case": "SIT20260908",
+    "type": "ORDINARY_CONVECTION",
+    "window": "2026-09-08T17:40:00Z->2026-09-08T18:45:00Z",
+    "frames": 13,
+    "cells_by_frame": [
+      19,
+      19,
+      18,
+      22,
+      19,
+      18,
+      19,
+      18,
+      17,
+      18,
+      15,
+      20,
+      19
+    ],
+    "objects_by_frame": [
+      14,
+      13,
+      13,
+      11,
+      11,
+      11,
+      14,
+      12,
+      10,
+      9,
+      8,
+      11,
+      9
+    ],
+    "aggregation_comparison": {
+      "methods": {
+        "distance_cc": {
+          "object_counts_by_frame": [
+            19,
+            19,
+            18,
+            21,
+            17,
+            17,
+            19,
+            17,
+            15,
+            18,
+            15,
+            20,
+            18
+          ],
+          "total_objects_all_frames": 233,
+          "cells_covered_pct": 100.0,
+          "mean_objects_per_frame": 17.92,
+          "coclustering_coeff": 0.0042,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 6.97,
+          "params": {
+            "method": "distance_cc",
+            "dbscan_eps_km": 15.0
+          }
+        },
+        "dbscan": {
+          "object_counts_by_frame": [
+            0,
+            0,
+            0,
+            1,
+            2,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            0,
+            1
+          ],
+          "total_objects_all_frames": 7,
+          "cells_covered_pct": 6.22,
+          "mean_objects_per_frame": 0.54,
+          "coclustering_coeff": 0.0042,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 14.5,
+          "params": {
+            "method": "dbscan",
+            "dbscan_eps_km": 15.0,
+            "dbscan_min_cells": 2
+          }
+        },
+        "dilation_overlap": {
+          "object_counts_by_frame": [
+            14,
+            13,
+            13,
+            11,
+            11,
+            11,
+            14,
+            12,
+            10,
+            9,
+            8,
+            11,
+            9
+          ],
+          "total_objects_all_frames": 146,
+          "cells_covered_pct": 100.0,
+          "mean_objects_per_frame": 11.23,
+          "coclustering_coeff": 0.0784,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 19.43,
+          "params": {
+            "method": "dilation_overlap",
+            "merge_gap_km": 5.0,
+            "dilate_km": 8.0
+          }
+        }
+      },
+      "default_method": "dilation_overlap",
+      "frames": 13,
+      "note": "confronto DIAGNOSTICO; la scelta del default resta configurabile e NON è automatica (vedi report Fase 1.7)",
+      "documentation": {
+        "distance_cc": {
+          "pro": "semplice, deterministico, un solo parametro; buono per oggetti ben separati.",
+          "lim": "valuta SOLO i centroidi; celle grandi vicine con centroidi lontani non si uniscono; sensibile all'eps.",
+          "sensitivity": "eps_km in [7.5, 30.0] cambia fortemente il numero di oggetti (see results).",
+          "cost": "O(n^2) distanze, no runtime significativo (decine di celle)."
+        },
+        "dbscan": {
+          "pro": "gestisce il rumore (celle isolate escluse) e la densità variabile con eps/min_cells regolabili.",
+          "lim": "soglie di densità; cluster a catena dipendono da eps; senza sklearn (implementazione interna di riferimento, matrice O(n^2)); il rumore NON diventa storm object.",
+          "sensitivity": "eps_km e min_cells da calibrare per intensità/morfologia della convezione.",
+          "cost": "O(n^2) memoria distanza; costante le osservazioni per frame (10-50 celle)."
+        },
+        "dilation_overlap": {
+          "pro": "usa la GEOMETRIA (cerchi reali da area): unisce celle adiacenti anche se i centroidi distano poco; il default merge_gap/dilate unisce in modo ragionevolmente fisico.",
+          "lim": "solo approssimazione circolare (mask non conservata); due parametri interagiscono; celle a STRISCE dilatate possono fondere oggetti separati.",
+          "sensitivity": "merge_gap_km e dilate_km agiscono insieme; con dilate_km=0 diventa gap-only.",
+          "cost": "O(n^2) come gli altri; nessuna dipendenza esterna."
+        }
+      }
+    },
+    "comparison_metrics": [
+      {
+        "n_frames": 13,
+        "cells": 241,
+        "tracks": 30,
+        "id_switch": {
+          "switches": 113,
+          "compared": 304,
+          "rate": 0.3717
+        },
+        "birth_rate": 0.145,
+        "track_continuity": 0.605,
+        "motion_error_deg": 48.4,
+        "direction_stability_deg": 43.84,
+        "mean_track_duration_min": 34.3
+      },
+      {
+        "n_frames": 13,
+        "objects": 146,
+        "tracks": 16,
+        "id_switch": {
+          "switches": 1,
+          "compared": 122,
+          "rate": 0.0082
+        },
+        "birth_rate": 0.137,
+        "track_continuity": 0.683,
+        "motion_error_deg": 50.87,
+        "direction_stability_deg": 46.21,
+        "mean_track_duration_min": 39.4,
+        "motion_confidence": {
+          "high": 7,
+          "medium": 8,
+          "low": 5
+        },
+        "tracking_ambiguity": {
+          "high": 13,
+          "medium": 7
+        }
+      }
+    ],
+    "success": true,
+    "success_criteria": {
+      "c1_reduced_fragmentation": true,
+      "c2_motion_stability": false,
+      "c3_confidence_dynamic": true
+    },
+    "deltas": {
+      "id_switch_rate_delta": -0.3635,
+      "birth_rate_delta": -0.008,
+      "continuity_delta": 0.078,
+      "motion_error_delta_deg": 2.47,
+      "direction_stability_delta_deg": 2.37
+    },
+    "aggregation_summary": {
+      "distance_cc": 17.92,
+      "dbscan": 0.54,
+      "dilation_overlap": 11.23
+    }
+  },
+  "QUIET20260823": {
+    "case": "QUIET20260823",
+    "type": "UNKNOWN",
+    "window": "2026-08-23T17:55:00Z->2026-08-23T18:20:00Z",
+    "frames": 5,
+    "cells_by_frame": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "objects_by_frame": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "aggregation_comparison": {
+      "methods": {
+        "distance_cc": {
+          "object_counts_by_frame": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "total_objects_all_frames": 0,
+          "cells_covered_pct": 0.0,
+          "mean_objects_per_frame": 0.0,
+          "coclustering_coeff": 0.0,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 0.02,
+          "params": {
+            "method": "distance_cc",
+            "dbscan_eps_km": 15.0
+          }
+        },
+        "dbscan": {
+          "object_counts_by_frame": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "total_objects_all_frames": 0,
+          "cells_covered_pct": 0.0,
+          "mean_objects_per_frame": 0.0,
+          "coclustering_coeff": 0.0,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 0.02,
+          "params": {
+            "method": "dbscan",
+            "dbscan_eps_km": 15.0,
+            "dbscan_min_cells": 2
+          }
+        },
+        "dilation_overlap": {
+          "object_counts_by_frame": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "total_objects_all_frames": 0,
+          "cells_covered_pct": 0.0,
+          "mean_objects_per_frame": 0.0,
+          "coclustering_coeff": 0.0,
+          "temporal_stability_rand": 1.0,
+          "runtime_ms": 0.01,
+          "params": {
+            "method": "dilation_overlap",
+            "merge_gap_km": 5.0,
+            "dilate_km": 8.0
+          }
+        }
+      },
+      "default_method": "dilation_overlap",
+      "frames": 5,
+      "note": "confronto DIAGNOSTICO; la scelta del default resta configurabile e NON è automatica (vedi report Fase 1.7)",
+      "documentation": {
+        "distance_cc": {
+          "pro": "semplice, deterministico, un solo parametro; buono per oggetti ben separati.",
+          "lim": "valuta SOLO i centroidi; celle grandi vicine con centroidi lontani non si uniscono; sensibile all'eps.",
+          "sensitivity": "eps_km in [7.5, 30.0] cambia fortemente il numero di oggetti (see results).",
+          "cost": "O(n^2) distanze, no runtime significativo (decine di celle)."
+        },
+        "dbscan": {
+          "pro": "gestisce il rumore (celle isolate escluse) e la densità variabile con eps/min_cells regolabili.",
+          "lim": "soglie di densità; cluster a catena dipendono da eps; senza sklearn (implementazione interna di riferimento, matrice O(n^2)); il rumore NON diventa storm object.",
+          "sensitivity": "eps_km e min_cells da calibrare per intensità/morfologia della convezione.",
+          "cost": "O(n^2) memoria distanza; costante le osservazioni per frame (10-50 celle)."
+        },
+        "dilation_overlap": {
+          "pro": "usa la GEOMETRIA (cerchi reali da area): unisce celle adiacenti anche se i centroidi distano poco; il default merge_gap/dilate unisce in modo ragionevolmente fisico.",
+          "lim": "solo approssimazione circolare (mask non conservata); due parametri interagiscono; celle a STRISCE dilatate possono fondere oggetti separati.",
+          "sensitivity": "merge_gap_km e dilate_km agiscono insieme; con dilate_km=0 diventa gap-only.",
+          "cost": "O(n^2) come gli altri; nessuna dipendenza esterna."
+        }
+      }
+    },
+    "comparison_metrics": [
+      {
+        "n_frames": 5,
+        "cells": 0,
+        "tracks": 0,
+        "id_switch": {
+          "switches": 0,
+          "compared": 0,
+          "rate": 0.0
+        },
+        "birth_rate": null,
+        "track_continuity": 0.0,
+        "motion_error_deg": 0.0,
+        "direction_stability_deg": 0.0,
+        "mean_track_duration_min": 0.0
+      },
+      {
+        "n_frames": 5,
+        "objects": 0,
+        "tracks": 0,
+        "id_switch": {
+          "switches": 0,
+          "compared": 0,
+          "rate": 0.0
+        },
+        "birth_rate": null,
+        "track_continuity": 0.0,
+        "motion_error_deg": 0.0,
+        "direction_stability_deg": 0.0,
+        "mean_track_duration_min": 0.0,
+        "motion_confidence": {},
+        "tracking_ambiguity": {}
+      }
+    ],
+    "success": true,
+    "success_criteria": {
+      "c1_reduced_fragmentation": false,
+      "c2_motion_stability": true,
+      "c3_confidence_dynamic": false
+    },
+    "deltas": {
+      "id_switch_rate_delta": 0.0,
+      "birth_rate_delta": 0.0,
+      "continuity_delta": 0.0,
+      "motion_error_delta_deg": 0.0,
+      "direction_stability_delta_deg": 0.0
+    },
+    "aggregation_summary": {
+      "distance_cc": 0.0,
+      "dbscan": 0.0,
+      "dilation_overlap": 0.0
+    }
+  }
+}
