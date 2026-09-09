@@ -1,7 +1,7 @@
 {
   "valid": true,
   "outcome": "OK",
-  "checked_at": "2026-09-09T05:53:34.098004+00:00",
+  "checked_at": "2026-09-09T06:16:15.566305+00:00",
   "dataset": {
     "status": "live"
   },
@@ -94,12 +94,12 @@
     {
       "check": "best_match_fetch_timestamp >= ecmwf_fetch_timestamp",
       "status": "PASS",
-      "detail": "best=2026-09-09T05:53:33.306754+00:00 ecmwf=2026-09-09T05:53:33.306754+00:00"
+      "detail": "best=2026-09-09T06:16:14.596359+00:00 ecmwf=2026-09-09T06:16:14.596359+00:00"
     },
     {
       "check": "update_strategy coerente con leg_timestamps",
       "status": "PASS",
-      "detail": "strategy=coordinated best=2026-09-09T05:53:33.306754+00:00 ecmwf=2026-09-09T05:53:33.306754+00:00"
+      "detail": "strategy=coordinated best=2026-09-09T06:16:14.596359+00:00 ecmwf=2026-09-09T06:16:14.596359+00:00"
     },
     {
       "check": "point_count == metadati",
@@ -110,6 +110,16 @@
       "check": "day0 presente",
       "status": "PASS",
       "detail": "got '2026-09-08'"
+    },
+    {
+      "check": "metadata.day0 == time_base[:10] (giorno di partenza array)",
+      "status": "PASS",
+      "detail": "day0=2026-09-08 time_base=2026-09-08T00:00"
+    },
+    {
+      "check": "points.day0 == metadata.day0 (stesso giorno di partenza)",
+      "status": "PASS",
+      "detail": "points=2026-09-08 meta=2026-09-08"
     },
     {
       "check": "ids univoci e contigui 0..N-1",
@@ -18148,8 +18158,8 @@
     }
   ],
   "infos": [
-    "sha256 meteorisk-points.json = ed1ca6dfea02552a721feff2008ec01d9d01416e47f82f3dd30f8d5c54d87ccb (9244999 byte)",
-    "sha256 meteorisk-provinces.json = 604f7f0b0df6f0a71c20cfcc9f0ccf694aa7637a7889013228a5773bde6acc1b (126163 byte)"
+    "sha256 meteorisk-points.json = 97a6a5536ec231bcd8306b84a9259b72cc12e923ccd631d764534daf5aac1838 (9244921 byte)",
+    "sha256 meteorisk-provinces.json = 14ad95e4ca52ceaf47e1f8decff4da42f9fb26f9c5355b959a7c5450286648d0 (126157 byte)"
   ],
   "errors": []
 }
