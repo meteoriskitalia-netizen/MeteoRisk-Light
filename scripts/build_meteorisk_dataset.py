@@ -121,7 +121,9 @@ def main():
     points_meta = json.load(open(args.points_json, encoding="utf-8")) if os.path.exists(args.points_json) else []
     points_meta_map = {p["index"]: p for p in points_meta}
 
-    # giorno di partenza del forecast (giorno 0) per le etichette
+    # giorno di partenza del forecast (giorno 0) per le etichette.
+    # 1.0.1.4: FALLBACK di sola emergenza (senza marker _time nei raw): init del run.
+    # La fonte di verità REALE è il giorno Europe/Rome del FETCH (override sotto).
     init_ts = int(state.get("run_init_ts") or 0)
     day0 = _dt.datetime.fromtimestamp(init_ts, _dt.timezone.utc).astimezone(
         _dt.timezone(_dt.timedelta(hours=1)))  # Europe/Rome e' UTC+1 in inverno (approssimazione sicura: si
@@ -176,6 +178,43 @@ def main():
     raw_map = {idx: payload for idx, payload in raw.get("points", [])}
     fetch_ts = raw.get("fetched_at")
     run_info["fetched_at"] = fetch_ts
+
+    # 1.0.1.4 — FIX CRITICO day0 (scarto +1 "oggi→domani" LIVE). Le serie orarie/giornaliere
+    # Open-Meteo partono SEMPRE dall'00:00 del giorno Europe/Rome in cui avviene il FETCH
+    # (daily[0]=stesso giorno; verified live 2026-09-09), NON dal giorno di init del run
+    # driver. Se il run partiva la sera/notte del giorno prima, day0 (da run_init_ts) restava
+    # indietro di 1 → in app "Oggi" mappava sull'indice del giorno dopo. SOVRASCRIVI day0 dal
+    # primo timestamp degli array (marker transitorio _time scritto da fetch_source_data.py);
+    # time_base = primo timestamp orario (oggetto d'invariante per validate_dataset).
+    data_day0 = None
+    time_base = None
+    if raw_map:
+        for _ridx in sorted(raw_map):
+            _pt = raw_map[_ridx]
+            _tm = _pt.get("_time") if isinstance(_pt, dict) else None
+            if not _tm:
+                continue
+            _hb = _tm.get("hourly0")
+            _db = _tm.get("daily0")
+            if _db:
+                try:
+                    data_day0 = _dt.date.fromisoformat(_db[:10])
+                except ValueError:
+                    data_day0 = None
+            if not data_day0 and _hb:
+                try:
+                    data_day0 = _dt.date.fromisoformat(_hb[:10])
+                except ValueError:
+                    data_day0 = None
+            if _hb:
+                time_base = _hb
+            break
+    if data_day0:
+        day0 = data_day0
+        print("[build] day0 effettivo dai dati: %s (time_base=%s)" % (day0.isoformat(), time_base))
+    else:
+        print("[build] AVVISO: _time assente nei raw; day0 da init run (%s)."
+              % day0.isoformat())
     leg_ts = raw.get("leg_timestamps") or {}
     bm_ts = leg_ts.get("best_match_fetched_at") or fetch_ts
     ecm_ts = leg_ts.get("ecmwf_fetched_at") or fetch_ts
@@ -285,6 +324,7 @@ def main():
         "point_count": len(points_out),
         "province_count": len(provinces),
         "day0": day_label(0),
+        "time_base": time_base or (day0.isoformat() + "T00:00"),
         "run_info": run_info,
         "fetch_timestamps": fetch_timestamps,
         "update_strategy": cycle_mode,

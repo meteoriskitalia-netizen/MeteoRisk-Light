@@ -117,6 +117,16 @@ def main():
     check("point_count == metadati", meta.get("point_count") == len(plist),
           "meta=%s len=%s" % (meta.get("point_count"), len(plist)))
     check("day0 presente", bool(points.get("day0")), "got %r" % points.get("day0"))
+    # 1.0.1.4 — INVARIANTE TEMPORALE (fix scarto +1 "oggi→domani"): le serie Open-Meteo
+    # partono dall'00:00 del giorno Europe/Rome del fetch; day0 dev'essere l'ESATTO giorno
+    # di time_base (primo timestamp orario) e coincidere tra metadata e points. Un dataset
+    # con day0 sfasato (run partito il giorno prima) non deve MAI arrivare in pubblicazione.
+    check("metadata.day0 == time_base[:10] (giorno di partenza array)", meta.get("time_base")
+          and meta.get("day0") == (meta.get("time_base") or "")[:10],
+          "day0=%s time_base=%s" % (meta.get("day0"), meta.get("time_base")))
+    check("points.day0 == metadata.day0 (stesso giorno di partenza)",
+          points.get("day0") == meta.get("day0"),
+          "points=%s meta=%s" % (points.get("day0"), meta.get("day0")))
     ids = [p.get("id") for p in plist]
     check("ids univoci e contigui 0..N-1", sorted(ids) == list(range(len(plist))))
     s_prov = set()
