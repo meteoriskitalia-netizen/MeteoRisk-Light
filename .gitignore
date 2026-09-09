@@ -12,6 +12,14 @@ data/_workdir/*
 data/state/_latest_backup/
 data/workdir-tmp/
 
+# ---- Meteorisk Radar Engine (Fase 1): raw radar MAI committati ----
+# I GeoTIFF VMI scaricati vivono solo nella cache del motore (mai nel repo).
+scripts/radar_engine/temp/
+scripts/radar_engine/cache/
+temp/
+cache/
+data/radar/*.tmp
+
 # ---- Python ----
 __pycache__/
 *.pyc
