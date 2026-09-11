@@ -2,32 +2,32 @@
   "last_model_runs": {
     "ecmwf_ifs": {
       "model": "ecmwf_ifs",
-      "last_run_initialisation_time": 1789041600,
+      "last_run_initialisation_time": 1789063200,
       "available_time": null,
       "update_interval_seconds": 21600,
       "not_available_before_this_time": null
     },
     "best_match": {
       "model": "best_match",
-      "last_checked_at": "2026-09-11T00:01:01.081030+00:00",
-      "last_changed_at": "2026-09-10T22:44:08.167673+00:00",
-      "last_fingerprint": "f0a1f61c5b01469e6283a924a6752ab202d0d25d7862c46649f23905e646477e",
+      "last_checked_at": "2026-09-11T00:49:46.928357+00:00",
+      "last_changed_at": "2026-09-11T00:49:46.928357+00:00",
+      "last_fingerprint": "41b4fa5387d208d0d66060a04d20c9fdec37120cb2320725facd1f586ff230f5",
       "fingerprint_source": "sentinel"
     }
   },
   "driver_model": "ecmwf_ifs",
-  "run_key": "1789041600",
-  "run_init_ts": 1789041600,
-  "run_available_ts": 1789063200,
-  "last_processed_key": "1789041600",
+  "run_key": "1789063200",
+  "run_init_ts": 1789063200,
+  "run_available_ts": 1789084800,
+  "last_processed_key": "1789063200",
   "status": "live",
   "bootstrap_pending": false,
-  "checked_at": "2026-09-10T18:46:42.132395+00:00",
-  "last_processed_at": "2026-09-11T00:01:01.081047+00:00",
+  "checked_at": "2026-09-11T00:47:14.653715+00:00",
+  "last_processed_at": "2026-09-11T00:49:46.928373+00:00",
   "dataset": {
     "point_count": 257,
     "validation_outcome": "OK"
   },
   "note": "Ciclo coordinato: il run ECMWF comanda l'aggiornamento; best_match viene scaricato nello stesso ciclo di fetch. I run non vanno copiati/ripubblicati: Open-Meteo e' SOLO fonte dati. Vengono pubblicati dati DERIVATI MeteoRisk.",
-  "published_at": "2026-09-11T00:01:01.081030+00:00"
+  "published_at": "2026-09-11T00:49:46.928357+00:00"
 }
