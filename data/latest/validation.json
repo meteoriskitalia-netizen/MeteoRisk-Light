@@ -1,7 +1,7 @@
 {
   "valid": true,
   "outcome": "OK",
-  "checked_at": "2026-09-21T02:07:21.151254+00:00",
+  "checked_at": "2026-09-21T02:22:54.961899+00:00",
   "dataset": {
     "status": "live"
   },
@@ -94,12 +94,12 @@
     {
       "check": "best_match_fetch_timestamp >= ecmwf_fetch_timestamp",
       "status": "PASS",
-      "detail": "best=2026-09-21T02:07:19.954008+00:00 ecmwf=2026-09-21T02:07:19.954008+00:00"
+      "detail": "best=2026-09-21T02:22:53.783788+00:00 ecmwf=2026-09-21T02:22:53.783788+00:00"
     },
     {
       "check": "update_strategy coerente con leg_timestamps",
       "status": "PASS",
-      "detail": "strategy=coordinated best=2026-09-21T02:07:19.954008+00:00 ecmwf=2026-09-21T02:07:19.954008+00:00"
+      "detail": "strategy=coordinated best=2026-09-21T02:22:53.783788+00:00 ecmwf=2026-09-21T02:22:53.783788+00:00"
     },
     {
       "check": "point_count == metadati",
@@ -18158,8 +18158,8 @@
     }
   ],
   "infos": [
-    "sha256 meteorisk-points.json = 3cf17779c07507d2ece81f2a58346d12c09dbf56a99f82aaf5f4ea356b88049e (9089813 byte)",
-    "sha256 meteorisk-provinces.json = 1a7304cec4d1be75e84c20a0c75bb3a3db9dc2450cb4a6480e13c828fe4664cf (123722 byte)"
+    "sha256 meteorisk-points.json = 6632ca1e18c092ae141a2e825d1ca89bf0cb92458df92e319a97de057ac41aa3 (9089843 byte)",
+    "sha256 meteorisk-provinces.json = 5e2f3eb4474706a1c0471958625d82b9d6908865da30bb4624efec9cfc7ed7e7 (123723 byte)"
   ],
   "errors": []
 }
