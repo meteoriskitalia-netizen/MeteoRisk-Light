@@ -1,0 +1,145 @@
+name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
+
+# Meteorisk Satellite Engine — ogni 5 minuti scarica UN frame per ciascuna delle
+# 3 sorgenti EUMETSAT (WMS view.eumetsat.int) e pubblica la finestra rolling su
+# GitHub Pages come immagini statiche.
+#   - Sorgenti (chiave = sourceId): eumetsat (mtg_fd:ir105_hrfi),
+#     eumetsat_airmass (msg_fes:rgb_airmass), eumetsat_geocolour
+#     (mtg_fd:rgb_geocolour).
+#   - GetMap IDENTICI a buildEumetsatLiveGetMap dell'app: EPSG:3857 su
+#     SATELLITE_EUROPE_BOUNDS [[22,-28],[72,55]], width 2048, height
+#     proporzionale; time = ora - EUMETSAT_DATA_LAG_MS (15 min) floor a 5 min
+#     (buildSyncTimeline), formato .000Z.
+#   - Finestra rolling: 25 slot per sorgente (2 ore a passo 5 min). Pruning e
+#     satellite/manifest.json (slot disponibili per sourceId) gestiti dallo
+#     script, idempotente sullo slot gia' presente.
+#   - Persistenza SENZA crescita di history: branch ORPHAN satellite-cache
+#     (albero = solo satellite/), commit singola senza parent e force-push ad
+#     OGNI run -> history resettata, crescita zero. main NON viene toccato.
+#   - Pages: deploy artifact-based COMPLETO (index.html + data/latest +
+#     data/geography + data/radar + satellite) con la stessa struttura di
+#     radar-engine.yml / update-weather-data.yml. Concurrency group "pages"
+#     condiviso: i deploy si serializzano (cancel-in-progress: false).
+#   - Failure policy: rc 0 ok | rc 3 degradato (1-2 sorgenti in errore, comunque
+#     atteso) | rc 4 error (nessuna sorgente scaricata) -> failure visibile.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  satellite-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # La finestra rolling vive nel branch satellite-cache (mai su main):
+      # ogni run la ripristina prima di scaricare lo slot corrente.
+      - name: Ripristina finestra rolling (branch satellite-cache)
+        run: |
+          if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null; then
+            if git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
+              echo "[INFO] Finestra rolling ripristinata da satellite-cache."
+            else
+              echo "[WARN] satellite-cache esistente senza directory satellite/."
+            fi
+          else
+            echo "[INFO] Branch satellite-cache assente (primo run): finestra vuota."
+          fi
+
+      # rc 0 ok / rc 3 degradato (1-2 sorgenti in errore, le altre scaricate) ->
+      # success; rc 4 error (nessuna sorgente) -> failure visibile.
+      - name: Download frame EUMETSAT (3 sorgenti, slot corrente)
+        id: run
+        run: |
+          rc=0
+          python scripts/satellite_engine.py || rc=$?
+          echo "engine_rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
+            exit "$rc"
+          fi
+
+      # Branch orphan a commit singola (niente parent -> history resettata ad
+      # ogni push, crescita zero). Il push va a satellite-cache, mai a main.
+      - name: Aggiorna branch satellite-cache (force-push rolling window)
+        if: success()
+        run: |
+          set -euo pipefail
+          if [ ! -d satellite ]; then
+            echo "[INFO] Nessuna directory satellite: cache non aggiornata."
+            exit 0
+          fi
+          export GIT_INDEX_FILE="$RUNNER_TEMP/satellite-cache.index"
+          git read-tree --empty
+          git add -f satellite/
+          TREE=$(git write-tree)
+          unset GIT_INDEX_FILE
+          OLD=""
+          if git rev-parse -q --verify satellite-cache-base >/dev/null; then
+            OLD=$(git rev-parse satellite-cache-base^{tree})
+          fi
+          if [ "$OLD" = "$TREE" ]; then
+            echo "[INFO] Nessuna modifica alla finestra rolling: push saltato."
+            exit 0
+          fi
+          COMMIT=$(git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit-tree "$TREE" -m "[skip ci] satellite: rolling window EUMETSAT (25 slot per sorgente)")
+          for attempt in 1 2 3; do
+            if git push --force origin "$COMMIT:refs/heads/satellite-cache"; then
+              echo "[INFO] satellite-cache aggiornata (commit ${COMMIT:0:7})."
+              exit 0
+            fi
+            echo "[WARN] push satellite-cache fallito (tentativo $attempt/3): riprovo."
+            sleep $((attempt * 5))
+          done
+          echo "[ERRORE] push satellite-cache fallito dopo 3 tentativi."
+          exit 1
+
+      # L'ARTEFATTO di deploy e' COMPLETO (stessa struttura di radar-engine e
+      # update-weather-data): app, dataset derivati, geografie, derivati radar
+      # e la finestra rolling satellite/. Senza satellite/ il deploy seguirebbe
+      # quello degli altri workflow e cancellerebbe i frame da Pages.
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + satellite)
+        if: success()
+        run: |
+          mkdir -p _site/data
+          cp mri-light-1.1.0.3.html _site/index.html
+          if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
+          if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
+          if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
+          if [ -d satellite ]; then cp -R satellite _site/satellite; fi
+
+      - name: Upload Pages artifact
+        if: success()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy su GitHub Pages
+        if: success()
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "engine rc: \`${{ steps.run.outputs.engine_rc || 'n/a' }}\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
