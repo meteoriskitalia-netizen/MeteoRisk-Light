@@ -1,8 +1,9 @@
 name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
 
-# Meteorisk Satellite Engine — ogni 5 minuti scarica UN frame per ciascuna delle
-# 3 sorgenti EUMETSAT (WMS view.eumetsat.int) e pubblica la finestra rolling su
-# GitHub Pages come immagini statiche.
+# Meteorisk Satellite Engine — ogni 5 minuti riempie la finestra rolling: slot
+# corrente + i 24 slot precedenti, per ciascuna delle 3 sorgenti EUMETSAT (WMS
+# view.eumetsat.int), scaricando solo i frame mancanti (backfill), e pubblica la
+# finestra rolling su GitHub Pages come immagini statiche.
 #   - Sorgenti (chiave = sourceId): eumetsat (mtg_fd:ir105_hrfi),
 #     eumetsat_airmass (msg_fes:rgb_airmass), eumetsat_geocolour
 #     (mtg_fd:rgb_geocolour).
@@ -12,7 +13,9 @@ name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
 #     (buildSyncTimeline), formato .000Z.
 #   - Finestra rolling: 25 slot per sorgente (2 ore a passo 5 min). Pruning e
 #     satellite/manifest.json (slot disponibili per sourceId) gestiti dallo
-#     script, idempotente sullo slot gia' presente.
+#     script, idempotente: gli slot gia' presenti e validi sono saltati senza
+#     richieste (0 se la finestra e' piena, 3 se manca solo lo slot corrente,
+#     fino a 75 al primo run).
 #   - Persistenza SENZA crescita di history: branch ORPHAN satellite-cache
 #     (albero = solo satellite/), commit singola senza parent e force-push ad
 #     OGNI run -> history resettata, crescita zero. main NON viene toccato.
@@ -20,8 +23,10 @@ name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
 #     data/geography + data/radar + satellite) con la stessa struttura di
 #     radar-engine.yml / update-weather-data.yml. Concurrency group "pages"
 #     condiviso: i deploy si serializzano (cancel-in-progress: false).
-#   - Failure policy: rc 0 ok | rc 3 degradato (1-2 sorgenti in errore, comunque
-#     atteso) | rc 4 error (nessuna sorgente scaricata) -> failure visibile.
+#   - Failure policy (valutata sullo slot corrente): rc 0 ok | rc 3 degradato
+#     (1-2 sorgenti in errore, comunque atteso) | rc 4 error (nessuna sorgente
+#     scaricata) -> failure visibile. I fallimenti sugli slot di backfill sono
+#     solo loggati: non cambiano l'exit code.
 
 on:
   schedule:
@@ -50,7 +55,7 @@ jobs:
           python-version: "3.13"
 
       # La finestra rolling vive nel branch satellite-cache (mai su main):
-      # ogni run la ripristina prima di scaricare lo slot corrente.
+      # ogni run la ripristina prima del backfill (slot corrente + 24 precedenti).
       - name: Ripristina finestra rolling (branch satellite-cache)
         run: |
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null; then
@@ -63,9 +68,11 @@ jobs:
             echo "[INFO] Branch satellite-cache assente (primo run): finestra vuota."
           fi
 
-      # rc 0 ok / rc 3 degradato (1-2 sorgenti in errore, le altre scaricate) ->
-      # success; rc 4 error (nessuna sorgente) -> failure visibile.
-      - name: Download frame EUMETSAT (3 sorgenti, slot corrente)
+      # rc valutati sullo slot corrente: rc 0 ok / rc 3 degradato (1-2 sorgenti
+      # in errore, le altre scaricate) -> success; rc 4 error (nessuna sorgente
+      # sullo slot corrente) -> failure visibile; i fallimenti di backfill non
+      # cambiano l'exit code.
+      - name: Download frame EUMETSAT (backfill finestra + slot corrente)
         id: run
         run: |
           rc=0
@@ -119,7 +126,7 @@ jobs:
         if: success()
         run: |
           mkdir -p _site/data
-          cp mri-light-1.1.0.3.html _site/index.html
+          cp mri-light-1.1.0.4.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
