@@ -16,6 +16,7 @@ Fase 1 = polling findLastProductByType).
 """
 
 import datetime as _dt
+import http.client
 import json
 import os
 import re
@@ -48,7 +49,8 @@ def _http_json(url, timeout_s, headers=None, method="GET", body=None):
         if exc.code == 404:
             raise models.SourceError("not_found") from exc
         raise models.SourceError(f"http_{exc.code}") from exc
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+    except (urllib.error.URLError, TimeoutError, OSError,
+            http.client.HTTPException) as exc:
         raise models.SourceError(f"network:{exc.__class__.__name__}") from exc
     try:
         return json.loads(raw.decode("utf-8"))
@@ -91,9 +93,17 @@ def get_latest_product(product_type="VMI", api_base=None, origin=None,
         raise models.SourceError("no_product")
     first = items[0]
     period_s = parse_iso_period(first.get("period"))
+    raw_time = first.get("time")
+    if raw_time is None:
+        raise models.SourceError("missing_product_time")
+    try:
+        time_ms = int(raw_time)
+    except (TypeError, ValueError) as exc:
+        raise models.SourceError(
+            f"invalid_product_time:{raw_time!r}") from exc
     return models.ProductInfo(
         product_type=first.get("productType") or product_type,
-        time_ms=int(first.get("time")),
+        time_ms=time_ms,
         period_s=period_s,
     )
 
@@ -123,7 +133,8 @@ def download_product(product_info, api_base=None, origin=None, timeout_s=30,
             with urllib.request.urlopen(req, timeout=download_timeout_s) as rr:
                 content = rr.read()
             return s3_key, content
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        except (urllib.error.URLError, TimeoutError, OSError,
+                http.client.HTTPException) as exc:
             last_err = exc
     raise models.SourceError(f"download_failed:{last_err.__class__.__name__}")
 

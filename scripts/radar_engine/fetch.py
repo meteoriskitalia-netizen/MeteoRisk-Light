@@ -96,17 +96,26 @@ def fetch_frames(config, product=None, max_frames=None):
         path = _save_bytes(_cache_path(cache_dir, s3_key), content)
         try:
             source_dpc.validate_download(path)
-        except models.ValidationError as exc:
+            raster = preprocess.read_raster(
+                path,
+                nodata_values=src_preprocess_nodata(config),
+                declared_nodata_from_tiff=True,
+                geo_plausible_bbox=config["preprocess"].get("geo_plausible_bbox"),
+            )
+        except (models.ValidationError, models.CrsError) as exc:
             warnings.append(f"frame@{real_ts} invalid: {exc}")
             if not keep:
                 _cleanup(path)
             continue
-        raster = preprocess.read_raster(
-            path,
-            nodata_values=src_preprocess_nodata(config),
-            declared_nodata_from_tiff=True,
-            geo_plausible_bbox=config["preprocess"].get("geo_plausible_bbox"),
-        )
+        except Exception as exc:
+            # read_raster può propagare guasti non tipizzati (es. pyproj sul
+            # centroide): il frame viene scartato con warning, mai crash del run.
+            warnings.append(
+                f"frame@{real_ts} preprocess_failed: "
+                f"{exc.__class__.__name__}: {exc}")
+            if not keep:
+                _cleanup(path)
+            continue
         raster.time_ms = real_ts
         raster.time_iso = _iso(real_ts)
         raster.source_path = path

@@ -22,10 +22,29 @@ import json
 import os
 import tempfile
 
+import numpy as np
+
 from . import models
 from . import supercell as sc_mod
 
 SOURCE_LABEL = "Radar-DPC VMI (GeoTIFF quantitativo)"
+
+
+def _json_default(obj):
+    """default= per json.dumps: numpy -> Python nativi, altro -> str.
+
+    Un run normale non lo invoca mai (i valori sono già float/int/str/None);
+    interviene solo su oggetti numpy che altrimenti farebbero crashare il
+    processo con TypeError (exit 1 senza GITHUB_OUTPUT)."""
+    if isinstance(obj, np.generic):
+        return obj.item()
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if obj is None or isinstance(obj, (bool, int, float, str)):
+        return obj
+    if isinstance(obj, (list, tuple)):
+        return list(obj)
+    return str(obj)
 
 
 def _atomic_write_text(path, text):
@@ -265,12 +284,18 @@ def write_outputs(bundle, out_dir, engine_meta=None):
         "supercells.json": os.path.join(out_dir, "supercells.json"),
     }
     contents = {
-        "latest.json": json.dumps(build_latest(bundle, engine_meta)),
-        "storms.geojson": json.dumps(build_storms_geojson(bundle)),
-        "tracks.json": json.dumps(build_tracks(bundle)),
-        "storm_objects.geojson": json.dumps(build_storm_objects_geojson(bundle)),
-        "storm_tracks.json": json.dumps(build_storm_tracks(bundle)),
-        "supercells.json": json.dumps(build_supercells(bundle, engine_meta)),
+        "latest.json": json.dumps(build_latest(bundle, engine_meta),
+                                  default=_json_default),
+        "storms.geojson": json.dumps(build_storms_geojson(bundle),
+                                     default=_json_default),
+        "tracks.json": json.dumps(build_tracks(bundle),
+                                  default=_json_default),
+        "storm_objects.geojson": json.dumps(build_storm_objects_geojson(bundle),
+                                            default=_json_default),
+        "storm_tracks.json": json.dumps(build_storm_tracks(bundle),
+                                        default=_json_default),
+        "supercells.json": json.dumps(build_supercells(bundle, engine_meta),
+                                      default=_json_default),
     }
     # Fase 1: scrivi tutti i tmp e poi replace (atomicità per file);
     # su errore il blocco viene interrotto e i vecchi file restano intatti.
@@ -288,7 +313,8 @@ def write_status_only(out_dir, status, generated_at_iso, warnings, engine_meta=N
     bundle.tracks = []
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "latest.json")
-    _atomic_write_text(path, json.dumps(build_latest(bundle, engine_meta)))
+    _atomic_write_text(path, json.dumps(build_latest(bundle, engine_meta),
+                                        default=_json_default))
     return path
 
 

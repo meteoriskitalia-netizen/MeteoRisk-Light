@@ -162,15 +162,23 @@ def _run(config, out_dir, product, max_frames, dry_run):
     try:
         output.write_outputs(bundle, out_dir, engine_meta=_engine_meta())
     except models.OutputError as exc:
-        bundle.status = "error"
-        try:
-            output.write_status_only(out_dir, "error", bundle.generated_at_iso,
-                                     bundle.warnings + [f"output failed: {exc}"],
-                                     engine_meta=_engine_meta())
-        except models.OutputError:
-            pass
-        return bundle, _ERROR
+        return _fail_output(bundle, out_dir, str(exc))
+    except Exception as exc:  # guasto imprevisto del writer -> OutputError
+        return _fail_output(bundle, out_dir,
+                            f"unexpected:{exc.__class__.__name__}:{exc}")
     return bundle, _OK if bundle.status == "ok" else _DEGRADED
+
+
+def _fail_output(bundle, out_dir, reason):
+    """Scrivi SOLO latest.json (status=error) e ritorna rc 4, mai crash."""
+    bundle.status = "error"
+    try:
+        output.write_status_only(out_dir, "error", bundle.generated_at_iso,
+                                 bundle.warnings + [f"output failed: {reason}"],
+                                 engine_meta=_engine_meta())
+    except Exception:
+        pass  # out_dir irrecuperabile: rc 4 comunque (nessun exit 1)
+    return bundle, _ERROR
 
 
 def main(argv=None):
