@@ -29,6 +29,11 @@ SEED = 20260101
 
 
 def synth_point(lat, lon, elev):
+    # NOTA 1.0.1.4: il marker transitorio _time riproduce la COPPERTURA TEMPORALE REALE delle
+    # serie Open-Meteo (hourly[0] = 00:00 del giorno Europe/Rome del fetch, daily[0] = stesso
+    # giorno). Il fixture è configurato per SIMULARE il bug: run driver partito il giorno PRIMA
+    # (fetched_at=2026-01-01 ma run_init_ts=2026-12-31) — day0 dai dati deve comunque risultare
+    # 2026-01-01, NON 2026-12-31.
     rnd = random.Random(SEED + int(lat * 1000) + int(lon * 1000) + int((elev or 0)))
     base_t = 30.0 - (elev or 0) / 150.0 - (abs(lat - 42.0)) * 1.2
     # cella convettiva concentrica su 41.4N, 12.7E
@@ -134,6 +139,10 @@ def synth_point(lat, lon, elev):
         "best_match": model_rec(0.15),
         "ecmwf_ifs": model_rec(0.35),
         "elevation": (elev or 0),
+        # COPPERTURA TEMPORALE TRANSITORIA (mai pubblicata): hourly[0]/daily[0] = giorno
+        # del fetch (2026-01-01), coerente con fetched_at del raw. Qui il day0 dai dati
+        # (2026-01-01) DEVE battere il day0 da init run (2025-12-31, vedi run_state del test).
+        "_time": {"hourly0": "2026-01-01T00:00", "daily0": "2026-01-01"},
     }
 
 

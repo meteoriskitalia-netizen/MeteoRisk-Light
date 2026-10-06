@@ -79,6 +79,16 @@ def fetch_batch(batch):
                 "daily": {f: d[f] for f in common.DAILY_FIELDS if f in d},
                 "hourly": {f: h[f] for f in common.HOURLY_FIELDS if f in h},
             }
+            # 1.0.1.4 — FIX day0: le serie Open-Meteo partono dall'00:00 del giorno
+            # Europe/Rome del fetch (daily[0]=stesso giorno), NON dal giorno di init
+            # del run driver. Il builder deve derivare day0 dal PRIMO giorno degli
+            # array per non lasciare lo scarto +1 (oggi→domani). Marker TRANSITORIO:
+            # vive solo nei raw (mai pubblicato), consumato dal builder.
+            if "_time" not in rec:
+                rec["_time"] = {
+                    "hourly0": h.get("time")[0] if h.get("time") else None,
+                    "daily0": d.get("time")[0] if d.get("time") else None,
+                }
             if rec["elevation"] is None:
                 rec["elevation"] = el.get("elevation")
     return [records[k] for k in sorted(records)], None

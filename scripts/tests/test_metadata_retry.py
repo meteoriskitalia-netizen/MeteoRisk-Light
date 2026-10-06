@@ -106,15 +106,20 @@ def test_h4_no_state_update_on_failure():
     # Il canary Best Match e il check ECMWF scrivono SOLO dopo un fetch riuscito:
     # qui verifichiamo che lo state rimanga byte-identico se la fetch fallisce.
     from unittest import mock
+    import sys
     import check_model_runs
     import check_best_match
+
+    # isoliamo sys.argv (sotto pytest contiene gli argomenti del runner)
+    argv_guard = mock.patch.object(sys, "argv", ["check_model_runs"])
 
     # check_model_runs: errore metadata -> non scrive nulla (no-op su save e
     # nessuna telemetria guardrails; l'esito arriva da rc 1 + summary)
     with mock.patch.object(common, "get_model_metadata",
                            side_effect=RuntimeError("Metadata API unavailable after 4 retries")), \
          mock.patch.object(common, "record_api_usage") as rec_m, \
-         mock.patch.object(common, "save_run_state") as save:
+         mock.patch.object(common, "save_run_state") as save, \
+         argv_guard:
         assert check_model_runs.main() == 1
         save.assert_not_called()
         rec_m.assert_not_called()
@@ -124,7 +129,8 @@ def test_h4_no_state_update_on_failure():
          mock.patch.object(common, "fetch_best_match_check",
                            side_effect=ConnectionResetError("reset")), \
          mock.patch.object(common, "record_api_usage") as rec, \
-         mock.patch.object(common, "save_run_state") as save2:
+         mock.patch.object(common, "save_run_state") as save2, \
+         mock.patch.object(sys, "argv", ["check_best_match"]):
         assert check_best_match.main() == 1
         rec.assert_not_called()
         save2.assert_not_called()

@@ -17,7 +17,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.0.1.2.html');
+const HTML = path.join(ROOT, 'mri-light-1.1.0.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -39,6 +39,7 @@ vm.runInNewContext(pure, ctx);
 failFast('dateKeyInTimeZone non estratta', typeof ctx.dateKeyInTimeZone === 'function');
 failFast('daysBetweenIso non estratta', typeof ctx.daysBetweenIso === 'function');
 failFast('datasetIndexForDayLabelAt non estratta', typeof ctx.datasetIndexForDayLabelAt === 'function');
+failFast('resolveEffectiveDay0 non estratta (1.0.1.4)', typeof ctx.resolveEffectiveDay0 === 'function');
 
 // ---------- 1. helper di base ----------
 {
@@ -95,6 +96,42 @@ const t12 = (iso) => new Date(iso + 'T12:00:00Z'); // mezzogiorno UTC → fermo 
   ok('day0=08 now=07: Dopodomani → indice 1 = 2026-09-09 (dopodomani vero)', dp === 1, 'idx=' + dp);
   ok('nessun clamp: /if \(off < 0\) off = 0;/ ASSENTE nel sorgente', !/if \(off < 0\) off = 0;/.test(src));
   ok('currentDayOffset NON clampa negativi', !/off < 0 \? 0 : off;/.test(src));
+}
+
+// ---------- 3c. FIX 1.0.1.4 — SCARTO +1 DALL'INIT DEL RUN (oggi→domani LIVE). ----------
+// Le serie Open-Meteo partono dal giorno Europe/Rome del FETCH, non dal giorno di init
+// del run driver ecmwf_ifs. Con run del giorno prima + fetch oggi, metadata.day0 resta
+// indietro: resolveEffectiveDay0 deve risolvere il giorno del fetch, e la mappatura
+// con quel day0 deve riportare "Oggi"→indice 0.
+{
+  // Scenario reale del bug: run_init_ts = 2026-09-08 (run della sera/notte precedente),
+  // fetched_at = 2026-09-09T21:00:00Z → giorno Europe/Rome = 2026-09-09 (= primo giorno
+  // array). metadata.day0 ("2026-09-08") NON va usato.
+  const metaMis = { day0: '2026-09-08',
+                    run_info: { run_init_ts: 1788609600, fetched_at: '2026-09-09T21:00:00Z' } };
+  const d0f = ctx.resolveEffectiveDay0(metaMis);
+  ok('resolveEffectiveDay0: run_info.fetched_at → giorno fetch (09-09)',
+    d0f === '2026-09-09', 'got ' + d0f);
+  ok('Oggi con day0=fetch → indice 0 (map del giorno vero)',
+    ctx.datasetIndexForDayLabelAt(0, t12('2026-09-09'), d0f) === 0);
+  ok('Domani con day0=fetch → indice 1', ctx.datasetIndexForDayLabelAt(1, t12('2026-09-09'), d0f) === 1);
+  ok('Dopodomani con day0=fetch → indice 2', ctx.datasetIndexForDayLabelAt(2, t12('2026-09-09'), d0f) === 2);
+  // fallback fetch_timestamps
+  const metaFT = { day0: '2026-09-08', fetch_timestamps: { best_match_fetch_timestamp: '2026-09-09T21:05:00Z' } };
+  ok('resolveEffectiveDay0: fallback fetch_timestamps → 09-09',
+    ctx.resolveEffectiveDay0(metaFT) === '2026-09-09', 'got ' + ctx.resolveEffectiveDay0(metaFT));
+  // nessun timestamp → null (il chiamante mantiene day0 storico)
+  ok('resolveEffectiveDay0: senza timestamps → null', ctx.resolveEffectiveDay0({ day0: '2026-09-09' }) === null);
+  ok('resolveEffectiveDay0: metadata null → null', ctx.resolveEffectiveDay0(null) === null);
+  // SEMANTICA COERENTE: dataset VALIDO/già allineato (day0 metadata == giorno fetch):
+  // resolve non deve mai spostare il giorno.
+  const metaOk = { day0: '2026-09-09', run_info: { fetched_at: '2026-09-09T02:00:00Z' } };
+  ok('resolveEffectiveDay0: dataset allineato resta sullo stesso giorno (09-09)',
+    ctx.resolveEffectiveDay0(metaOk) === '2026-09-09', 'got ' + ctx.resolveEffectiveDay0(metaOk));
+  // source check: applyStaticDataset usa resolveEffectiveDay0 e fa la mappatura su di esso
+  ok('applyStaticDataset usa resolveEffectiveDay0 (1.0.1.4)',
+    /var _effD0 = resolveEffectiveDay0\(meta\);/.test(src) &&
+    /datasetState\.day0 = _effD0 \|\| meta\.day0 \|\| '';/.test(src));
 }
 
 // ---------- 4. regressioni strutturali: selectDay e init usano la mappatura ----------
