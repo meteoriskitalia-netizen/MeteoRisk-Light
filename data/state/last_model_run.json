@@ -9,9 +9,9 @@
     },
     "best_match": {
       "model": "best_match",
-      "last_checked_at": "2026-10-06T15:43:51.193466+00:00",
-      "last_changed_at": "2026-10-06T15:43:51.193466+00:00",
-      "last_fingerprint": "48e25495fe75c2dfa493e2351cebccb6c59ffce335c48613cc49f167f836df4d",
+      "last_checked_at": "2026-10-06T17:44:01.603208+00:00",
+      "last_changed_at": "2026-10-06T17:44:01.603208+00:00",
+      "last_fingerprint": "b897a4f24a0b6307fb3f1ec054ad7bdbb191691d91149522687231c7905358d8",
       "fingerprint_source": "sentinel"
     }
   },
@@ -21,13 +21,13 @@
   "run_available_ts": 1791288000,
   "last_processed_key": "1791266400",
   "status": "live",
-  "bootstrap_pending": true,
-  "checked_at": "2026-10-06T15:41:18.348903+00:00",
-  "last_processed_at": "2026-10-06T15:43:51.193489+00:00",
+  "bootstrap_pending": false,
+  "checked_at": "2026-10-06T17:40:52.268337+00:00",
+  "last_processed_at": "2026-10-06T17:44:01.603229+00:00",
   "dataset": {
     "point_count": 257,
     "validation_outcome": "OK"
   },
-  "note": "INITIAL DATASET BOOTSTRAP (1.0.0.8): primo ciclo senza dataset live; sara' eseguito il fetch reale del primo dataset (guardrail ceiling -> fetch -> build -> validate -> publish atomico).",
-  "published_at": "2026-10-06T15:43:51.193466+00:00"
+  "note": "Ciclo coordinato: il run ECMWF comanda l'aggiornamento; best_match viene scaricato nello stesso ciclo di fetch. I run non vanno copiati/ripubblicati: Open-Meteo e' SOLO fonte dati. Vengono pubblicati dati DERIVATI MeteoRisk.",
+  "published_at": "2026-10-06T17:44:01.603208+00:00"
 }
