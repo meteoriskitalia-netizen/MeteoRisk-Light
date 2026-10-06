@@ -1,12 +1,13 @@
-MeteoRisk Light — 1.1.0.3 — SYNC DEPLOY PAGES (update-weather-data.yml, data/radar in _site) (bump da 1.1.0.2)
+MeteoRisk Light — 1.1.0.4 — SATELLITE ENGINE (satellite-engine.yml, finestra rolling 25 frame su Pages) (bump da 1.1.0.3)
 MAJOR=1
 MINOR=1
 PATCH=0
-BUILD=3
+BUILD=4
 RELEASE_TYPE=release
 DATE=2026-10-06
-NOTE=fix deploy pages (1.1.0.3): update-weather-data.yml copia anche data/radar in _site (stesso pattern di radar-engine.yml), quindi la pages serve sempre data/radar/supercells.json qualunque workflow effettui l'ultimo deploy. nessun altro cambiamento: motore radar/supercelle, casi di validazione, pipeline e app invariati rispetto a 1.1.0.2.
-APP_FILE=mri-light-1.1.0.3.html
+NOTE=satellite engine (1.1.0.4): satellite-engine.yml scarica ogni 5 minuti un frame per ciascuna delle 3 sorgenti EUMETSAT e pubblica su Pages la finestra rolling di 25 frame (branch satellite-cache, immagini statiche). nessun altro cambiamento: motore radar/supercelle, casi di validazione, pipeline meteo e app invariati rispetto a 1.1.0.3 (solo versione/changelog e rename file/cartella).
+APP_FILE=mri-light-1.1.0.4.html
+SATELLITE=BUMP 1.1.0.4 — nuovo workflow satellite-engine.yml: ogni 5 minuti (cron */5) scarica UN frame per ciascuna delle 3 sorgenti EUMETSAT (mtg_fd:ir105_hrfi, msg_fes:rgb_airmass, mtg_fd:rgb_geocolour) con GetMap identici a buildEumetsatLiveGetMap (EPSG:3857 su SATELLITE_EUROPE_BOUNDS, width 2048, time floor a 5 min - lag 15 min) e mantiene la finestra rolling di 25 slot per sorgente (2 ore) su branch ORPHAN satellite-cache (commit singola senza parent e force-push a ogni run: history zero, main intatto). Deploy Pages artifact-based completo (index.html + data/latest + data/geography + data/radar + satellite) con concurrency group "pages" condiviso. File/cartella rinominate a 1.1.0.4 in questo bump.
 DEPLOYFIX=BUMP 1.1.0.3 — fix deploy update-weather-data.yml: nel passo "Build sito statico" aggiunta la copia di data/radar in _site con la stessa guardia if [ -d ... ] di radar-engine.yml, dopo cp -R data/geography. senza questo passo un deploy meteo posteriore ricostruiva _site senza data/radar/supercells.json e l'app mostrava "Dati supercelle non disponibili (HTTP 404)". nessuna modifica a motore radar, validazione, app (solo versione/changelog) o pipeline.
 CIFIX=BUMP 1.1.0.2 — fix ci radar-engine (fixture validation cases/ nel repo, la suite non fallisce piu' in checkout pulito) + hardening motore: sourceerror rc 4 su time invalido, httpexception/incompleteread catturata, read_raster protetto (0 frame -> rc 4 status=error), writer con latest.json status=error e rc 4 invece di crash exit 1, json serialization con default handler numpy.
 RENDERFIX=BUMP 1.1.0.1 — fix rendering post-1.1.0.0: satellite ad alta risoluzione 2048px (EUMETSAT_FRAME_WIDTH + EUMETSAT_LIVE_WIDTH, 3 sorgenti EUMETSAT), satellite semitrasparente (SATELLITE_OPACITY 0.6 su LIVE panel e layover player) e radar precipitazioni opaco al layer piu' alto (radarPane zIndex 400 opacity 1, rimozione blend DPC, pixel no-data trasparenti).
