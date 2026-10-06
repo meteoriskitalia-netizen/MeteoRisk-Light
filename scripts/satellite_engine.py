@@ -5,24 +5,34 @@ Satellite Engine (satellite_engine.py): scarica i frame satellitari EUMETSAT
 (WMS view.eumetsat.int) e mantiene una finestra rolling di 25 slot per sorgente
 (2 ore a passo di 5 minuti) in satellite/<sourceId>/<slotISO>.png.
 
-Faithful port della logica dell'app (mri-light-1.1.0.3.html):
+Faithful port della logica dell'app (mri-light-1.1.0.4.html):
   - buildEumetsatLiveGetMap: GetMap EPSG:3857 su SATELLITE_EUROPE_BOUNDS
     [[22,-28],[72,55]] (width 2048, height proporzionale, stessa sequenza di
     parametri layers/styles/format/transparent/version/time/width/height/srs/bbox);
   - buildSyncTimeline + EUMETSAT_DATA_LAG_MS: time = ora corrente - 15 minuti,
     floor a 5 minuti (setUTCMinutes(floor(m/5)*5, 0, 0)), formato .000Z.
 
+Backfill: ogni run scarica tutti gli slot mancanti della finestra di 2 ore
+(25 slot x 3 sorgenti), dallo slot corrente al piu' vecchio, su MAX_WORKERS
+thread paralleli:
+  - 0 richieste se la finestra e' gia' tutta presente e valida;
+  - 3 richieste se manca solo lo slot corrente;
+  - fino a 75 richieste al primo run (25 slot x 3 sorgenti).
+
 Output:
   satellite/<sourceId>/<slotISO>.png   slotISO = 2026-10-06T19-45-00Z
   satellite/manifest.json              generated_at + slot + sorgenti -> slot ISO
   - idempotente: frame gia' presente e valido -> skip (nessun download);
   - pruning: restano solo gli ultimi 25 slot per sorgente, i non-PNG sono rimossi;
-  - il download e' indipendente per sorgente (un errore NON blocca le altre).
+  - il download e' indipendente per sorgente (un errore NON blocca le altre);
+  - i fallimenti sugli slot di backfill sono loggati e conteggiati ma non
+    influenzano l'exit code (uno slot storico morto non fa fallire la run).
 
-Exit codes:
-   0 = tutte le sorgenti scaricate o gia' presenti
-   3 = degradato: almeno una sorgente OK e almeno una in errore
-   4 = errore: nessuna sorgente disponibile (run visibilmente fallita)
+Exit codes (valutati sullo slot corrente):
+   0 = tutte e 3 le sorgenti dello slot corrente scaricate o gia' presenti
+   3 = degradato: sullo slot corrente almeno una sorgente OK e almeno una in errore
+   4 = errore: sullo slot corrente nessuna sorgente disponibile (run visibilmente
+       fallita)
 """
 
 import argparse
@@ -32,9 +42,11 @@ import math
 import os
 import random
 import sys
+import threading
 import time
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,8 +70,17 @@ HTTP_TIMEOUT_S = 60
 RETRY_ATTEMPTS = 4
 RETRY_BACKOFF_BASE_S = 5.0
 RETRY_JITTER_MAX_S = 1.5
+MAX_WORKERS = 4
 USER_AGENT = common.APP_NAME + "/satellite-engine (non-commercial)"
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+_LOG_LOCK = threading.Lock()
+
+
+def _log(msg):
+    """print con lock: i download girano su thread concorrenti."""
+    with _LOG_LOCK:
+        print(msg)
 
 
 def compute_slot(now=None):
@@ -70,6 +91,13 @@ def compute_slot(now=None):
     epoch = int(lagged.timestamp())
     epoch -= epoch % SLOT_STEP_S
     return _dt.datetime.fromtimestamp(epoch, tz=_dt.timezone.utc)
+
+
+def window_slots(slot):
+    """Finestra di WINDOW_SLOTS slot: dal corrente indietro di SLOT_STEP_S
+    (slot corrente per primo, poi dal piu' recente al piu' vecchio)."""
+    return [slot - _dt.timedelta(seconds=SLOT_STEP_S * i)
+            for i in range(WINDOW_SLOTS)]
 
 
 def slot_name(slot):
@@ -117,8 +145,8 @@ def fetch_png(url):
     for attempt in range(RETRY_ATTEMPTS):
         if attempt:
             delay = RETRY_BACKOFF_BASE_S * (2 ** (attempt - 1)) + random.uniform(0.0, RETRY_JITTER_MAX_S)
-            print("[satellite_engine] retry %d/%d tra %.1fs: %s"
-                  % (attempt, RETRY_ATTEMPTS - 1, delay, last_err))
+            _log("[satellite_engine] retry %d/%d tra %.1fs: %s"
+                 % (attempt, RETRY_ATTEMPTS - 1, delay, last_err))
             time.sleep(delay)
         try:
             req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT,
@@ -141,8 +169,8 @@ def process_source(source_id, layer, slot, out_root):
     target = src_dir / (slot_name(slot) + ".png")
     if is_png(target):
         size = target.stat().st_size
-        print("[satellite_engine] slot=%s source=%s status=skip bytes=%d"
-              % (slot_name(slot), source_id, size))
+        _log("[satellite_engine] slot=%s source=%s status=skip bytes=%d"
+             % (slot_name(slot), source_id, size))
         return {"status": "skip", "bytes": size}
     url = build_getmap_url(layer, slot_time(slot))
     try:
@@ -152,11 +180,11 @@ def process_source(source_id, layer, slot, out_root):
     except Exception as exc:  # noqa: BLE001
         if target.exists() and not is_png(target):
             target.unlink()
-        print("[satellite_engine] slot=%s source=%s status=errore bytes=0 url=%s motivo=%s"
-              % (slot_name(slot), source_id, url, exc))
+        _log("[satellite_engine] slot=%s source=%s status=errore bytes=0 url=%s motivo=%s"
+             % (slot_name(slot), source_id, url, exc))
         return {"status": "errore", "bytes": 0, "detail": str(exc)}
-    print("[satellite_engine] slot=%s source=%s status=ok bytes=%d"
-          % (slot_name(slot), source_id, len(body)))
+    _log("[satellite_engine] slot=%s source=%s status=ok bytes=%d"
+         % (slot_name(slot), source_id, len(body)))
     return {"status": "ok", "bytes": len(body)}
 
 
@@ -169,11 +197,11 @@ def prune_source(source_id, out_root):
         (valid if is_png(path) else invalid).append(path)
     for path in invalid:
         path.unlink()
-        print("[satellite_engine] source=%s status=rimosso file=%s motivo=non-PNG"
-              % (source_id, path.name))
+        _log("[satellite_engine] source=%s status=rimosso file=%s motivo=non-PNG"
+             % (source_id, path.name))
     for path in valid[:-WINDOW_SLOTS]:
         path.unlink()
-        print("[satellite_engine] source=%s status=pruned file=%s" % (source_id, path.name))
+        _log("[satellite_engine] source=%s status=pruned file=%s" % (source_id, path.name))
 
 
 def write_manifest(out_root, slot, generated_at):
@@ -205,7 +233,7 @@ def parse_now(value, parser):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Frame EUMETSAT (WMS) + finestra rolling 25 slot per sorgente.")
+        description="Frame EUMETSAT (WMS) + backfill finestra rolling 25 slot per sorgente.")
     parser.add_argument("--out-dir", default=None,
                         help="Directory output (default: <repo>/satellite).")
     parser.add_argument("--now", default=None,
@@ -222,23 +250,39 @@ def main():
 
     out_root = Path(args.out_dir) if args.out_dir else (common.REPO_ROOT / "satellite")
     out_root.mkdir(parents=True, exist_ok=True)
-    print("[satellite_engine] slot=%s time=%s out=%s"
-          % (slot_name(slot), slot_time(slot), out_root))
+    slots = window_slots(slot)
+    _log("[satellite_engine] slot=%s time=%s out=%s backfill=%d slot x %d sorgenti"
+         % (slot_name(slot), slot_time(slot), out_root, len(slots), len(SOURCES)))
 
     results = {}
-    for source_id, layer in SOURCES.items():
-        results[source_id] = process_source(source_id, layer, slot, out_root)
+    backfill = {"ok": 0, "skip": 0, "errore": 0}
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        pending = {pool.submit(process_source, source_id, layer, slot, out_root): source_id
+                   for source_id, layer in SOURCES.items()}
+        for future in as_completed(pending):
+            results[pending[future]] = future.result()
+        pending = {pool.submit(process_source, source_id, layer, s, out_root): source_id
+                   for s in slots[1:] for source_id, layer in SOURCES.items()}
+        for future in as_completed(pending):
+            backfill[future.result()["status"]] += 1
     for source_id in SOURCES:
         prune_source(source_id, out_root)
 
     generated_at = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     manifest = write_manifest(out_root, slot, generated_at)
 
-    ok = sum(1 for r in results.values() if r["status"] in ("ok", "skip"))
+    counts = {"ok": 0, "skip": 0, "errore": 0}
+    for res in results.values():
+        counts[res["status"]] += 1
+    ok = counts["ok"] + counts["skip"]
     failed = len(SOURCES) - ok
-    print("[satellite_engine] esito slot=%s ok=%d fallite=%d frame=%s"
-          % (slot_name(slot), ok, failed,
-             {k: len(v) for k, v in manifest["sources"].items()}))
+    _log("[satellite_engine] esito slot=%s ok=%d fallite=%d frame=%s"
+         % (slot_name(slot), ok, failed,
+            {k: len(v) for k, v in manifest["sources"].items()}))
+    _log("[satellite_engine] run: ok=%d skip=%d falliti=%d (slot corrente) | "
+         "backfill slot=%d: ok=%d skip=%d falliti=%d"
+         % (counts["ok"], counts["skip"], counts["errore"], len(slots) - 1,
+            backfill["ok"], backfill["skip"], backfill["errore"]))
 
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
@@ -256,11 +300,11 @@ def main():
     if failed == 0:
         return 0
     if ok:
-        print("[satellite_engine] DEGRADATO: %d sorgenti OK, %d in errore (run comunque valida)."
-              % (ok, failed))
+        _log("[satellite_engine] DEGRADATO: %d sorgenti OK, %d in errore (run comunque valida)."
+             % (ok, failed))
         return 3
-    print("[satellite_engine] ERRORE: nessuna sorgente disponibile per lo slot %s."
-          % slot_name(slot))
+    _log("[satellite_engine] ERRORE: nessuna sorgente disponibile per lo slot %s."
+         % slot_name(slot))
     return 4
 
 
