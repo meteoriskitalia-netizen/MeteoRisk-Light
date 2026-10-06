@@ -89,20 +89,27 @@ jobs:
             git push
           fi
 
-      # L'ARTEFATTO di deploy contiene: app, dataset derivati, geografie richieste e
-      # derivati radar (data/radar: latest.json/storms.geojson/tracks.json/supercells.json) —
-      # MAI _raw / _staging / _workdir / payload esterni. Senza questa build il toggle
-      # "Supercelle Radar" non troverebbe supercells.json su Pages (Pages serve _site,
-      # non il repo root). Concurrency group "pages" condiviso con update-weather-data:
-      # i due deploy si serializzano (cancel-in-progress: false).
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar)
+      # L'ARTEFATTO di deploy contiene: app, dataset derivati, geografie richieste,
+      # derivati radar (data/radar: latest.json/storms.geojson/tracks.json/supercells.json)
+      # e la finestra rolling satellite/ (branch satellite-cache, ripristinata qui
+      # perché viva solo su quel branch: senza i frame il deploy seguirebbe quello
+      # di satellite-engine e li cancellerebbe da Pages) — MAI _raw / _staging /
+      # _workdir / payload esterni. Senza questa build il toggle "Supercelle Radar"
+      # non troverebbe supercells.json su Pages (Pages serve _site, non il repo root).
+      # Concurrency group "pages" condiviso con update-weather-data e
+      # satellite-engine: i deploy si serializzano (cancel-in-progress: false).
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + satellite)
         if: success()
         run: |
           mkdir -p _site/data
-          cp mri-light-1.1.0.2.html _site/index.html
+          cp mri-light-1.1.0.3.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
+          if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
+            echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
+          fi
+          if [ -d satellite ]; then cp -R satellite _site/satellite; fi
 
       - name: Upload Pages artifact
         if: success()
