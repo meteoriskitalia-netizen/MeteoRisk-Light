@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "notes": "Casi retrospettivi per la Validation Fase 1.5. Metadata-only: il raw radar DPC non entra mai nel repo; i GeoTIFF VMI risiedono in RADAR_SAMPLES_DIR (esterno) e vengono risolti via radar_engine.validation.cases. Le etichette 'type' sono CATEGORIE NEUTRE di contesto (descrizione dell'evento osservato), non classificazioni automatiche: nessun modulo del motore emette firme supercell in Fase 1.",
+  "cases": [
+    {
+      "id": "SIT20260711",
+      "name": "Convezione intensa e persistente 2026-07-11 18:00Z",
+      "start": "2026-07-11T17:40:00Z",
+      "end": "2026-07-11T18:45:00Z",
+      "type": "ORGANIZED_MULTICELL",
+      "region": "Italia centro-settentrionale",
+      "description": "Caso ad alta attività: 53 celle rilevate al frame 18:00Z (scan a 1 campione/giorno), max dBZ 60. Finestra di 65 min su griglia VMI PT5M per test di tracking, sensitivity e stabilità. Etichetta basata SOLO sulla struttura radar osservata (nessuna verifica a terra).",
+      "reference_sources": [
+        "Archivio VMI Radar-DPC (retention verificata ~120 giorni, 2026-07-11)"
+      ]
+    },
+    {
+      "id": "SIT20260908",
+      "name": "Convezione ordinaria 2026-09-08 18:00Z",
+      "start": "2026-09-08T17:40:00Z",
+      "end": "2026-09-08T18:45:00Z",
+      "type": "ORDINARY_CONVECTION",
+      "region": "Italia",
+      "description": "Caso di attività moderata (19 celle al frame 18:00Z, max 50 dBZ, run live di riferimento Fase 1). Usato come riferimento di comportamento 'normale' per sensitivity e stability.",
+      "reference_sources": [
+        "Archivio VMI Radar-DPC (2026-09-08)"
+      ]
+    },
+    {
+      "id": "QUIET20260823",
+      "name": "Finestra quasi priva di echi 2026-08-23 18:00Z",
+      "start": "2026-08-23T17:55:00Z",
+      "end": "2026-08-23T18:20:00Z",
+      "type": "UNKNOWN",
+      "region": "Italia",
+      "description": "Frame 18:00Z senza celle rilevate (0 celle) nei 66 giorni di scan. Usato come caso 'quiet' per documentare i FALSI POSITIVI del detector (echo minori rivelati in condizioni quasi prive di convezione).",
+      "reference_sources": [
+        "Archivio VMI Radar-DPC (2026-08-23)"
+      ]
+    }
+  ]
+}

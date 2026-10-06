@@ -1,0 +1,333 @@
+{
+  "schema_version": "1.1",
+  "notes": "Fase 1.8 — Catalogo esteso per validazione su casi reali. METADATA-ONLY: nessun raw radar nel repo; i GeoTIFF VMI Radar-DPC risiedono in RADAR_SAMPLES_DIR (esterno) e vengono risolti per pattern <day>/VMI-HHMM.tif. 'category' = CATEGORIA NEUTRA di contesto assegnata sulla STRUTTURA radar osservata nella finestra VMI PT5M (celle, max dBZ, elongazione/concentrazione dei centroidi), NON una classificazione automatica e MAI una firma supercell. 'ground_truth_quality' attesta le FONTI di verità disponibili (documenti/bollettini), non la correttezza del motore. Per i casi privi di fonti indipendenti la qualità è UNKNOWN e la categoria resta struttura-osservata.",
+  "cases": [
+    {
+      "id": "QUIET20260823",
+      "date": "2026-08-23",
+      "start": "2026-08-23T17:55:00Z",
+      "end": "2026-08-23T18:15:00Z",
+      "region": "UNKNOWN",
+      "season": "SUMMER",
+      "category": "QUIET",
+      "description": "Finestra quasi priva di echi: 0 celle su 5 frame VMI (griglia PT5M). Caso di riferimento per i falsi positivi del detector e dello storm layer (nessuno atteso).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-23)"]
+    },
+    {
+      "id": "QUIET20260722",
+      "date": "2026-07-22",
+      "start": "2026-07-22T17:40:00Z",
+      "end": "2026-07-22T18:55:00Z",
+      "region": "UNKNOWN",
+      "season": "SUMMER",
+      "category": "QUIET",
+      "description": "Giorno senza celle sul Punto campione nazionale 18:00Z; verifica su 16 frame PT5M: 0 celle, 0 storm object attesi. Test quiet esteso.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-07-22)"]
+    },
+    {
+      "id": "QUIET20260904",
+      "date": "2026-09-04",
+      "start": "2026-09-04T17:40:00Z",
+      "end": "2026-09-04T18:55:00Z",
+      "region": "UNKNOWN",
+      "season": "AUTUMN",
+      "category": "QUIET",
+      "description": "Giorno senza celle al scan 18:00Z; verifica su 16 frame PT5M: 0 celle. Quiet test di fine stagione.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-09-04)"]
+    },
+    {
+      "id": "QUIET20260906",
+      "date": "2026-09-06",
+      "start": "2026-09-06T17:40:00Z",
+      "end": "2026-09-06T18:55:00Z",
+      "region": "SOUTH_ITALY",
+      "season": "AUTUMN",
+      "category": "QUIET",
+      "description": "Quasi-quiet: 1 debole cella (<=1, max ~37.5 dBZ) transitoria presente su 4/16 frame. Serve a caratterizzare la soglia di attivazione del layer storm in condizioni marginali.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-09-06)"]
+    },
+    {
+      "id": "ORD20260720",
+      "date": "2026-07-20",
+      "start": "2026-07-20T17:40:00Z",
+      "end": "2026-07-20T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Convezione ordinaria di debole/moderata intensità sul settore alpino: 7-12 celle/frame, max 52.5 dBZ, persistenza totale sulla finestra, organizzazione scarsa (axis_ratio 4.7).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-07-20)"]
+    },
+    {
+      "id": "ORD20260803",
+      "date": "2026-08-03",
+      "start": "2026-08-03T17:40:00Z",
+      "end": "2026-08-03T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Convezione diffusa debole (15-26 celle/frame, max 49.5 dBZ) lungo fascia prealpina: banda elongata (axis_ratio 15.3) ma intensità ordinaria. Verifica stabilità del layer storm su sistemi deboli.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-03)"]
+    },
+    {
+      "id": "ORD20260818",
+      "date": "2026-08-18",
+      "start": "2026-08-18T17:40:00Z",
+      "end": "2026-08-18T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Convezione moderata (12-21 celle/frame, max 50.5 dBZ) con crescita in coda alla finestra; organizzazione allungata (axis_ratio 18.3).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-18)"]
+    },
+    {
+      "id": "ORD20260831",
+      "date": "2026-08-31",
+      "start": "2026-08-31T17:40:00Z",
+      "end": "2026-08-31T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Poche celle intense isolate (2-6/frame, max 62.5 dBZ, axis_ratio 5.6) sul settore settentrionale. Bollettino Protezione Civile Salento ODV segnalava rischio temporali forti/grandine sul Salento per il pomeriggio: la finestra osservata mostra echi intensi ma disorganizzati e DIFFERENTI DALLA ZONA PREVISTA — discrepanza documentata tra previsione e radar registrato.",
+      "ground_truth_quality": "C",
+      "reference_sources": [
+        "Protezione Civile Salento ODV, bollettino 2026-08-31 (previsione temporali forti e grandine): https://ozanews.it/attualita/salento-temporali-forti-grandine-oggi-31-agosto/",
+        "Archivio VMI Radar-DPC (2026-08-31)"
+      ]
+    },
+    {
+      "id": "ORD20260902",
+      "date": "2026-09-02",
+      "start": "2026-09-02T17:40:00Z",
+      "end": "2026-09-02T18:55:00Z",
+      "region": "NORD_ITALY",
+      "season": "AUTUMN",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Convezione autunnale moderata (9-14 celle/frame, max 62.0 dBZ) sulle pianure del nord; bande allungate (axis_ratio 11.2) di intensità non eccezionale.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-09-02)"]
+    },
+    {
+      "id": "SIT20260908",
+      "date": "2026-09-08",
+      "start": "2026-09-08T17:40:00Z",
+      "end": "2026-09-08T18:40:00Z",
+      "region": "NORD_ITALY",
+      "season": "AUTUMN",
+      "category": "ORDINARY_CONVECTION",
+      "description": "Riferimento 'normale' del run live: 15-22 celle/frame, max 57.0 dBZ, 13 frame PT5M. Usato come riferimento di comportamento ordinario per sensibilità e stabilità (alias SIT20260908 in cases.json Fase 1.5).",
+      "ground_truth_quality": "C",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-09-08)"]
+    },
+    {
+      "id": "ORG20260710",
+      "date": "2026-07-10",
+      "start": "2026-07-10T17:40:00Z",
+      "end": "2026-07-10T18:55:00Z",
+      "region": "NORD_ITALY",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Multicella ad alta copertura: 31-49 celle/frame, max 58.0 dBZ, crescita costante sulla finestra (axis_ratio 3.5).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-07-10)"]
+    },
+    {
+      "id": "SIT20260711",
+      "date": "2026-07-11",
+      "start": "2026-07-11T17:00:00Z",
+      "end": "2026-07-11T19:35:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Caso di riferimento Fase 1.7: 30-62 celle/frame, max 64.5 dBZ, 32 frame, persistenza totale, sistema complesso nord-occidentale. Allerta DPC arancione su Lombardia e avviso condizioni avverse per temporali forti al Nord (documentato), struttura osservata organizzata-multicellulare.",
+      "ground_truth_quality": "B",
+      "reference_sources": [
+        "ANSA, 'Maltempo: allerta arancione in Lombardia, temporali e grandine al Nord' (2026-07-11): https://www.ansa.it/sito/notizie/cronaca/2026/07/11/",
+        "Newsroom Italia, avviso temporali violenti e rischio grandine Pax/ER (2026-07-11): https://newsroom24.it/notizia/2026/07/11/",
+        "Regione Emilia-Romagna, stato di crisi per ondate 15 e 18-21 luglio: https://notizie.regione.emilia-romagna.it/comunicati/2026/",
+        "Archivio VMI Radar-DPC (2026-07-11)"
+      ]
+    },
+    {
+      "id": "ORG20260811",
+      "date": "2026-08-11",
+      "start": "2026-08-11T17:40:00Z",
+      "end": "2026-08-11T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Sistema alpino molto attivo: 27-51 celle/frame, max 55.5 dBZ, banda stretta (axis_ratio 6.8, p80 perp 14.9 km) con declino in coda.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-11)"]
+    },
+    {
+      "id": "ORG20260812",
+      "date": "2026-08-12",
+      "start": "2026-08-12T17:40:00Z",
+      "end": "2026-08-12T18:55:00Z",
+      "region": "CENTRAL_ITALY",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Multicella in dissipazione: 11-27 celle/frame, max 57.5 dBZ, netto declino da 27 a 11 celle. Utile per la sensibilità del tracker al ciclo di vita.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-12)"]
+    },
+    {
+      "id": "ORG20260817",
+      "date": "2026-08-17",
+      "start": "2026-08-17T17:40:00Z",
+      "end": "2026-08-17T18:55:00Z",
+      "region": "CENTRAL_ITALY",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Sistema centrale intenso e in crescita: 32-52 celle/frame, max 63.5 dBZ, elongazione (axis_ratio 8.6).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-17)"]
+    },
+    {
+      "id": "ORG20260821",
+      "date": "2026-08-21",
+      "start": "2026-08-21T17:40:00Z",
+      "end": "2026-08-21T18:55:00Z",
+      "region": "NORD_ITALY",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Multicella settentrionale: 20-32 celle/frame stabili, max 53.0 dBZ, persistenza totale (axis_ratio 6.1).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-21)"]
+    },
+    {
+      "id": "ORG20260824",
+      "date": "2026-08-24",
+      "start": "2026-08-24T17:40:00Z",
+      "end": "2026-08-24T18:55:00Z",
+      "region": "CENTRAL_ITALY",
+      "season": "SUMMER",
+      "category": "ORGANIZED_MULTICELL",
+      "description": "Multicella centrale in crescita: 25-42 celle/frame, max 64.0 dBZ, banda elongata (axis_ratio 8.0).",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-24)"]
+    },
+    {
+      "id": "LIN20260708",
+      "date": "2026-07-08",
+      "start": "2026-07-08T17:40:00Z",
+      "end": "2026-07-08T18:55:00Z",
+      "region": "SOUTH_ITALY",
+      "season": "SUMMER",
+      "category": "LINEAR_CONVECTION",
+      "description": "Linea di cellule nel sud Italia: 5-11 celle/frame, max 56.5 dBZ, struttura fortemente elongata (axis_ratio 21.7, banda 80° percentile 15.2 km), persistente.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-07-08)"]
+    },
+    {
+      "id": "LIN20260726",
+      "date": "2026-07-26",
+      "start": "2026-07-26T17:40:00Z",
+      "end": "2026-07-26T18:55:00Z",
+      "region": "SOUTH_ITALY",
+      "season": "SUMMER",
+      "category": "LINEAR_CONVECTION",
+      "description": "Linea compatta di celle molto attiva sul sud (40-50 celle/frame su banda di 14 km, max 60.5 dBZ, axis_ratio 20.8): sistema a struttura lineare continua.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-07-26)"]
+    },
+    {
+      "id": "LIN20260816",
+      "date": "2026-08-16",
+      "start": "2026-08-16T17:40:00Z",
+      "end": "2026-08-16T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "SUMMER",
+      "category": "LINEAR_CONVECTION",
+      "description": "Banda prealpina allungata: 27-40 celle/frame, max 64.5 dBZ, axis_ratio 10.2. Sistema lineare intenso con alternanza crescita/decadimento.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-16)"]
+    },
+    {
+      "id": "LIN20260828",
+      "date": "2026-08-28",
+      "start": "2026-08-28T17:40:00Z",
+      "end": "2026-08-28T18:55:00Z",
+      "region": "CENTRAL_ITALY",
+      "season": "SUMMER",
+      "category": "LINEAR_CONVECTION",
+      "description": "Sistema centrale fortemente lineare: 24-38 celle/frame, max 63.5 dBZ, axis_ratio 44.7 (il più elongato dell'ensemble), banda 80° percentile 18.8 km.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-08-28)"]
+    },
+    {
+      "id": "LIN20260901",
+      "date": "2026-09-01",
+      "start": "2026-09-01T17:40:00Z",
+      "end": "2026-09-01T18:55:00Z",
+      "region": "ALPS_OR_PREALPS",
+      "season": "AUTUMN",
+      "category": "LINEAR_CONVECTION",
+      "description": "Banda lineare autunnale sul settore alpino: 8-11 celle/frame, max 60.0 dBZ, axis_ratio 16.6, banda 16 km. Sistema sfuggente a bassa densità di celle.",
+      "ground_truth_quality": "UNKNOWN",
+      "reference_sources": ["Archivio VMI Radar-DPC (2026-09-01)"]
+    },
+    {
+      "id": "SEV20260715",
+      "date": "2026-07-15",
+      "start": "2026-07-15T17:40:00Z",
+      "end": "2026-07-15T18:55:00Z",
+      "region": "NORD_ITALY",
+      "season": "SUMMER",
+      "category": "SEVERE_DOCUMENTED",
+      "description": "Violenta ondata settentrionale documentata: centinaia di interventi VVFF su ER-Lombardia-Alto Adige-Piemonte, raffiche fino a 100-120 km/h (Parma-Reggiana-Bologna canale), grandine fino a 8-10 cm, downburst, MCS su ER; stato di crisi regionale ER per 117 comuni (ondate 15 e 18-21 luglio). Radar (finestra): 6-12 celle dispersi (periplan 52.9 km), max 64.0 dBZ: celle forti isolate su matrice fragola — struttura a singole cellule intense NON lineare.",
+      "ground_truth_quality": "A",
+      "reference_sources": [
+        "meteo.it, 'Maltempo al Nord: raffiche fino a 120 km/h' (2026-07-15): https://www.meteo.it/notizie/",
+        "3B Meteo, 'Il Nord colpito da nubifragi, grandine e venti fino a 120km/h' (2026-07-15/16): https://www.3bmeteo.com/giornale-meteo/",
+        "Regione Emilia-Romagna, stato di crisi ondate 15 e 18-21 luglio: https://notizie.regione.emilia-romagna.it/comunicati/2026/",
+        "Archivio VMI Radar-DPC (2026-07-15)"
+      ]
+    },
+    {
+      "id": "SEV20260721",
+      "date": "2026-07-21",
+      "start": "2026-07-21T17:00:00Z",
+      "end": "2026-07-21T19:35:00Z",
+      "region": "NORD_ITALY",
+      "season": "SUMMER",
+      "category": "SEVERE_DOCUMENTED",
+      "description": "Sistema convettivo estremo documentato su più fonti nazionali (MCS/squall line che ha attraversato la penisola da NW a SE, ~15 ore attivo): maxi-grandine (chicchi fino a 9-10 cm), downburst, raffiche 100-120 km/h su ER-Lombardia, danni ingenti a Ferrarese/Ravennate/Bolognese; allerta DPC arancione/gialla e livello 3 Pretemp su Romagna-Marche. Radar (finestra): 15-42 celle/frame, max 63.0 dBZ, persistenza totale, banda allungata (axis_ratio 5.8, p80 perp 22.8 km) coerente con sistema lineare/organizzato in transito.",
+      "ground_truth_quality": "A",
+      "reference_sources": [
+        "Corriere della Sera, 'Maxi-grandine, paura sull'A13...' (2026-07-21): https://www.corriere.it/cronache/26_luglio_21/",
+        "today.it, 'Temporali violenti, grandine gigante e raffiche oltre 150 km/h' (2026-07-21): https://www.today.it/meteo/maltempo-21-luglio-2026.html",
+        "inmeteo.net, 'Nuove violentissime grandinate fra Veneto ed Emilia Romagna' (2026-07-21): https://www.inmeteo.net/2026/07/21/",
+        "Gazzetta di Mantova, grandine nella Bassa Mantovana (2026-07-21): https://www.gazzettadimantova.it/",
+        "Regione Emilia-Romagna, stato di crisi ondate 15 e 18-21 luglio: https://notizie.regione.emilia-romagna.it/comunicati/2026/",
+        "Archivio VMI Radar-DPC (2026-07-21)"
+      ]
+    },
+    {
+      "id": "SEV20260820",
+      "date": "2026-08-20",
+      "start": "2026-08-20T17:00:00Z",
+      "end": "2026-08-20T19:35:00Z",
+      "region": "NORD_ITALY",
+      "season": "SUMMER",
+      "category": "SEVERE_DOCUMENTED",
+      "description": "Inizio della fase estrema Centro-Nord documentata a livello nazionale: 40.000 scariche in Liguria, 250 mm sulle Alpi Orobie, 200 mm/24h a Chiavari, evacuazioni in Lombardia e Alto Adige, tromba d'aria a Rapallo; attività in arrivo sul Tigullio già nel pomeriggio. Radar (finestra): 15-31 celle/frame, max 66.5 dBZ (il massimo dell'ensemble), struttura ampia e quasi isotropa (axis_ratio 1.9, p80 perp 44.5 km): insieme multicellulare esteso, fase iniziale del sistema.",
+      "ground_truth_quality": "B",
+      "reference_sources": [
+        "ANSA, 'Nubifragi, tornado e fulmini: il maltempo sferza il Centro-Nord' (2026-08-21): https://www.ansa.it/",
+        "fanpage.it, 'Il nord nella morsa del maltempo' (2026-08-20): https://www.fanpage.it/attualita/",
+        "la Repubblica Genova, allagamenti nel Tigullio (2026-08-20): https://genova.repubblica.it/cronaca/2026/08/20/",
+        "Rainews, oltre 1200 interventi VVFF Centro-Nord (2026-08-22): https://www.rainews.it/",
+        "Euronews, eventi meteo estremi Liguria-Lombardia-Toscana (2026-08-21): https://it.euronews.com/",
+        "Archivio VMI Radar-DPC (2026-08-20)"
+      ]
+    }
+  ]
+}
