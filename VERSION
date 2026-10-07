@@ -1,3 +1,14 @@
+MeteoRisk Light — 1.1.0.6 — SATELLITE ITALIA + DEFAULT IR + SPEED X1 + STATIC-FIRST (bump da 1.1.0.5)
+MAJOR=1
+MINOR=1
+PATCH=0
+BUILD=6
+RELEASE_TYPE=release
+DATE=2026-10-07
+NOTE=satellite italia (1.1.0.6): 6 sorgenti EUMETSAT (3 Europa + 3 Italia). default IR Italia selezionato (satSource eumetsat_italy, prima option del #sat-source-select con selected), sorgenti Italia eumetsat_italy/eumetsat_airmass_italy/eumetsat_geocolour_italy su SATELLITE_ITALY_BOUNDS L.latLngBounds([[36.5,6.6],[47.2,18.8]]) con ITALY_FRAME_WIDTH e ITALY_LIVE_WIDTH 1024. player: speed default x1 (syncPlaySpeed=1, option value 1 selected). satellite static-first: i frame arrivano da fetch('satellite/manifest.json') con loadSatelliteManifest/satStaticSlotName/satStaticUrl al posto del WMS live sulla timeline. workflow satellite-engine.yml alleggerito: niente piu' build _site/upload/deploy Pages (la finestra satellite/ arriva su Pages tramite radar-engine/update-weather-data che la ripristinano da satellite-cache), concurrency group proprio satellite-cache (le run da 5 min non competono piu' con i deploy), force-push rolling con commit (6 sorgenti). Fase 2 supercell e motore radar invariati rispetto a 1.1.0.5 (solo versione/changelog e rename file/cartella).
+APP_FILE=mri-light-1.1.0.6.html
+SATELLITE2=BUMP 1.1.0.6 — SATELLITE ITALIA: sorgenti EUMETSAT italiane (eumetsat_italy mtg_fd:ir105_hrfi, eumetsat_airmass_italy msg_fes:rgb_airmass, eumetsat_geocolour_italy mtg_fd:rgb_geocolour) su SATELLITE_ITALY_BOUNDS [[36.5,6.6],[47.2,18.8]], width 1024 (ITALY_FRAME_WIDTH/ITALY_LIVE_WIDTH); IR Italia di default (satSource eumetsat_italy + prima option selected); speed predefinita x1 (syncPlaySpeed=1 + option x1 selected); caricamento static-first dei frame satellite (fetch satellite/manifest.json, loadSatelliteManifest/satStaticSlotName/satStaticUrl). satellite-engine.yml senza build _site e senza deploy Pages: concurrency group satellite-cache dedicato, solo download+pruning+force-push del branch satellite-cache (commit "[skip ci] satellite: rolling window (6 sorgenti)"). Test: 10 .mjs riallineati a 1.1.0.6 + NUOVO test_satellite_sources_italy.mjs (6 opzioni, map italy, bounds/width 1024, speed x1, static-first, APP_VERSION).
+
 MeteoRisk Light — 1.1.0.5 — PHASE 2 SUPERCELL (radar_engine Fase 2: SSI v2, hook echo, struttura verticale, ambiente NWP SCP-STP-SHIP, fulmini Blitz, overshooting top EUMETView; centraggio mappa su supercella; radar-engine.yml cron */5 e concurrency split) (bump da 1.1.0.4)
 MAJOR=1
 MINOR=1

@@ -5,19 +5,25 @@ Satellite Engine (satellite_engine.py): scarica i frame satellitari EUMETSAT
 (WMS view.eumetsat.int) e mantiene una finestra rolling di 25 slot per sorgente
 (2 ore a passo di 5 minuti) in satellite/<sourceId>/<slotISO>.png.
 
-Faithful port della logica dell'app (mri-light-1.1.0.5.html):
+Faithful port della logica dell'app (mri-light-1.1.0.6.html):
   - buildEumetsatLiveGetMap: GetMap EPSG:3857 su SATELLITE_EUROPE_BOUNDS
     [[22,-28],[72,55]] (width 2048, height proporzionale, stessa sequenza di
     parametri layers/styles/format/transparent/version/time/width/height/srs/bbox);
+  - frame Italia: stessa formula su SATELLITE_ITALY_BOUNDS [[36.5,6.6],[47.2,18.8]]
+    con ITALY_FRAME_WIDTH = 1024;
   - buildSyncTimeline + EUMETSAT_DATA_LAG_MS: time = ora corrente - 15 minuti,
     floor a 5 minuti (setUTCMinutes(floor(m/5)*5, 0, 0)), formato .000Z.
 
+6 sorgenti: 3 Europa (2048px, ~4,2 MP per frame) + 3 Italia (1024px, ~1,3 MP
+per frame, pixel -70% rispetto all'Europa).
+
 Backfill: ogni run scarica tutti gli slot mancanti della finestra di 2 ore
-(25 slot x 3 sorgenti), dallo slot corrente al piu' vecchio, su MAX_WORKERS
+(25 slot x 6 sorgenti), dallo slot corrente al piu' vecchio, su MAX_WORKERS
 thread paralleli:
   - 0 richieste se la finestra e' gia' tutta presente e valida;
-  - 3 richieste se manca solo lo slot corrente;
-  - fino a 75 richieste al primo run (25 slot x 3 sorgenti).
+  - steady-state 0-6 richieste (0 con la finestra piena, fino a 6 quando manca
+    solo lo slot corrente);
+  - fino a 150 richieste al primo run (25 slot x 6 sorgenti).
 
 Output:
   satellite/<sourceId>/<slotISO>.png   slotISO = 2026-10-06T19-45-00Z
@@ -29,7 +35,7 @@ Output:
     influenzano l'exit code (uno slot storico morto non fa fallire la run).
 
 Exit codes (valutati sullo slot corrente):
-   0 = tutte e 3 le sorgenti dello slot corrente scaricate o gia' presenti
+   0 = tutte e 6 le sorgenti dello slot corrente scaricate o gia' presenti
    3 = degradato: sullo slot corrente almeno una sorgente OK e almeno una in errore
    4 = errore: sullo slot corrente nessuna sorgente disponibile (run visibilmente
        fallita)
@@ -52,16 +58,22 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common
 
-SOURCES = {
-    "eumetsat": "mtg_fd:ir105_hrfi",
-    "eumetsat_airmass": "msg_fes:rgb_airmass",
-    "eumetsat_geocolour": "mtg_fd:rgb_geocolour",
-}
 WMS_ENDPOINT = "https://view.eumetsat.int/geoserver/wms"
 EU_WEST, EU_EAST = -28.0, 55.0
 EU_SOUTH, EU_NORTH = 22.0, 72.0
+IT_WEST, IT_EAST = 6.6, 18.8
+IT_SOUTH, IT_NORTH = 36.5, 47.2
 WORLD_M = 40075016.685578488
 FRAME_WIDTH = 2048
+ITALY_FRAME_WIDTH = 1024
+SOURCES = {
+    "eumetsat_italy":           {"layer": "mtg_fd:ir105_hrfi",   "bounds": (IT_WEST, IT_EAST, IT_SOUTH, IT_NORTH), "width": ITALY_FRAME_WIDTH},
+    "eumetsat_airmass_italy":   {"layer": "msg_fes:rgb_airmass", "bounds": (IT_WEST, IT_EAST, IT_SOUTH, IT_NORTH), "width": ITALY_FRAME_WIDTH},
+    "eumetsat_geocolour_italy": {"layer": "mtg_fd:rgb_geocolour","bounds": (IT_WEST, IT_EAST, IT_SOUTH, IT_NORTH), "width": ITALY_FRAME_WIDTH},
+    "eumetsat":                 {"layer": "mtg_fd:ir105_hrfi",   "bounds": (EU_WEST, EU_EAST, EU_SOUTH, EU_NORTH), "width": FRAME_WIDTH},
+    "eumetsat_airmass":         {"layer": "msg_fes:rgb_airmass", "bounds": (EU_WEST, EU_EAST, EU_SOUTH, EU_NORTH), "width": FRAME_WIDTH},
+    "eumetsat_geocolour":       {"layer": "mtg_fd:rgb_geocolour","bounds": (EU_WEST, EU_EAST, EU_SOUTH, EU_NORTH), "width": FRAME_WIDTH},
+}
 EUMETSAT_DATA_LAG_MS = 15 * 60 * 1000
 SLOT_MINUTES = 5
 WINDOW_SLOTS = 25
@@ -113,12 +125,15 @@ def _q(value):
     return urllib.parse.quote(value, safe="!*'()")
 
 
-def build_getmap_url(layer, iso, width=FRAME_WIDTH):
-    x0 = (EU_WEST / 360.0) * WORLD_M
-    x1 = (EU_EAST / 360.0) * WORLD_M
+def build_getmap_url(layer, iso, width=FRAME_WIDTH, bounds=None):
+    if bounds is None:
+        bounds = (EU_WEST, EU_EAST, EU_SOUTH, EU_NORTH)
+    west, east, south, north = bounds
+    x0 = (west / 360.0) * WORLD_M
+    x1 = (east / 360.0) * WORLD_M
     radius = WORLD_M / (2.0 * math.pi)
-    y0 = radius * math.log(math.tan(math.pi / 4.0 + EU_SOUTH * math.pi / 360.0))
-    y1 = radius * math.log(math.tan(math.pi / 4.0 + EU_NORTH * math.pi / 360.0))
+    y0 = radius * math.log(math.tan(math.pi / 4.0 + south * math.pi / 360.0))
+    y1 = radius * math.log(math.tan(math.pi / 4.0 + north * math.pi / 360.0))
     height = max(64, int(round(width * (y1 - y0) / (x1 - x0))))
     bbox = ",".join(repr(v) for v in (x0, y0, x1, y1))
     return (WMS_ENDPOINT + "?&service=WMS&request=GetMap"
@@ -163,7 +178,7 @@ def fetch_png(url):
     raise RuntimeError("download fallito dopo %d tentativi: %s" % (RETRY_ATTEMPTS, last_err))
 
 
-def process_source(source_id, layer, slot, out_root):
+def process_source(source_id, src, slot, out_root):
     src_dir = out_root / source_id
     src_dir.mkdir(parents=True, exist_ok=True)
     target = src_dir / (slot_name(slot) + ".png")
@@ -172,7 +187,7 @@ def process_source(source_id, layer, slot, out_root):
         _log("[satellite_engine] slot=%s source=%s status=skip bytes=%d"
              % (slot_name(slot), source_id, size))
         return {"status": "skip", "bytes": size}
-    url = build_getmap_url(layer, slot_time(slot))
+    url = build_getmap_url(src["layer"], slot_time(slot), src["width"], src["bounds"])
     try:
         body = fetch_png(url)
         with open(target, "wb") as fh:
@@ -257,12 +272,12 @@ def main():
     results = {}
     backfill = {"ok": 0, "skip": 0, "errore": 0}
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        pending = {pool.submit(process_source, source_id, layer, slot, out_root): source_id
-                   for source_id, layer in SOURCES.items()}
+        pending = {pool.submit(process_source, source_id, src, slot, out_root): source_id
+                   for source_id, src in SOURCES.items()}
         for future in as_completed(pending):
             results[pending[future]] = future.result()
-        pending = {pool.submit(process_source, source_id, layer, s, out_root): source_id
-                   for s in slots[1:] for source_id, layer in SOURCES.items()}
+        pending = {pool.submit(process_source, source_id, src, s, out_root): source_id
+                   for s in slots[1:] for source_id, src in SOURCES.items()}
         for future in as_completed(pending):
             backfill[future.result()["status"]] += 1
     for source_id in SOURCES:
@@ -288,10 +303,10 @@ def main():
     if summary_path:
         lines = ["## Meteorisk Satellite Engine — EUMETSAT WMS", "",
                  "slot: `%s` — time WMS: `%s`" % (slot_name(slot), slot_time(slot)), ""]
-        for source_id in SOURCES:
+        for source_id, src in SOURCES.items():
             res = results[source_id]
-            lines.append("- `%s`: **%s** — %d byte — %d frame nella finestra"
-                         % (source_id, res["status"], res["bytes"],
+            lines.append("- `%s` (%s): **%s** — %d byte — %d frame nella finestra"
+                         % (src["layer"], source_id, res["status"], res["bytes"],
                             len(manifest["sources"][source_id])))
         lines.append("")
         with open(summary_path, "a", encoding="utf-8") as fh:
