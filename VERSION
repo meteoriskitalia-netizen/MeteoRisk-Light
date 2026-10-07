@@ -1,3 +1,14 @@
+MeteoRisk Light - 1.1.0.8 - SATELLITE WEBP + STALENESS SOFT + PUSH RESILIENCE (bump da 1.1.0.7)
+MAJOR=1
+MINOR=1
+PATCH=0
+BUILD=8
+RELEASE_TYPE=release
+DATE=2026-10-07
+NOTE=satellite webp, staleness soft, push resilience (1.1.0.8): frame satellite ri-codificati WebP (~10x piu' leggeri); indicatore staleness discreto (chip + tooltip, soglia radar 20 min); update-weather-data fa fetch+rebase+retry (5 tentativi) prima del push.
+APP_FILE=mri-light-1.1.0.8.html
+SATWEBP=BUMP 1.1.0.8 - SATELLITE WEBP (frame satellite ri-codificati WebP ~10x piu' leggeri, stesso slot/orologio e formati dati) + STALENESS SOFT (indicatore discreto: chip + tooltip, soglia radar 20 min) + PUSH RESILIENCE (update-weather-data: git fetch + pull --rebase --autostash + retry 5x con sleep prima del push). NO REGRESSION: bump di versione soltanto.
+
 MeteoRisk Light — 1.1.0.7 — COMPONENTI SSI V2 PER-CELLA + MITIGAZIONI WORKFLOW (bump da 1.1.0.6)
 MAJOR=1
 MINOR=1
