@@ -183,7 +183,29 @@ jobs:
             echo "[INFO] Nessuna modifica al dataset."
           else
             git commit -m "chore(data): aggiornamento dataset derivato MeteoRisk (pipeline 1.0.1.1)"
-            git push
+            # FIX RACE PUSH: radar-engine pusha su main ogni ~5 min, il push non
+            # fast-forward veniva rifiutato ("fetch first"). Prima di ogni push:
+            # git pull --rebase --autostash origin main = fetch del remoto +
+            # replay del nostro commit sopra origin/main (autostash preserva
+            # eventuali modifiche tracked non committate), poi push con retry.
+            # Semantica -e: Actions esegue il run con `bash -e -o pipefail`;
+            # tutte le chiamate git del loop stanno in una condizione `if`, quindi
+            # errexit NON termina il passo su un tentativo fallito, il `break`
+            # esce solo a push riuscito e l'exit 1 esplicito segnala il fallimento
+            # dopo i 5 tentativi (nessun errore silenziato).
+            push_ok=0
+            for i in 1 2 3 4 5; do
+              if git pull --rebase --autostash origin main && git push origin main; then
+                push_ok=1
+                break
+              fi
+              echo "[WARN] Push rifiutato (race su main) - tentativo $i/5"
+              if [ "$i" -lt 5 ]; then sleep 5; fi
+            done
+            if [ "$push_ok" -ne 1 ]; then
+              echo "[ERROR] Push non riuscito dopo 5 tentativi (race con altri workflow su main)"
+              exit 1
+            fi
           fi
 
       # L'ARTEFATTO di deploy contiene SOLO: app, dataset derivati, geografie
