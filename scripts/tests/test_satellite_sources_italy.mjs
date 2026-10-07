@@ -14,7 +14,7 @@
 //      forza eumetsat_italy
 //   6) static-first: loadSatelliteManifest / satStaticSlotName / satStaticUrl +
 //      fetch('satellite/manifest.json')
-//   7) APP_VERSION = 1.1.0.7
+//   7) APP_VERSION = 1.1.0.8
 // Documentato limite: verifica PRESENZA/STRUTTURA delle modifiche, non il
 // rendering reale (il comportamento runtime va validato in-browser).
 'use strict';
@@ -24,7 +24,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.1.0.7.html');
+const HTML = path.join(ROOT, 'mri-light-1.1.0.8.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -131,7 +131,7 @@ ok('6d: fetch("satellite/manifest.json") presente (letterale, template o via sat
   has(/fetch\(\s*['"`][^'"`]*manifest\.json['"`]/));
 
 // ---------- 7. VERSIONE ----------
-ok('7: APP_VERSION = 1.1.0.7', has(/APP_VERSION\s*=\s*['"]1\.1\.0\.7['"]/));
+ok('7: APP_VERSION = 1.1.0.8', has(/APP_VERSION\s*=\s*['"]1\.1\.0\.8['"]/));
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
 process.exit(failures === 0 ? 0 : 1);
