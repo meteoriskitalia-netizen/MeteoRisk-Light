@@ -114,7 +114,7 @@ jobs:
         if: success()
         run: |
           mkdir -p _site/data
-          cp mri-light-1.1.0.7.html _site/index.html
+          cp mri-light-1.1.0.8.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
