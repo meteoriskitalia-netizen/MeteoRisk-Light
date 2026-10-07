@@ -1,16 +1,19 @@
-name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
+name: Satellite Engine — download rolling (6 sorgenti, niente deploy Pages)
 
 # Meteorisk Satellite Engine — ogni 5 minuti riempie la finestra rolling: slot
-# corrente + i 24 slot precedenti, per ciascuna delle 3 sorgenti EUMETSAT (WMS
-# view.eumetsat.int), scaricando solo i frame mancanti (backfill), e pubblica la
-# finestra rolling su GitHub Pages come immagini statiche.
+# corrente + i 24 slot precedenti, per ciascuna delle 6 sorgenti EUMETSAT (WMS
+# view.eumetsat.int, 3 Europa + 3 Italia), scaricando solo i frame mancanti
+# (backfill), e pubblica la finestra su GitHub Pages tramite il branch
+# satellite-cache (force-push di immagini statiche) SENZA build/upload/deploy
+# dell'artefatto Pages: la cadenza */5 non dipende piu' dai deploy.
 #   - Sorgenti (chiave = sourceId): eumetsat (mtg_fd:ir105_hrfi),
 #     eumetsat_airmass (msg_fes:rgb_airmass), eumetsat_geocolour
-#     (mtg_fd:rgb_geocolour).
+#     (mtg_fd:rgb_geocolour) + eumetsat_italy / eumetsat_airmass_italy /
+#     eumetsat_geocolour_italy (stessi prodotti sul ritaglio Italia).
 #   - GetMap IDENTICI a buildEumetsatLiveGetMap dell'app: EPSG:3857 su
-#     SATELLITE_EUROPE_BOUNDS [[22,-28],[72,55]], width 2048, height
-#     proporzionale; time = ora - EUMETSAT_DATA_LAG_MS (15 min) floor a 5 min
-#     (buildSyncTimeline), formato .000Z.
+#     SATELLITE_EUROPE_BOUNDS [[22,-28],[72,55]] e SATELLITE_ITALY_BOUNDS
+#     [[36.5,6.6],[47.2,18.8]], time = ora - EUMETSAT_DATA_LAG_MS (15 min)
+#     floor a 5 min (buildSyncTimeline), formato .000Z.
 #   - Finestra rolling: 25 slot per sorgente (2 ore a passo 5 min). Pruning e
 #     satellite/manifest.json (slot disponibili per sourceId) gestiti dallo
 #     script, idempotente: gli slot gia' presenti e validi sono saltati senza
@@ -19,10 +22,11 @@ name: Satellite Engine (EUMETSAT WMS — finestra rolling 25 frame)
 #   - Persistenza SENZA crescita di history: branch ORPHAN satellite-cache
 #     (albero = solo satellite/), commit singola senza parent e force-push ad
 #     OGNI run -> history resettata, crescita zero. main NON viene toccato.
-#   - Pages: deploy artifact-based COMPLETO (index.html + data/latest +
-#     data/geography + data/radar + satellite) con la stessa struttura di
-#     radar-engine.yml / update-weather-data.yml. Concurrency group "pages"
-#     condiviso: i deploy si serializzano (cancel-in-progress: false).
+#   - Niente deploy Pages in questo workflow: satellite/ arriva su Pages
+#     tramite radar-engine.yml / update-weather-data.yml, che dopo il download
+#     lo ripristinano da satellite-cache e lo includono nel proprio artifact.
+#     Concurrency group PROPRIO "satellite-cache" (cancel-in-progress: false):
+#     le run da 5 min non competono piu' con i deploy del group "pages".
 #   - Failure policy (valutata sullo slot corrente): rc 0 ok | rc 3 degradato
 #     (1-2 sorgenti in errore, comunque atteso) | rc 4 error (nessuna sorgente
 #     scaricata) -> failure visibile. I fallimenti sugli slot di backfill sono
@@ -35,11 +39,9 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
+  group: satellite-cache
   cancel-in-progress: false
 
 jobs:
@@ -84,6 +86,7 @@ jobs:
 
       # Branch orphan a commit singola (niente parent -> history resettata ad
       # ogni push, crescita zero). Il push va a satellite-cache, mai a main.
+      # Il push avviene SOLO se il download e' riuscito (if: success()).
       - name: Aggiorna branch satellite-cache (force-push rolling window)
         if: success()
         run: |
@@ -106,7 +109,7 @@ jobs:
             exit 0
           fi
           COMMIT=$(git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit-tree "$TREE" -m "[skip ci] satellite: rolling window EUMETSAT (25 slot per sorgente)")
+            commit-tree "$TREE" -m "[skip ci] satellite: rolling window (6 sorgenti)")
           for attempt in 1 2 3; do
             if git push --force origin "$COMMIT:refs/heads/satellite-cache"; then
               echo "[INFO] satellite-cache aggiornata (commit ${COMMIT:0:7})."
@@ -117,31 +120,6 @@ jobs:
           done
           echo "[ERRORE] push satellite-cache fallito dopo 3 tentativi."
           exit 1
-
-      # L'ARTEFATTO di deploy e' COMPLETO (stessa struttura di radar-engine e
-      # update-weather-data): app, dataset derivati, geografie, derivati radar
-      # e la finestra rolling satellite/. Senza satellite/ il deploy seguirebbe
-      # quello degli altri workflow e cancellerebbe i frame da Pages.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + satellite)
-        if: success()
-        run: |
-          mkdir -p _site/data
-          cp mri-light-1.1.0.5.html _site/index.html
-          if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
-          if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
-          if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
-          if [ -d satellite ]; then cp -R satellite _site/satellite; fi
-
-      - name: Upload Pages artifact
-        if: success()
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - name: Deploy su GitHub Pages
-        if: success()
-        id: deployment
-        uses: actions/deploy-pages@v4
 
       - name: Summary
         if: always()
