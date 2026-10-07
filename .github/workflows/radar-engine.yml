@@ -18,7 +18,7 @@ name: Radar Engine (Fase 1 — Storm Detection & Tracking)
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -26,13 +26,20 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
+# NOTA (fase A4 — separazione concurrency): rimossa la concurrency di
+# WORKFLOW (ex group "pages" condiviso con update-weather-data e
+# satellite-engine, cancel-in-progress: false). Essa serializzava l'INTERO
+# run radar (checkout, test, motore, commit) dietro i run lunghi del meteo:
+# due workflow che si accodano l'uno all'altro fanno slittare gli schedule
+# (run partito con decine di minuti di ritardo). La serializzazione vive
+# ORA SOLO sul job deploy-pages (concurrency a livello di job, group
+# "pages-deploy", cancel-in-progress: false): il job dati/motore parte
+# subito, il deploy si accoda solo ad altri deploy.
 
 jobs:
   radar-engine:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -96,13 +103,15 @@ jobs:
       # di satellite-engine e li cancellerebbe da Pages) — MAI _raw / _staging /
       # _workdir / payload esterni. Senza questa build il toggle "Supercelle Radar"
       # non troverebbe supercells.json su Pages (Pages serve _site, non il repo root).
-      # Concurrency group "pages" condiviso con update-weather-data e
-      # satellite-engine: i deploy si serializzano (cancel-in-progress: false).
+      # Serializzazione SOLO sul deploy (job deploy-pages, group "pages-deploy",
+      # condiviso con update-weather-data e satellite-engine, cancel-in-progress:
+      # false). Questo job (dati/motore) NON ha concurrency: non entra in coda
+      # dietro i run lunghi del meteo.
       - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + satellite)
         if: success()
         run: |
           mkdir -p _site/data
-          cp mri-light-1.1.0.4.html _site/index.html
+          cp mri-light-1.1.0.5.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
@@ -117,6 +126,21 @@ jobs:
         with:
           path: _site
 
+  # JOB DI DEPLOY PAGES — unico punto serializzato del workflow.
+  # group "pages-deploy" condiviso con update-weather-data e satellite-engine:
+  # i deploy si serializzano tra loro (cancel-in-progress: false) SENZA bloccare
+  # i job dati/motore. NOTA: la condivisione vale SOLO se anche gli altri due
+  # workflow adottano lo stesso group a livello di job (fase A4).
+  # L'artifact "github-pages" (upload-pages-artifact) viene prodotto nel job
+  # radar-engine e consumato qui da deploy-pages (stessa workflow run).
+  deploy-pages:
+    needs: radar-engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    steps:
       - name: Deploy su GitHub Pages
         if: success()
         id: deployment
