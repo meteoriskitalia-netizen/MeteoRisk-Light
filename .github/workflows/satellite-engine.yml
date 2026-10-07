@@ -58,6 +58,13 @@ jobs:
         with:
           python-version: "3.13"
 
+      # Pillow: la ri-codifica PNG -> WebP dei frame (satellite_engine.py)
+      # richiede Pillow, installato dal requirements dedicato dello script.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/satellite_engine_requirements.txt
+
       # La finestra rolling vive nel branch satellite-cache (mai su main):
       # ogni run la ripristina prima del backfill (slot corrente + 24 precedenti).
       - name: Ripristina finestra rolling (branch satellite-cache)
