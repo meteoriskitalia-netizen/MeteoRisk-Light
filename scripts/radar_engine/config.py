@@ -9,7 +9,7 @@ validati retrospettivamente prima di qualunque uso operativo.
 
 Il file può essere sovrascritto parzialmente con un JSON (opzione --config /
 variabile RADAR_ENGINE_CONFIG): l'override è un merge 1-livello sui singoli
-blocchi (source, preprocess, detect, tracking, scoring, output).
+blocchi (source, preprocess, detect, tracking, scoring, phase2, output).
 """
 
 import json
@@ -191,6 +191,59 @@ CONFIG = {
             (65.0, 79.0, "possible"),
             (80.0, 100.0, "marked"),
         ],
+    },
+    "phase2": {
+        # Fase 2 SUPERCELL (EXPERIMENTAL): layer additivi A1 -> SSI v2.
+        # Policy: ogni sotto-layer e' OPZIONALE; errore/dato assente ->
+        # warning + sub-score None (mai crash del run, stessa politica dei
+        # layer storm/supercell della Fase 1). Nessun dato inventato.
+        "enabled": True,
+        "hook": {
+            # Hook echo morfologico da griglia VMI (nessun Doppler):
+            # soglia dBZ del core + persistenza sulle ultime N griglie.
+            "dbz_threshold": 45.0,     # = hook.HOOK_DBZ_THRESHOLD (A1)
+            "history_frames": 3,       # frame per hook.filter_persistence
+        },
+        "structure": {
+            # Prodotti DPC addizionali (griglie devono allinearsi alla VMI).
+            # None = product type non configurato -> descrittore ASSENTE
+            # (membership 0, mai un valore fabbricato).
+            "product_vil": "VIL",      # prodotto DPC verificato (A0)
+            "product_etm": "ETM",      # prodotto DPC verificato (A0)
+            "product_poh": "POH",      # prodotto DPC verificato (A0)
+            "product_low": None,       # CAPPI 2 km: product type DPC ignoto
+            "product_high": None,      # CAPPI 6 km: idem -> overhang assente
+        },
+        "environment": {
+            # Open-Meteo sul punto del PRIMO candidato (urllib diretto,
+            # nessuna dipendenza extra): SCP/STP/SHIP + env_score 0-100.
+            "enabled": True,
+            "timeout_s": 30,           # = environment.ENV_HTTP_TIMEOUT_S
+        },
+        "lightning": {
+            # Blitz v2 S3 DPC: finestra del rate in slot da 5 minuti.
+            "window_slots": 4,         # = lightning.LIGHTNING_TREND_WINDOW
+        },
+        "ot": {
+            # EUMETSAT WV/IR: DN->K NON calibrato (evidence A0: PNG
+            # grayscale senza taratura) -> dn_to_kelvin=None implica
+            # layer OT = None con warning ot_unavailable:dn_to_kelvin_non_configurato.
+            "dn_to_kelvin": None,      # None | {"offset": K, "scale": K/DN}
+            "btd_threshold_k": 12.0,   # = overshoot.OT_BTD_THRESHOLD_K
+            "ir_threshold_k": 215.0,   # = overshoot.OT_IR_THRESHOLD_K
+        },
+        "aggregate": {
+            # Pesi SSI v2: SOMMA ESATTAMENTE 1.00 (aggregate.DEFAULT_WEIGHTS).
+            # Somma > 1.0 -> ValueError -> warning + nessun ssi_v2 (v. A2-2).
+            "weights": {
+                "base": 0.60,          # SSI Fase 1 (supercell.py) — fondamento
+                "hook": 0.15,
+                "structure": 0.10,
+                "env": 0.08,
+                "ot": 0.04,
+                "lightning": 0.03,
+            },
+        },
     },
     "output": {
         "out_dir": "data/radar",

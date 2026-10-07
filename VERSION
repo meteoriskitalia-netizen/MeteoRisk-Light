@@ -1,3 +1,14 @@
+MeteoRisk Light — 1.1.0.5 — PHASE 2 SUPERCELL (radar_engine Fase 2: SSI v2, hook echo, struttura verticale, ambiente NWP SCP-STP-SHIP, fulmini Blitz, overshooting top EUMETView; centraggio mappa su supercella; radar-engine.yml cron */5 e concurrency split) (bump da 1.1.0.4)
+MAJOR=1
+MINOR=1
+PATCH=0
+BUILD=5
+RELEASE_TYPE=release
+DATE=2026-10-07
+NOTE=phase 2 supercell (1.1.0.5): radar_engine Fase 2 SUPERCELL additiva alla Fase 1 (SSI v2 a pesi base 0.60/hook 0.15/struttura 0.10/env 0.08/ot 0.04/fulmini 0.03). hook echo morfologico da griglia VMI (45 dBZ, persistenza 3 frame, nessun Doppler -> mai dichiarato mesocyclone), struttura verticale da prodotti DPC VIL/ETM/POH allineati alla VMI, ambiente NWP da Open-Meteo sul punto del primo candidato (SCP/STP/SHIP + env_score), fulmini Blitz (rate window 4 slot), overshooting top EUMETView WV/IR (DN->K non configurato -> layer None con warning ot_unavailable:dn_to_kelvin_non_configurato). app: click su candidato supercella -> mappa centrata sul marker. workflow radar-engine.yml cron */5 e concurrency split. Unica versione con Fase 2 attiva; motore Fase 1, casi di validazione, pipeline meteo, satellite engine invariati rispetto a 1.1.0.4 (solo versione/changelog e rename file/cartella).
+APP_FILE=mri-light-1.1.0.5.html
+PHASE2=BUMP 1.1.0.5 — Phase 2 SUPERCELL: SSI v2 con hook echo / struttura verticale / ambiente NWP SCP-STP-SHIP / fulmini Blitz / overshooting top EUMETView; centraggio mappa su supercella; workflow radar-engine cron */5 e concurrency split; test 219 totali.
+
 MeteoRisk Light — 1.1.0.4 — SATELLITE ENGINE (satellite-engine.yml, finestra rolling 25 frame su Pages) (bump da 1.1.0.3)
 MAJOR=1
 MINOR=1

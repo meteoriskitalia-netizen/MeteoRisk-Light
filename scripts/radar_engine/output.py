@@ -88,6 +88,7 @@ def build_latest(bundle, engine_meta=None):
         "tracking_confidence": _tracking_confidence(bundle.tracks),
         "supercell_tracks_evaluated": getattr(bundle, "supercell_tracks_evaluated", 0),
         **_supercell_summary(bundle),
+        **_phase2_summary(bundle),
         "warnings": bundle.warnings[-50:],
     }
 
@@ -122,6 +123,20 @@ def _supercell_summary(bundle):
         "supercell_births": births,
         "supercell_on_latest": on_latest,
         "supercell_ssi_max": ssi_max,
+    }
+
+
+def _phase2_summary(bundle):
+    """Riepilogo Fase 2 per latest.json (layer additivo, nessun dato raw)."""
+    p2 = getattr(bundle, "phase2", None)
+    if not isinstance(p2, dict):
+        return {"phase2_status": "unavailable"}
+    cells = getattr(bundle, "supercells", None) or []
+    return {
+        "phase2_status": p2.get("status", "unavailable"),
+        "phase2_ssi_v2_max": max(
+            (float(c["ssi_v2"]) for c in cells
+             if c.get("ssi_v2") is not None), default=None),
     }
 
 
@@ -259,6 +274,8 @@ def build_supercells(bundle, engine_meta=None):
         "marked": sum(1 for c in cells if c.get("level") == "marked"),
         "on_latest_frame": sum(1 for c in cells if c.get("on_latest_frame")),
         "ssi_max": max((float(c.get("ssi", 0)) for c in cells), default=None),
+        "ssi_v2_max": max((float(c["ssi_v2"]) for c in cells
+                           if c.get("ssi_v2") is not None), default=None),
     }
     return {
         "generated_at": bundle.generated_at_iso,
@@ -267,6 +284,7 @@ def build_supercells(bundle, engine_meta=None):
         "engine": engine_meta or {},
         "source": bundle.source,
         "data_limits": sc_mod.DATA_LIMITS_NOTE,
+        "phase2": getattr(bundle, "phase2", None),
         "summary": summary,
         "candidates": cells,
     }
@@ -329,6 +347,8 @@ def validate_outputs(out_dir):
         return errors
     if "status" not in latest:
         errors.append("latest.json missing 'status'")
+    if "phase2_status" not in latest:
+        errors.append("latest.json missing 'phase2_status'")
     try:
         with open(os.path.join(out_dir, "storms.geojson"), encoding="utf-8") as fh:
             geojson = json.load(fh)
@@ -373,4 +393,6 @@ def validate_outputs(out_dir):
             errors.append("supercells.json missing 'candidates' list")
         if "data_limits" not in sp:
             errors.append("supercells.json missing 'data_limits'")
+        if "phase2" not in sp:
+            errors.append("supercells.json missing 'phase2'")
     return errors

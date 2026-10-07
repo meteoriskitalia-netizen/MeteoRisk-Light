@@ -5,7 +5,7 @@ Satellite Engine (satellite_engine.py): scarica i frame satellitari EUMETSAT
 (WMS view.eumetsat.int) e mantiene una finestra rolling di 25 slot per sorgente
 (2 ore a passo di 5 minuti) in satellite/<sourceId>/<slotISO>.png.
 
-Faithful port della logica dell'app (mri-light-1.1.0.4.html):
+Faithful port della logica dell'app (mri-light-1.1.0.5.html):
   - buildEumetsatLiveGetMap: GetMap EPSG:3857 su SATELLITE_EUROPE_BOUNDS
     [[22,-28],[72,55]] (width 2048, height proporzionale, stessa sequenza di
     parametri layers/styles/format/transparent/version/time/width/height/srs/bbox);
