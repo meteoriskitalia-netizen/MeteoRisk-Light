@@ -47,6 +47,8 @@ on:
         required: false
         default: false
         type: boolean
+  repository_dispatch:
+    types: [ci-weather]
 
 permissions:
   contents: write
