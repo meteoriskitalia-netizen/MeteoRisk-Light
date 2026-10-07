@@ -188,8 +188,9 @@ jobs:
             # git pull --rebase --autostash origin main = fetch del remoto +
             # replay del nostro commit sopra origin/main (autostash preserva
             # eventuali modifiche tracked non committate), poi push con retry.
-            # Semantica -e: Actions esegue il run con `bash -e -o pipefail`;
-            # tutte le chiamate git del loop stanno in una condizione `if`, quindi
+            # Semantica -e: il passo usa il shell di default `/usr/bin/bash -e {0}`
+            # (verificato nei log del run di test); tutte le chiamate git del loop
+            # stanno in una condizione `if`, quindi
             # errexit NON termina il passo su un tentativo fallito, il `break`
             # esce solo a push riuscito e l'exit 1 esplicito segnala il fallimento
             # dopo i 5 tentativi (nessun errore silenziato).
