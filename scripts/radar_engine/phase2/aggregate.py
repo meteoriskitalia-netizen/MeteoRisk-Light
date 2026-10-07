@@ -5,8 +5,7 @@ Meteorisk Phase 2 — aggregate.py (SSI v2, EXPERIMENTAL)
 
 Combinazione pesata dei layer Fase 2 nello Supercell Signature Index v2:
 
-  ssi_v2 = min(100, round( w_base*base + w_hook*hook + w_structure*structure
-                           + w_env*env + w_ot*ot + w_lightning*lightning ))
+  ssi_v2 = min(100, round( sum_k w_eff[k] * value[k] ))   k sui componenti PRESENTI
 
 Pesi DEFAULT (somma ESATTAMENTE 1.00, nessun iperparametro):
   base      0.60   SSI Fase 1 (supercell.py) — resta il fondamento
@@ -16,14 +15,28 @@ Pesi DEFAULT (somma ESATTAMENTE 1.00, nessun iperparametro):
   ot        0.04   overshooting top (overshoot)
   lightning 0.03   tasso/jump fulmini (lightning)
 
-Validazioni (ValueError, input malformati):
-  - chiavi pesi sconosciute o negative;
-  - SOMMA PESI > 1.0 (divieto esplicito: nessuna normalizzazione fittizia);
-  - somma < 1.0 e' AMMESSA (il residuo non viene redistribuito: un layer
-    assente non gonfia gli altri).
+Politica RINORMALIZZAZIONE PESI (B2, PHASE2_VERSION 0.4.0 — componenti per
+candidato): i componenti None (layer non calcolato / dato mancante per
+QUEL candidato) vengono ESCLUSI e i pesi dei componenti PRESENTI vengono
+ridistribuiti in modo che la somma dei pesi usati sia ESATTAMENTE 1.00
+(w_eff[k] = w[k] / sum(w[j] per j presenti)). Conseguenze esplicite:
+  - un layer assente NON abbassa piu' lo score degli altri (prima: contribuiva
+    0.0 a peso pieno, sottostimando sistematicamente i candidati con dati
+    parziali);
+  - tutti i componenti None -> ssi_v2 = None (nessun punteggio fabbricato da
+    nessun dato);
+  - componenti presenti ma tutti a peso 0 -> ssi_v2 = None (nessuna base per
+    una media pesata);
+  - 'weights' resta il dict RICHIESTO (validato: somma <= 1.0) e
+    'weights_effective' documenta i pesi REALMENTE usati sui presenti.
 
-Un componente None (layer non calcolato / dato mancante) contribuisce 0.0 ed
-e' elencato in 'missing' con partial=True: nessun valore fabbricato.
+Validazioni (ValueError, input malformati):
+  - chiavi pesi sconosciute, mancanti o negative;
+  - SOMMA PESI RICHIESTI > 1.0 (divieto esplicito: nessuna normalizzazione
+    fittizia sui pesi di default).
+
+Un componente None resta None nel dict di output (MAI convertito in 0.0: 0.0
+sarebbe un valore fabbricato) ed e' elencato in 'missing' con partial=True.
 Funzione PURA (nessuna I/O).
 """
 
@@ -43,7 +56,8 @@ COMPONENT_KEYS = ("base", "hook", "structure", "env", "ot", "lightning")
 
 
 def _clamp100(x):
-    """Valore componente in [0,100]; None/non finito -> 0.0."""
+    """Valore componente in [0,100]; None/non finito -> 0.0 (solo per il
+    calcolo interno dei componenti PRESENTI: i None restano None in output)."""
     if x is None:
         return 0.0
     try:
@@ -81,13 +95,34 @@ def _validate_weights(weights):
     return w, round(total, 6)
 
 
+def effective_weights(weights, present):
+    """Pesi RINORMALIZZATI sui componenti presenti (somma esattamente 1.00).
+
+    present: iterable di chiavi componente. Ritorna dict {chiave: w/sum} SOLO
+    per le chiavi presenti (ordine COMPONENT_KEYS). Se la somma dei pesi dei
+    presenti e' 0 -> dict vuoto (nessuna media pesata possibile, nessun
+    valore inventato). ValueError per chiavi sconosciute (input malformati)."""
+    unknown = set(present) - set(COMPONENT_KEYS)
+    if unknown:
+        raise ValueError(f"unknown_weight_keys:{sorted(unknown)}")
+    w, _ = _validate_weights(weights)
+    keys = [k for k in COMPONENT_KEYS if k in set(present)]
+    total = sum(w[k] for k in keys)
+    if total <= 0.0:
+        return {}
+    return {k: w[k] / total for k in keys}
+
+
 def aggregate_ssi_v2(base_ssi, hook, structure, env, ot, lightning,
                      weights=None):
-    """Combina i layer in SSI v2 (0-100 intero).
+    """Combina i layer in SSI v2 (0-100 intero) con RINORMALIZZAZIONE PESI.
 
-    Ritorna dict con le singole voci (valori clamped 0..100, 1 decimale),
-    'ssi_v2' (int), 'weights', 'weights_sum', 'missing' (voci None) e
-    'partial' (True se almeno una voce mancante). Funzione pura."""
+    Componenti None ESCLUSI e pesi ridistribuiti sui presenti (somma 1.00);
+    tutti None -> ssi_v2 None. Ritorna dict con le singole voci (componenti
+    presenti clamped 0..100 con 1 decimale, componenti assenti None),
+    'ssi_v2' (int | None), 'weights' (richiesti), 'weights_effective' (usati),
+    'weights_sum', 'present', 'missing' (voci None) e 'partial' (True se
+    almeno una voce mancante). Funzione pura."""
     w, wsum = _validate_weights(DEFAULT_WEIGHTS if weights is None
                                 else weights)
     raw = {
@@ -98,18 +133,25 @@ def aggregate_ssi_v2(base_ssi, hook, structure, env, ot, lightning,
         "ot": ot,
         "lightning": lightning,
     }
+    present = [k for k in COMPONENT_KEYS if raw[k] is not None]
     missing = [k for k in COMPONENT_KEYS if raw[k] is None]
-    values = {k: _clamp100(raw[k]) for k in COMPONENT_KEYS}
 
-    acc = 0.0
-    for k in COMPONENT_KEYS:
-        acc += w[k] * values[k]
-    ssi_v2 = int(min(100, round(acc)))
+    out = {k: None for k in COMPONENT_KEYS}
+    for k in present:
+        out[k] = round(_clamp100(raw[k]), 1)
 
-    out = {k: round(values[k], 1) for k in COMPONENT_KEYS}
+    eff = effective_weights(w, present)
+    ssi_v2 = None
+    if eff:
+        acc = sum(eff[k] * _clamp100(raw[k]) for k in present)
+        ssi_v2 = int(min(100, round(acc)))
+
     out["ssi_v2"] = ssi_v2
     out["weights"] = dict(w)
+    out["weights_effective"] = {k: round(v, 6) for k, v in eff.items()}
+    out["weights_effective_sum"] = round(sum(eff.values()), 6)
     out["weights_sum"] = wsum
+    out["present"] = present
     out["missing"] = missing
     out["partial"] = bool(missing)
     return out

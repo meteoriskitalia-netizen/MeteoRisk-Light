@@ -454,3 +454,40 @@ def filter_persistence(current, history):
     w = PERSISTENCE_WEIGHTS[len(PERSISTENCE_WEIGHTS) - len(seq):]
     total_w = sum(w)
     return round(sum(s * wi for s, wi in zip(seq, w)) / total_w, 1)
+
+
+def hook_score_footprint(windows, dbz_threshold=None):
+    """Score uncino sul FOOTPRINT PER-CANDIDATO (B2, finestra locale).
+
+    windows: sequenza ordinata (dal piu' vecchio al piu' recente) di tuple
+    (grid, mask) gia' ritagliate attorno al candidato dalla finestra
+    phase2.hook.footprint_radius_km (una coppia per frame della storia).
+
+    Ritorna None — componente ASSENTE, nessuno score fabbricato — quando:
+      - la sequenza e' vuota (nessun frame);
+      - ALMENO UNA finestra e' senza dati: shape vuota/1D, 0 px validi nel
+        mask, o nessun pixel finito nella griglia. Senza quella osservazione
+        la persistenza multi-frame non e' verificabile -> nessun valore.
+    Altrimenti: score per finestra (compute_hook_features +
+    hook_score_from_features) e persistenza (filter_persistence) sull'ultima
+    osservazione. Deterministico: nessuno stato, nessuna I/O."""
+    if not windows:
+        return None
+    scores = []
+    for item in windows:
+        if not isinstance(item, (tuple, list)) or len(item) != 2:
+            return None
+        grid, mask = item
+        g = np.asarray(grid, dtype="float64")
+        if g.ndim != 2 or g.size == 0:
+            return None
+        m = np.isfinite(g) if mask is None else np.asarray(mask, dtype=bool)
+        if m.shape != g.shape or not m.any():
+            return None
+        if not np.isfinite(g[m]).any():
+            return None
+        scores.append(hook_score_from_features(
+            compute_hook_features(g, m, dbz_threshold=dbz_threshold)))
+    if not scores:
+        return None
+    return filter_persistence(scores[-1], scores[:-1])

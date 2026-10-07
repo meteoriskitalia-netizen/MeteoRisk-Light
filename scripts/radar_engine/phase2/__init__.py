@@ -22,6 +22,11 @@ determinismo): l'I/O vive solo nei wrapper fetch_* e solleva eccezioni locali
 allineabili a radar_engine.models.SourceError a integrazione.
 
 EXPERIMENTAL: soglie e pesi non calibrati su dataset reali (v. report fase A1).
+
+B2 — COMPONENTI PER CELLÀ (0.4.0): hook/struttura/ambiente/fulmini sono
+calcolati SULLA FINESTRA LOCALE di ciascun candidato (footprint ±km) e non piu'
+su una griglia globale condivisa; aggregate.aggregate_ssi_v2 ESCLUDE i
+componenti None e RINORMALIZZA i pesi sui presenti (somma 1.00).
 """
 
-PHASE2_VERSION = "0.3.0"
+PHASE2_VERSION = "0.4.0"   # B2: componenti per cella + rinormalizzazione pesi

@@ -38,6 +38,7 @@ Nessuna dipendenza da `requests` (assente nel venv): urllib come in
 source_dpc.py. Funzioni pure + un solo wrapper di rete (fetch_ltg).
 """
 
+import math
 import struct
 import urllib.error
 import urllib.parse
@@ -67,6 +68,10 @@ LIGHTNING_THRESHOLD_RATE = 100.0    # fulmini per finestra 5 minuti di riferm.
 LIGHTNING_JUMP_REF = 100.0          # diff cumulata di riferimento
 LIGHTNING_SCORE_WEIGHTS = {"rate": 0.7, "jump": 0.3}   # somma 1.00
 LIGHTNING_TREND_WINDOW = 4          # max sample per il diff cumulato (2-4)
+# Per-candidato (B2): conteggio spaziale + soglia minima di merito
+LIGHTNING_RADIUS_KM = 30.0          # = config phase2.lightning.radius_km
+LIGHTNING_MIN_STRIKES = 1           # = config phase2.lightning.min_strikes
+EARTH_RADIUS_KM = 6371.0088         # raggio medio IUGG (haversine)
 
 _PNG_SIG = b"\x89PNG\r\n\x1a\n"
 
@@ -381,6 +386,90 @@ def lightning_score(rate, jump, threshold=None):
     jump_t = min(max(j, 0.0) / LIGHTNING_JUMP_REF, 1.0)
     w = LIGHTNING_SCORE_WEIGHTS
     return round(100.0 * (w["rate"] * rate_t + w["jump"] * jump_t), 1)
+
+
+# ---------------------------------------------------------------------------
+# Pure: conteggio spaziale PER-CANDIDATO (B2)
+# ---------------------------------------------------------------------------
+def haversine_km(lon1, lat1, lon2, lat2):
+    """Distanza geodesica (km) fra 2 punti (lon, lat) in gradi — haversine.
+
+    Raggio EARTH_RADIUS_KM (6371.0088 km). Funzione pura, deterministica;
+    input non numerici/NaN -> ValueError (nessuna distanza inventata)."""
+    try:
+        a_lon, a_lat = float(lon1), float(lat1)
+        b_lon, b_lat = float(lon2), float(lat2)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("haversine_non_numeric") from exc
+    for v in (a_lon, a_lat, b_lon, b_lat):
+        if v != v or v in (float("inf"), float("-inf")):
+            raise ValueError("haversine_non_finite")
+    p1, p2 = math.radians(a_lat), math.radians(b_lat)
+    dphi = p2 - p1
+    dlmb = math.radians(b_lon - a_lon)
+    a = (math.sin(dphi / 2.0) ** 2
+         + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2.0) ** 2)
+    return 2.0 * EARTH_RADIUS_KM * math.asin(min(1.0, math.sqrt(a)))
+
+
+def count_strikes_in_radius(strikes, lon, lat, radius_km=LIGHTNING_RADIUS_KM):
+    """Strike entro `radius_km` dal punto (lon, lat) — conteggio PER CANDIDATO.
+
+    strikes: iterable di tuple/list (lon, lat) con la precisione a 6 decimali
+    del decoder Blitz v2 (decode_blitz_v2). Punteggi invalidi (record malformati,
+    coordinate non finite) vengono SKIPPATI (mai crash, mai contato). Ritorna
+    intero >= 0; input assente/None -> 0. Nessun dato -> 0, MAI un valore
+    fabbricato (e' il chiamante a mappare 0 su None)."""
+    if not strikes:
+        return 0
+    r = float(radius_km)
+    n = 0
+    for rec in strikes:
+        try:
+            s_lon, s_lat = rec[0], rec[1]
+        except (TypeError, IndexError, KeyError):
+            continue
+        try:
+            if haversine_km(s_lon, s_lat, lon, lat) <= r:
+                n += 1
+        except ValueError:
+            continue
+    return n
+
+
+def lightning_spatial_score(counts, min_strikes=None, threshold=None):
+    """Score fulmini PER-CANDIDATO (0-100) dai conteggi spaziali della finestra.
+
+    counts: conteggi nello STAFFA di raggio del candidato, per slot da 5 min
+    (dal piu' vecchio al piu' recente), None per gli slot non scaricati.
+    min_strikes: soglia minima sul rate dello slot recente
+    (default LIGHTNING_MIN_STRIKES = config phase2.lightning.min_strikes).
+
+    Ritorna None (componente ASSENTE) quando:
+      - nessun dato (lista vuota o tutti None) oppure nessuno strike nel
+        rate recente / rate < min_strikes;
+    Altrimenti score = 100 * (0.7 * min(rate/100, 1) + 0.3 * min(max(jump,0)/100, 1))
+    con rate = conteggio dello slot recente e jump dal trend Gatlin della
+    finestra (lightning_trend) — cioe' lightning_score(rate, jump)."""
+    if not counts:
+        return None
+    ms = (LIGHTNING_MIN_STRIKES if min_strikes is None
+          else max(0, int(min_strikes)))
+    rate = None
+    for c in reversed(counts):
+        try:
+            if c is None:
+                continue
+            v = float(c)
+        except (TypeError, ValueError):
+            continue
+        if v == v:
+            rate = v
+            break
+    if rate is None or rate < ms:
+        return None
+    jump = lightning_trend(counts)["jump"]
+    return lightning_score(rate, jump, threshold=threshold)
 
 
 # ---------------------------------------------------------------------------

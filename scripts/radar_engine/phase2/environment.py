@@ -65,6 +65,7 @@ import urllib.request
 # ---------------------------------------------------------------------------
 OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
 ENV_HTTP_TIMEOUT_S = 30
+ENV_CACHE_GRID_DEG = 0.1           # = config phase2.environment.cache_grid_deg
 ENV_SCP_TANH_SCALE = 3.0          # tanh(SCP/3): SCP=1 -> ~31, SCP=3 -> ~76
 SHIP_DENOMINATOR = 42000000.0     # specifica Fase 2 (release usa 44e6)
 BUNKERS_DEV_MS = 7.5              # deviazione standard Bunkers right-mover
@@ -639,3 +640,59 @@ def evaluate_environment(lat, lon, openmeteo_client=None, timeout_s=None):
         "missing": missing,
         "flags": flags,
     }
+
+
+# ---------------------------------------------------------------------------
+# Cache per-candidato (B2): dedup delle richieste Open-Meteo
+# ---------------------------------------------------------------------------
+def _decimals_of(grid_deg):
+    """Numero di decimali di grid_deg (0.1 -> 1, 1.0 -> 0, 0.01 -> 2)."""
+    v = abs(float(grid_deg))
+    nd = 0
+    while nd < 9 and abs(v - round(v)) > 1e-12:
+        v *= 10.0
+        nd += 1
+    return nd
+
+
+def cache_bucket(lat, lon, grid_deg=ENV_CACHE_GRID_DEG):
+    """Bucket di cache per la posizione: (round(lat, nd), round(lon, nd)).
+
+    nd = decimali di grid_deg (0.1 -> 1: bucket 0.1 gradi, ~11 km).
+    Con grid_deg=0.1 il bucket e' esattamente (round(lat,1), round(lon,1)).
+    Ritorna tuple di 2 float; ValueError per coordinate non numeriche (nessun
+    bucket inventato)."""
+    nd = _decimals_of(grid_deg)
+    try:
+        return (round(float(lat), nd), round(float(lon), nd))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("cache_bucket_non_numeric") from exc
+
+
+def evaluate_environment_cached(lat, lon, cache=None,
+                                grid_deg=ENV_CACHE_GRID_DEG, timeout_s=None,
+                                evaluator=None):
+    """evaluate_environment con CACHE PER BUCKET (dedup fra candidati vicini).
+
+    Ogni candidato chiama la propria posizione; i candidati nello stesso
+    bucket (stesso round a `grid_deg` gradi) condividono UNA sola chiamata
+    Open-Meteo. `cache` e' il dict del run, creato dal chiamante (main).
+    evaluator: callabile (lat, lon, timeout_s) -> dict, default
+    evaluate_environment (iniettabile per i test).
+
+    FALLIMENTO -> None (nessun dato ambiente inventato) e la voce NON viene
+    memorizzata in cache, quindi un candidato successivo sullo stesso bucket
+    puo' riprovare. Ritorna il dict dettaglio oppure None."""
+    key = cache_bucket(lat, lon, grid_deg)
+    if cache is not None and key in cache:
+        return cache[key]
+    fn = evaluate_environment if evaluator is None else evaluator
+    try:
+        detail = fn(float(lat), float(lon), timeout_s=timeout_s)
+    except Exception:
+        return None
+    if not isinstance(detail, dict):
+        return None
+    if cache is not None:
+        cache[key] = detail
+    return detail

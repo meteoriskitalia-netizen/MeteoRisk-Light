@@ -94,3 +94,50 @@ def test_weights_sum_gt_1_raises():
         vs.structure_score(vil, etm, poh, low, high,
                            weights={"vil": 2.0, "etm": 0.1, "poh": 0.1,
                                     "overhang": 0.1})
+
+
+# ---------------------------------------------------------------------------
+# B2 (PHASE2_VERSION 0.4.0): unita' dei prodotti al ritaglio per-candidato
+# Valori verificati eseguendo vertical_structure.py reale
+# (scratch_b2_values.py, radarvenv Python 3.13).
+# ---------------------------------------------------------------------------
+
+def test_etm_to_km_and_poh_to_percent_pure_conversion():
+    etm_m = np.array([[2000.0, 9000.0, 12500.0]])
+    poh_f = np.array([[0.0, 0.35, 0.72]])
+    etm_src = etm_m.copy()
+    poh_src = poh_f.copy()
+    assert np.allclose(vs.etm_to_km(etm_m), [[2.0, 9.0, 12.5]])
+    assert np.allclose(vs.poh_to_percent(poh_f), [[0.0, 35.0, 72.0]])
+    # nessuna modifica in-place del prodotto originale
+    assert np.array_equal(etm_m, etm_src)
+    assert np.array_equal(poh_f, poh_src)
+    # NaN preservati, dtype intero accettato
+    assert np.isnan(vs.etm_to_km(np.array([[np.nan]]))[0, 0])
+    assert np.isnan(vs.poh_to_percent(np.array([[np.nan]]))[0, 0])
+    assert vs.etm_to_km(np.array([[9000]]))[0, 0] == 9.0
+
+
+def test_structure_features_units_conversion_matches_native_units():
+    vil = np.array([[20.0, 20.0, 20.0]])
+    etm_m = np.array([[2000.0, 9000.0, 12500.0]])
+    poh_f = np.array([[0.0, 0.35, 0.72]])
+    nan = np.full((1, 3), np.nan)
+    converted = vs.structure_features(vil, vs.etm_to_km(etm_m),
+                                      vs.poh_to_percent(poh_f), nan, nan)
+    native = vs.structure_features(vil, np.array([[2.0, 9.0, 12.5]]),
+                                   np.array([[0.0, 35.0, 72.0]]), nan, nan)
+    assert converted == native
+    assert converted["etm_max"] == 12.5
+    assert converted["poh_max"] == 72.0
+
+
+def test_structure_score_conversion_is_not_optional():
+    # ETM in METRI senza conversione: le soglie 6/9/12 km vedono valori 1000x
+    vil = np.array([[20.0, 20.0, 20.0]])
+    etm_m = np.array([[2000.0, 9000.0, 12500.0]])
+    poh_f = np.array([[0.0, 0.35, 0.72]])
+    nan = np.full((1, 3), np.nan)
+    assert vs.structure_score(vil, etm_m, poh_f, nan, nan) == 25.0
+    assert vs.structure_score(vil, vs.etm_to_km(etm_m),
+                              vs.poh_to_percent(poh_f), nan, nan) == 50.0

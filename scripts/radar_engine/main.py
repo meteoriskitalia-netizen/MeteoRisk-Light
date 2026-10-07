@@ -31,6 +31,7 @@ Utilizzo:
 import argparse
 import datetime as _dt
 import json
+import math
 import os
 import sys
 
@@ -50,6 +51,15 @@ _OK = 0
 _DEGRADED = 3
 _ERROR = 4
 
+# Convergenza locale: 1 grado di latitudine ~ 111.32 km (WGS84 medio).
+_KM_PER_DEG_LAT = 111.32
+# Prodotti DPC di struttura -> nome interno (ordine di structure_score).
+_STRUCTURE_PRODUCTS = (("vil", "product_vil"), ("etm", "product_etm"),
+                       ("poh", "product_poh"), ("low", "product_low"),
+                       ("high", "product_high"))
+# Componenti Fase 2 calcolati PER CANDIDATO (B2).
+_PHASE2_COMPONENTS = ("hook", "structure", "env", "ot", "lightning")
+
 
 def _utcnow_str():
     return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -63,14 +73,184 @@ def _engine_meta():
     }
 
 
+def _candidate_position(candidate):
+    """(lon, lat) float del candidato; None se assente/invalido.
+
+    Nessuna posizione inventata: chiave 'position' assente, corta o non
+    numerica -> None (i layer per-candidato restano None)."""
+    pos = candidate.get("position") or []
+    if len(pos) != 2:
+        return None
+    try:
+        lon, lat = float(pos[0]), float(pos[1])
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(lon) and math.isfinite(lat)):
+        return None
+    return lon, lat
+
+
+def _candidate_window(frame, lon, lat, radius_km):
+    """Finestra INCLUSIVA (r0, r1, c0, c1) che copre il disco di raggio
+    `radius_km` attorno a (lon, lat) sul raster `frame`.
+
+    Conversione inversa lon/lat -> (row, col) con transform/geo_transform del
+    raster (models.RasterData.lonlat_to_pixel: transformer CRS<->EPSG:4326 in
+    direzione INVERSA + affine inversa ~transform). Gli4 angoli del bounding
+    box geografico del disco piu' il centro danno gli estremi: l'intersezione
+    con la griglia copre il disco anche dove la proiezione deforma gli assi.
+
+    Ritorna None se la posizione non e' invertibile (fuori dominio CRS) o se
+    la finestra non interseca la griglia (nessun pixel inventato, FAIL SAFE)."""
+    try:
+        rows, cols = int(frame.rows), int(frame.cols)
+        radius = float(radius_km)
+        lat = float(lat)
+        lon = float(lon)
+    except (TypeError, ValueError):
+        return None
+    if radius <= 0.0 or rows <= 0 or cols <= 0:
+        return None
+    dlat = radius / _KM_PER_DEG_LAT
+    dlon = radius / max(_KM_PER_DEG_LAT
+                        * abs(math.cos(math.radians(lat))), 1e-6)
+    try:
+        r_c, c_c = frame.lonlat_to_pixel(lon, lat)
+    except ValueError:
+        return None
+    rmin = rmax = r_c
+    cmin = cmax = c_c
+    for s_lat in (-1.0, 1.0):
+        for s_lon in (-1.0, 1.0):
+            try:
+                r, c = frame.lonlat_to_pixel(lon + s_lon * dlon,
+                                             lat + s_lat * dlat)
+            except ValueError:
+                continue            # angolo fuori dominio CRS: nessun dato li'
+            rmin, rmax = min(rmin, r), max(rmax, r)
+            cmin, cmax = min(cmin, c), max(cmax, c)
+    r0, r1 = max(0, rmin), min(rows - 1, rmax)
+    c0, c1 = max(0, cmin), min(cols - 1, cmax)
+    if r0 > r1 or c0 > c1:
+        return None
+    return r0, r1, c0, c1
+
+
+def _crop(window, arr):
+    """Ritaglio ndarray sulla finestra (r0, r1, c0, c1) inclusiva."""
+    r0, r1, c0, c1 = window
+    return arr[r0:r1 + 1, c0:c1 + 1]
+
+
+def _fetch_structure_products(config, scfg, ref_shape, warnings):
+    """Scarica UNA VOLTA i prodotti DPC di struttura (griglia di riferimento).
+
+    Ritorna dict {nome: RasterData | None}: prodotto non configurato, non
+    scaricabile o con shape diverso dal riferimento VMI -> None con warning
+    (nessun dato inventato, nessun crash del layer)."""
+    out = {}
+    for name, key in _STRUCTURE_PRODUCTS:
+        product = scfg.get(key)
+        if not product:
+            out[name] = None
+            continue
+        try:
+            gframes, gwarn, _ts = fetch.fetch_frames(config, product=product,
+                                                      max_frames=1)
+            warnings.extend(gwarn)
+        except Exception as exc:
+            warnings.append(f"phase2 structure {name}: {exc}")
+            out[name] = None
+            continue
+        if not gframes:
+            warnings.append(f"phase2 structure {name}: no frames")
+            out[name] = None
+            continue
+        rd = gframes[-1]
+        if tuple(rd.data.shape) != tuple(ref_shape):
+            warnings.append(f"phase2 structure {name}: shape mismatch")
+            out[name] = None
+            continue
+        out[name] = rd
+    return out
+
+
+def _structure_at_window(products, window, vs):
+    """Score + features struttura verticale SULLA FINESTRA del candidato.
+
+    products: dict nome -> RasterData (None = prodotto assente); window:
+    (r0, r1, c0, c1) o None. Ritorna (score, features) oppure (None, None)
+    quando nessun prodotto e' disponibile, la finestra e' vuota/fuori griglia
+    o non contiene alcun valore finito (dato assente -> nessun punteggio).
+
+    UNITA': al ritaglio l'ETM di prodotto (metri) e' convertito in km
+    (vs.etm_to_km) e il POH (frazione) in % (vs.poh_to_percent), in modo che
+    le soglie 6/9/12 km e 30/50/70 % siano applicate alle unita' giuste.
+    I prodotti non configurati restano NaN -> membership 0 (mai inventati)."""
+    import numpy as np
+
+    if window is None or not any(rd is not None for rd in products.values()):
+        return None, None
+    r0, r1, c0, c1 = window
+    shape = (int(r1) - int(r0) + 1, int(c1) - int(c0) + 1)
+    if shape[0] <= 0 or shape[1] <= 0:
+        return None, None
+    nan_grid = np.full(shape, np.nan, dtype="float64")
+    grids = {}
+    any_finite = False
+    for name, _key in _STRUCTURE_PRODUCTS:
+        rd = products.get(name)
+        if rd is None:
+            grids[name] = nan_grid
+            continue
+        g = _crop(window, rd.data)
+        if name == "etm":
+            g = vs.etm_to_km(g)            # metri -> km (x/1000)
+        elif name == "poh":
+            g = vs.poh_to_percent(g)       # frazione -> % (x100)
+        grids[name] = g
+        if not any_finite and bool(np.isfinite(g).any()):
+            any_finite = True
+    if not any_finite:
+        return None, None
+    g5 = tuple(grids[n] for n, _k in _STRUCTURE_PRODUCTS)
+    return vs.structure_score(*g5), vs.structure_features(*g5)
+
+
+def _hook_for_candidate(frames, lon, lat, radius_km, hcfg, hook_mod):
+    """Hook morfologico sul FOOTPRINT del candidato (ultime N griglie).
+
+    Ogni frame viene ritagliato sulla finestra ±radius_km attorno al
+    candidato e la coppia (data, valid_mask) passata a
+    hook.hook_score_footprint: finestra assente/fuori griglia -> None.
+    Ritorna lo score persistito (float) oppure None."""
+    try:
+        n_hist = max(1, int(hcfg.get("history_frames", 3)))
+    except (TypeError, ValueError):
+        n_hist = 3
+    windows = []
+    for fr in frames[-n_hist:]:
+        win = _candidate_window(fr, lon, lat, radius_km)
+        if win is None:
+            return None
+        windows.append((_crop(win, fr.data), _crop(win, fr.valid_mask)))
+    if not windows:
+        return None
+    return hook_mod.hook_score_footprint(
+        windows, dbz_threshold=hcfg.get("dbz_threshold"))
+
+
 def _phase2_evaluate(bundle, config):
-    """Layer Fase 2 SUPERCELL (additivo): sub-layer A1 -> SSI v2 candidati.
+    """Layer Fase 2 SUPERCELL (additivo): sub-layer A1 -> SSI v2 PER CANDIDATO.
 
     Policy: ogni sotto-layer e' OPZIONALE; errore/dato assente -> warning in
-    bundle.warnings + sub-score None (mai crash del run, nessun dato
-    inventato). I candidati Fase 1 sono solo ARRICCHITI: ssi/level/... e
-    bundle.status restano intatti (lo status e' gia' calcolato alla riga 85
-    del pipeline, prima di questo layer)."""
+    bundle.warnings + sub-score None PER IL CANDIDATO toccato (mai crash del
+    run, nessun dato inventato). Da B2 hook/struttura/ambiente/fulmini sono
+    calcolati sulla FINESTRA LOCALE del candidato (footprint ±km, cache per
+    slot/bucket condivise fra i candidati) e l'SSI v2 rinormalizza i pesi
+    sui componenti presenti (aggregate 0.4.0). I candidati Fase 1 sono solo
+    ARRICCHITI: ssi/level/... e bundle.status restano intatti (lo status e'
+    gia' calcolato alla riga 85 del pipeline, prima di questo layer)."""
     p2_cfg = config.get("phase2") or {}
     warnings = bundle.warnings
     if not p2_cfg.get("enabled"):
@@ -82,7 +262,6 @@ def _phase2_evaluate(bundle, config):
         bundle.phase2 = {"status": "unavailable", "warnings": warnings}
         return
     try:
-        import numpy as np
         from radar_engine import phase2 as p2_mod
         from radar_engine.phase2 import (aggregate, environment, hook,
                                          lightning, vertical_structure)
@@ -96,68 +275,24 @@ def _phase2_evaluate(bundle, config):
     bundle.phase2 = result
     frames = list(getattr(bundle, "frames", []) or [])
 
-    # --- HOOK: morfologia uncino sulle ultime N griglie (score condiviso) ---
-    hook_score = None
+    # --- CONFIG (raggi finestra per-candidato + finestra fulmini) ----------
+    hcfg = p2_cfg.get("hook") or {}
+    scfg = p2_cfg.get("structure") or {}
+    ecfg = p2_cfg.get("environment") or {}
+    lcfg = p2_cfg.get("lightning") or {}
+    hook_radius = float(hcfg.get("footprint_radius_km", 45.0))
+    struct_radius = float(scfg.get("local_radius_km", 45.0))
+    ltg_radius = float(lcfg.get("radius_km", 30.0))
     try:
-        hcfg = p2_cfg.get("hook") or {}
-        n_hist = max(1, int(hcfg.get("history_frames", 3)))
-        scores = []
-        for fr in frames[-n_hist:]:
-            feats = hook.compute_hook_features(
-                fr.data, fr.valid_mask,
-                dbz_threshold=hcfg.get("dbz_threshold"))
-            scores.append(hook.hook_score_from_features(feats))
-        if scores:
-            hook_score = hook.filter_persistence(scores[-1], scores[:-1])
-        else:
-            warnings.append("phase2 hook: no frames")
-    except Exception as exc:
-        warnings.append(f"phase2 hook failed: {exc}")
+        ltg_min_strikes = int(lcfg.get("min_strikes", 1))
+    except (TypeError, ValueError):
+        ltg_min_strikes = 1
+    env_enabled = bool(ecfg.get("enabled", True))
 
-    # --- STRUTTURA VERTICALE: VIL/ETM/POH (+ CAPPI se configurati) ---------
-    structure_score = None
-    structure_feats = None
-    try:
-        scfg = p2_cfg.get("structure") or {}
-        if not frames:
-            raise ValueError("no_reference_grid")
-        shape = frames[-1].data.shape
-
-        def _grid(product, label):
-            if not product:
-                return None
-            try:
-                gframes, gwarn, _ts = fetch.fetch_frames(
-                    config, product=product, max_frames=1)
-                warnings.extend(gwarn)
-            except Exception as exc:
-                warnings.append(f"phase2 structure {label}: {exc}")
-                return None
-            if not gframes:
-                warnings.append(f"phase2 structure {label}: no frames")
-                return None
-            g = gframes[-1].data
-            if g.shape != shape:
-                warnings.append(f"phase2 structure {label}: shape mismatch")
-                return None
-            return g
-
-        grids = {name: _grid(scfg.get(key), name)
-                 for name, key in (("vil", "product_vil"),
-                                   ("etm", "product_etm"),
-                                   ("poh", "product_poh"),
-                                   ("low", "product_low"),
-                                   ("high", "product_high"))}
-        if not any(g is not None for g in grids.values()):
-            warnings.append("phase2 structure: no products available")
-        else:
-            nan_grid = np.full(shape, np.nan, dtype="float64")
-            g5 = tuple(grids[n] if grids[n] is not None else nan_grid
-                       for n in ("vil", "etm", "poh", "low", "high"))
-            structure_score = vertical_structure.structure_score(*g5)
-            structure_feats = vertical_structure.structure_features(*g5)
-    except Exception as exc:
-        warnings.append(f"phase2 structure failed: {exc}")
+    def _warn(msg):
+        """Warning deduplicato (i layer per-candidato girano N volte)."""
+        if msg not in warnings:
+            warnings.append(msg)
 
     # --- OVERSHOOTING TOP: DN->K non calibrato in A2 -> layer assente -------
     ot_score = None
@@ -166,78 +301,150 @@ def _phase2_evaluate(bundle, config):
     else:
         warnings.append("ot_unavailable:pipeline_satellite_non_inclusa_in_A2")
 
-    # --- FULMINI: rate Blitz v2 sugli ultimi slot 5 min (S3 DPC) ------------
-    lightning_score = None
-    try:
-        window = int((p2_cfg.get("lightning") or {}).get("window_slots", 4))
-        window = max(2, min(window, lightning.LIGHTNING_TREND_WINDOW))
-        counts = []
-        for k in range(window - 1, -1, -1):   # dal piu' vecchio al recente
-            try:
-                frame = lightning.fetch_ltg(
-                    epoch_ms=lightning.ltg_epoch_floor(backoff_steps=k))
-                counts.append(frame["count"])
-            except lightning.LightningFetchError as exc:
-                warnings.append(f"phase2 lightning slot-{k}: {exc}")
-                counts.append(None)
-        rate = next((c for c in reversed(counts) if c is not None), None)
-        if rate is None:
-            warnings.append("phase2 lightning: no slots available")
-        else:
-            trend = lightning.lightning_trend(counts)
-            lightning_score = lightning.lightning_score(rate, trend["jump"])
-    except Exception as exc:
-        warnings.append(f"phase2 lightning failed: {exc}")
+    # --- STRUTTURA: prodotti DPC scaricati UNA VOLTA (rif. = ultima VMI) ----
+    products = {}
+    if frames:
+        products = _fetch_structure_products(config, scfg,
+                                             frames[-1].data.shape, warnings)
+        if not any(rd is not None for rd in products.values()):
+            warnings.append("phase2 structure: no products available")
+    else:
+        warnings.append("phase2 structure: no frames")
 
-    # --- AMBIENTE NWP: Open-Meteo sul punto del primo candidato -------------
-    env_score = None
+    # --- FULMINI: slot scaricati UNA VOLTA, strike in cache per slot --------
     try:
-        ecfg = p2_cfg.get("environment") or {}
-        if ecfg.get("enabled", True):
-            pos = candidates[0].get("position") or []
-            if len(pos) == 2:
-                detail = environment.evaluate_environment(
-                    float(pos[1]), float(pos[0]),
-                    timeout_s=ecfg.get("timeout_s"))
-                env_score = detail["env_score"]
-                result["environment"] = {
-                    "scp": detail["scp"], "stp": detail["stp"],
-                    "ship": detail["ship"], "env_score": detail["env_score"],
-                    "completeness": detail["completeness"],
-                    "partial": detail["partial"], "position": list(pos),
-                }
-            else:
-                warnings.append("phase2 environment: no candidate position")
-    except environment.EnvironmentFetchError as exc:
-        warnings.append(f"phase2 environment: {exc}")
-    except Exception as exc:
-        warnings.append(f"phase2 environment failed: {exc}")
+        window = max(2, min(int(lcfg.get("window_slots", 4)),
+                            lightning.LIGHTNING_TREND_WINDOW))
+    except (TypeError, ValueError):
+        window = lightning.LIGHTNING_TREND_WINDOW
+    slot_cache = {}
+    ltg_slots = []
+    for k in range(window - 1, -1, -1):   # dal piu' vecchio al recente
+        epoch = lightning.ltg_epoch_floor(backoff_steps=k)
+        if epoch in slot_cache:
+            ltg_slots.append(slot_cache[epoch])
+            continue
+        try:
+            slot_cache[epoch] = lightning.fetch_ltg(epoch_ms=epoch)["strikes"]
+        except lightning.LightningFetchError as exc:
+            warnings.append(f"phase2 lightning slot-{k}: {exc}")
+            slot_cache[epoch] = None
+        except Exception as exc:          # guasto imprevisto -> slot assente
+            warnings.append(f"phase2 lightning failed: {exc}")
+            slot_cache[epoch] = None
+        ltg_slots.append(slot_cache[epoch])
+    if all(s is None for s in ltg_slots):
+        warnings.append("phase2 lightning: no slots available")
 
-    # --- SSI v2 sui candidati (pesi da config; pesi invalidi -> warning) ----
-    sub = {"hook": hook_score, "structure": structure_score,
-           "env": env_score, "ot": ot_score, "lightning": lightning_score}
-    present = sum(1 for v in sub.values() if v is not None)
-    result.update(sub)
-    result["status"] = ("ok" if present == len(sub)
-                        else "partial" if present else "unavailable")
-    if structure_feats is not None:
-        # 'poc' e' il refuso storico di 'poh' (Probability Of Hail): alias
-        # emesso con lo stesso valore per compatibilita' con A3 (feature_chips).
-        structure_feats = dict(structure_feats,
-                               poc=structure_feats.get("poh_max"))
-        result["structure_features"] = structure_feats
-    weights = (p2_cfg.get("aggregate") or {}).get("weights")
+    # --- LAYER PER CANDIDATO: hook/struttura/fulmini/ambiente ---------------
+    # Cache condivise: env per bucket (0.1 gradi), fulmini per slot epoch ->
+    # N candidati = UNA chiamata per bucket/slot. Ogni sub-valore finisce
+    # sul SINGOLO candidato (chiavi lette dai chip dell'app).
+    env_cache = {}
+    env_bucket_deg = ecfg.get("cache_grid_deg", environment.ENV_CACHE_GRID_DEG)
+    env_failures = 0
+    no_position = False
     for c in candidates:
+        pos = _candidate_position(c)
+        if pos is None:
+            no_position = True
+            lon = lat = None
+        else:
+            lon, lat = pos
+
+        # Finestra struttura sul riferimento (ultima VMI): hook usa la sua
+        # propria finestra per ciascuno degli ultimi frame della storia.
+        window = (_candidate_window(frames[-1], lon, lat, struct_radius)
+                  if frames and lon is not None else None)
+
+        hook_score = None
+        if lon is not None:
+            try:
+                hook_score = _hook_for_candidate(frames, lon, lat, hook_radius,
+                                                 hcfg, hook)
+            except Exception as exc:
+                _warn(f"phase2 hook failed: {exc}")
+
+        structure_score = None
+        structure_feats = None
+        if window is not None:
+            try:
+                structure_score, structure_feats = _structure_at_window(
+                    products, window, vertical_structure)
+            except Exception as exc:
+                _warn(f"phase2 structure failed: {exc}")
+
+        lightning_score = None
+        if lon is not None:
+            try:
+                counts = [(lightning.count_strikes_in_radius(
+                    s, lon, lat, ltg_radius) if s is not None else None)
+                    for s in ltg_slots]
+                lightning_score = lightning.lightning_spatial_score(
+                    counts, min_strikes=ltg_min_strikes)
+            except Exception as exc:
+                _warn(f"phase2 lightning failed: {exc}")
+
+        env_score = None
+        if env_enabled and lon is not None:
+            detail = None
+            try:
+                detail = environment.evaluate_environment_cached(
+                    lat, lon, cache=env_cache, grid_deg=env_bucket_deg,
+                    timeout_s=ecfg.get("timeout_s"))
+            except Exception as exc:
+                _warn(f"phase2 environment failed: {exc}")
+            if detail is None:
+                env_failures += 1
+            else:
+                env_score = detail.get("env_score")
+                if result.get("environment") is None:
+                    result["environment"] = {
+                        "scp": detail.get("scp"), "stp": detail.get("stp"),
+                        "ship": detail.get("ship"),
+                        "env_score": detail.get("env_score"),
+                        "completeness": detail.get("completeness"),
+                        "partial": detail.get("partial"),
+                        "position": [lon, lat],
+                        "bucket": list(environment.cache_bucket(
+                            lat, lon, env_bucket_deg)),
+                    }
+
         c["hook"] = hook_score
         c["structure"] = structure_score
+        if structure_feats is None:
+            c["structure_features"] = None
+        else:
+            # 'poc' e' il refuso storico di 'poh' (Probability Of Hail): alias
+            # emesso con lo stesso valore per compatibilita' con A3.
+            c["structure_features"] = dict(structure_feats,
+                                            poc=structure_feats.get("poh_max"))
         c["ot"] = ot_score
         c["lightning"] = lightning_score
+        c["env"] = env_score
         c["env_scp"] = env_score        # chip 'Env' (0-100; SCP grezzo sopra)
+
+    if no_position:
+        _warn("phase2: candidate without valid position -> per-cell layers None")
+    if env_failures:
+        _warn(f"phase2 environment: {env_failures} candidate bucket(s) "
+              "without data")
+
+    # --- STATUS: componenti presenti su ALMENO UN candidato -----------------
+    comps = {name: sum(1 for c in candidates if c.get(name) is not None)
+             for name in _PHASE2_COMPONENTS}
+    result["components_status"] = comps
+    present = sum(1 for v in comps.values() if v)
+    result["status"] = ("ok" if present == len(_PHASE2_COMPONENTS)
+                        else "partial" if present else "unavailable")
+
+    # --- SSI v2 per candidato (pesi rinormalizzati sui presenti) ------------
+    weights = (p2_cfg.get("aggregate") or {}).get("weights")
     try:
         for c in candidates:
             v2 = aggregate.aggregate_ssi_v2(
-                float(c.get("ssi") or 0.0), hook_score, structure_score,
-                env_score, ot_score, lightning_score, weights=weights)
+                float(c.get("ssi") or 0.0), c.get("hook"), c.get("structure"),
+                c.get("env"), c.get("ot"), c.get("lightning"), weights=weights)
             c["ssi_v2"] = v2["ssi_v2"]
     except ValueError as exc:
         warnings.append(f"phase2 aggregate weights invalid: {exc}")

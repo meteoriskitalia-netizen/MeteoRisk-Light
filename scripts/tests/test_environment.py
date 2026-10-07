@@ -139,3 +139,58 @@ def test_evaluate_environment_client_failure_raises():
     with pytest.raises(env.EnvironmentFetchError,
                        match="client_failed:RuntimeError"):
         env.evaluate_environment(41.9, 12.5, openmeteo_client=bad_client)
+
+
+# ---------------------------------------------------------------------------
+# B2 (PHASE2_VERSION 0.4.0): cache per bucket dei candidati
+# ---------------------------------------------------------------------------
+
+def test_cache_bucket_rounding_by_grid_deg():
+    # grid 0.1 -> 1 decimale: due candidati nello stesso bucket = 1 chiamata
+    assert env.cache_bucket(41.94, 12.51) == (41.9, 12.5)
+    assert env.cache_bucket(41.91, 12.54) == (41.9, 12.5)
+    assert env.cache_bucket(41.94, 12.51) == env.cache_bucket(41.91, 12.54)
+    assert env.cache_bucket(41.5, 13.5) == (41.5, 13.5)
+    assert env.cache_bucket(41.94, 12.51, grid_deg=1.0) == (42.0, 13.0)
+    with pytest.raises(ValueError, match="cache_bucket_non_numeric"):
+        env.cache_bucket("not-a-lat", 12.5)
+
+
+def test_evaluate_environment_cached_dedup_and_failure_not_cached():
+    calls = []
+
+    def evaluator(lat, lon, timeout_s=None):
+        calls.append((lat, lon, timeout_s))
+        if lon > 13.0:
+            raise RuntimeError("boom")
+        return {"env_score": 42.0, "scp": 1.0, "partial": False}
+
+    cache = {}
+    first = env.evaluate_environment_cached(41.94, 12.51, cache=cache,
+                                            timeout_s=7, evaluator=evaluator)
+    second = env.evaluate_environment_cached(41.91, 12.54, cache=cache,
+                                             timeout_s=7, evaluator=evaluator)
+    # stesso bucket -> UNA sola richiesta, stesso dict restituito
+    assert first == {"env_score": 42.0, "scp": 1.0, "partial": False}
+    assert second is first
+    assert len(calls) == 1
+    assert calls[0][2] == 7
+    assert len(cache) == 1
+
+    # bucket diverso con errore -> None (nessun dato inventato)
+    assert env.evaluate_environment_cached(41.5, 13.5, cache=cache,
+                                           evaluator=evaluator) is None
+    assert len(calls) == 2
+    assert len(cache) == 1              # il fallimento NON viene memorizzato
+    # stesso bucket fallito -> riprova (quindi e' proprio non cachato)
+    assert env.evaluate_environment_cached(41.5, 13.5, cache=cache,
+                                           evaluator=evaluator) is None
+    assert len(calls) == 3
+
+    # risposta non-dict -> None, non cachata
+    assert env.evaluate_environment_cached(41.0, 14.0, cache=cache,
+                                           evaluator=lambda *a, **k: []) is None
+    assert len(cache) == 1
+    # nessun cache dict -> funziona comunque (cache opzionale)
+    assert env.evaluate_environment_cached(41.9, 12.5, cache=None,
+                                           evaluator=evaluator)["env_score"] == 42.0

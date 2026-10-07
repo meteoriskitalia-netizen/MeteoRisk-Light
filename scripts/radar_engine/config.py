@@ -201,28 +201,40 @@ CONFIG = {
         "hook": {
             # Hook echo morfologico da griglia VMI (nessun Doppler):
             # soglia dBZ del core + persistenza sulle ultime N griglie.
+            # B2: calcolo sul FOOTPRINT locale di ogni candidato.
             "dbz_threshold": 45.0,     # = hook.HOOK_DBZ_THRESHOLD (A1)
             "history_frames": 3,       # frame per hook.filter_persistence
+            "footprint_radius_km": 45.0,  # finestra ±km attorno al candidato
         },
         "structure": {
             # Prodotti DPC addizionali (griglie devono allinearsi alla VMI).
             # None = product type non configurato -> descrittore ASSENTE
             # (membership 0, mai un valore fabbricato).
+            # B2: ritaglio PER CANDIDATO della finestra ±local_radius_km
+            # (ETM metri -> km, POH frazione -> % convertiti al ritaglio).
             "product_vil": "VIL",      # prodotto DPC verificato (A0)
             "product_etm": "ETM",      # prodotto DPC verificato (A0)
             "product_poh": "POH",      # prodotto DPC verificato (A0)
             "product_low": None,       # CAPPI 2 km: product type DPC ignoto
             "product_high": None,      # CAPPI 6 km: idem -> overhang assente
+            "local_radius_km": 45.0,   # finestra ±km attorno al candidato
         },
         "environment": {
-            # Open-Meteo sul punto del PRIMO candidato (urllib diretto,
+            # Open-Meteo sul punto di OGNI candidato (urllib diretto,
             # nessuna dipendenza extra): SCP/STP/SHIP + env_score 0-100.
+            # B2: cache per bucket a cache_grid_deg gradi -> i candidati
+            # nello stesso bucket condividono UNA sola richiesta.
             "enabled": True,
             "timeout_s": 30,           # = environment.ENV_HTTP_TIMEOUT_S
+            "cache_grid_deg": 0.1,     # bucket = (round(lat,1), round(lon,1))
         },
         "lightning": {
             # Blitz v2 S3 DPC: finestra del rate in slot da 5 minuti.
+            # B2: conteggio spaziale PER CANDIDATO entro radius_km (haversine)
+            # con fetch dello slot in cache condiviso fra i candidati.
             "window_slots": 4,         # = lightning.LIGHTNING_TREND_WINDOW
+            "radius_km": 30.0,         # = lightning.LIGHTNING_RADIUS_KM
+            "min_strikes": 1,          # rate < min_strikes -> componente None
         },
         "ot": {
             # EUMETSAT WV/IR: DN->K NON calibrato (evidence A0: PNG
@@ -235,6 +247,8 @@ CONFIG = {
         "aggregate": {
             # Pesi SSI v2: SOMMA ESATTAMENTE 1.00 (aggregate.DEFAULT_WEIGHTS).
             # Somma > 1.0 -> ValueError -> warning + nessun ssi_v2 (v. A2-2).
+            # B2: i componenti None per candidato vengono ESCLUSI e i pesi
+            # RINORMALIZZATI sui presenti (somma 1.0); tutti None -> ssi_v2 None.
             "weights": {
                 "base": 0.60,          # SSI Fase 1 (supercell.py) — fondamento
                 "hook": 0.15,

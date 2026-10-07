@@ -9,6 +9,7 @@ una FAILURE POLICY esplicita (status ok/degraded/error).
 """
 
 import datetime as _dt
+import math
 
 # ---------------------------------------------------------------------------
 # Errori (FAILURE POLICY: mai sovrascrivere l'ultimo dataset valido)
@@ -88,6 +89,32 @@ class RasterData:
         x, y = self.transform @ (float(col) + 0.5, float(row) + 0.5)
         lon, lat = self.geo_transform.transform(x, y)
         return float(lon), float(lat)
+
+    def lonlat_to_pixel(self, lon, lat):
+        """Converte (lon, lat) EPSG:4326 nel pixel (row, col) che lo CONTIENE.
+
+        Inversa esatta di pixel_to_lonlat: (lon, lat) -> coordinate raster
+        attraverso il transformer `geo_transform` in direzione INVERSA, poi
+        affine inversa (~transform). Come in pixel_to_lonlat il centro del
+        pixel (row, col) e' a (col+0.5, row+0.5): il floor del risultato e'
+        l'indice del pixel che contiene il punto.
+
+        Ritorna (row, col) INTERI che PUO' essere fuori griglia (negativi o
+        >= rows/cols): e' compito del chiamante clampare/intersecare con la
+        griglia (le finestre per-candidato intersecano con i bordi raster).
+        ValueError SOLO se la posizione non e' invertibile (fuori dominio
+        CRS: coordinate non finite) — nessuna posizione inventata, FAIL SAFE."""
+        try:
+            x, y = self.geo_transform.transform(float(lon), float(lat),
+                                                direction="INVERSE")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("lonlat_not_invertible") from exc
+        if not (math.isfinite(x) and math.isfinite(y)):
+            raise ValueError("lonlat_out_of_crs_domain")
+        col_f, row_f = (~self.transform) @ (x, y)
+        if not (math.isfinite(col_f) and math.isfinite(row_f)):
+            raise ValueError("lonlat_out_of_raster_domain")
+        return int(math.floor(row_f)), int(math.floor(col_f))
 
     def to_dict(self):
         return {

@@ -127,17 +127,47 @@ def _supercell_summary(bundle):
 
 
 def _phase2_summary(bundle):
-    """Riepilogo Fase 2 per latest.json (layer additivo, nessun dato raw)."""
+    """Riepilogo Fase 2 per latest.json (layer additivo, nessun dato raw).
+
+    Da B2 (PHASE2_VERSION 0.4.0) i sub-valori hook/struttura/env/fulmini sono
+    PER CANDIDATO: qui si emette il riepilogo del candidato con ssi_v2 piu'
+    alto (o il primo candidato se ssi_v2 e' nullo ovunque) più il conteggio
+    dei candidati con componente presente (components_status, visto anche nel
+    blocco phase2 di supercells.json). Nessun dato raw (celle, lat/lon, griglie)
+    entra nel latest.json."""
     p2 = getattr(bundle, "phase2", None)
     if not isinstance(p2, dict):
         return {"phase2_status": "unavailable"}
     cells = getattr(bundle, "supercells", None) or []
-    return {
+    comps = p2.get("components_status")
+    if not isinstance(comps, dict):
+        comps = {name: sum(1 for c in cells if c.get(name) is not None)
+                 for name in ("hook", "structure", "env", "ot", "lightning")}
+    best = None
+    for c in cells:
+        if c.get("ssi_v2") is None:
+            continue
+        if best is None or float(c["ssi_v2"]) > float(best["ssi_v2"]):
+            best = c
+    if best is None and cells:
+        best = cells[0]
+    out = {
         "phase2_status": p2.get("status", "unavailable"),
         "phase2_ssi_v2_max": max(
             (float(c["ssi_v2"]) for c in cells
              if c.get("ssi_v2") is not None), default=None),
+        "phase2_components_status": dict(comps),
     }
+    if best is not None:
+        out["phase2_best_candidate"] = {
+            "ssi_v2": best.get("ssi_v2"),
+            "hook": best.get("hook"),
+            "structure": best.get("structure"),
+            "env": best.get("env"),
+            "ot": best.get("ot"),
+            "lightning": best.get("lightning"),
+        }
+    return out
 
 
 def build_storms_geojson(bundle):

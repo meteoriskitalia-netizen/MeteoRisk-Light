@@ -145,3 +145,40 @@ def test_malformed_input_raises():
 def test_determinism_double_run():
     m = _annulus(r_in=4.0, r_out=12.0, a0=45.0, a1=315.0)
     assert _features(m) == _features(m)
+
+
+# ---------------------------------------------------------------------------
+# B2 (PHASE2_VERSION 0.4.0): score sul FOOTPRINT per-candidato
+# Valori verificati eseguendo hook.py reale (scratch_b2_values.py,
+# radarvenv Python 3.13).
+# ---------------------------------------------------------------------------
+
+def test_hook_score_footprint_absent_data_returns_none():
+    # nessuna finestra -> componente ASSENTE, nessun punteggio fabbricato
+    assert hook.hook_score_footprint([]) is None
+    g, m = _blank(), np.ones((64, 64), dtype=bool)
+    # voce non tupla (griglia "nuda") -> FAIL SAFE
+    assert hook.hook_score_footprint([g]) is None
+    # mask con shape diversa dalla griglia -> None
+    assert hook.hook_score_footprint([(g, np.ones((8, 8), bool))]) is None
+    # finestra senza pixel validi -> None
+    assert hook.hook_score_footprint([(g, np.zeros((64, 64), bool))]) is None
+    # finestra shape vuota -> None
+    assert hook.hook_score_footprint([(g, None), (np.zeros((0, 0)), None)]) is None
+    # ALMENO UNA finestra senza valori finiti -> None (persistenza non
+    # verificabile sull'intera storia)
+    assert hook.hook_score_footprint([(g, None),
+                                      (np.full((64, 64), np.nan), None)]) is None
+
+
+def test_hook_score_footprint_persisted_score():
+    m = _annulus(r_in=4.0, r_out=12.0, a0=45.0, a1=315.0)
+    g = _blank()
+    g[m] = 55.0
+    # score del singolo footprint verificato 69.6
+    assert hook.hook_score_footprint([(g, None)]) == 69.6
+    # due finestre identiche -> persistenza sullo stesso score
+    assert hook.hook_score_footprint([(g, None), (g, None)]) == 69.6
+    assert hook.hook_score_footprint([(g, m)]) == 69.6
+    # griglia valida ma senza uncino -> 0.0 (score reale, NON None)
+    assert hook.hook_score_footprint([(_blank(), None)]) == 0.0

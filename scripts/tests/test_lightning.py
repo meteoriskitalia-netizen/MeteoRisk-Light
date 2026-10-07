@@ -171,3 +171,48 @@ def test_build_getmap_url():
     url_t = ltg.build_getmap_url(time_iso="2026-10-07T10:00:00Z")
     assert "TIME=" in url_t
     assert "2026-10-07T10" in url_t
+
+
+# ---------------------------------------------------------------------------
+# B2 (PHASE2_VERSION 0.4.0): conteggio spaziale per candidato
+# Valori verificati eseguendo lightning.py reale (scratch_b2_values.py,
+# radarvenv Python 3.13).
+# ---------------------------------------------------------------------------
+
+def test_haversine_km_verified_values():
+    assert ltg.haversine_km(0.0, 0.0, 0.0, 0.0) == 0.0
+    # 1 grado di latitudine = 6371.0088 * pi/180 = 111.195080 km
+    assert round(ltg.haversine_km(0.0, 0.0, 0.0, 1.0), 6) == 111.195080
+    assert round(ltg.haversine_km(0.0, 0.0, 1.0, 0.0), 6) == 111.195080
+    # Roma -> Milano (477.385 km, valore calcolato a runtime)
+    assert round(ltg.haversine_km(12.4922, 41.8955, 9.1899, 45.4642),
+                 3) == 477.385
+    # simmetrica
+    assert (ltg.haversine_km(12.5, 41.9, 9.2, 45.5)
+            == ltg.haversine_km(9.2, 45.5, 12.5, 41.9))
+
+
+def test_count_strikes_in_radius_verified_values():
+    strikes = [(12.5, 41.9), (13.0, 41.9), (12.5, 43.5),
+               (12.5001, 41.9001), (float("nan"), 41.9), ("x", 41.9)]
+    assert ltg.count_strikes_in_radius(strikes, 12.5, 41.9, 30.0) == 2
+    assert ltg.count_strikes_in_radius(strikes, 12.5, 41.9, 1.0) == 2
+    assert ltg.count_strikes_in_radius(strikes, 12.5, 41.9, 0.001) == 1
+    assert ltg.count_strikes_in_radius([], 12.5, 41.9, 30.0) == 0
+    assert ltg.count_strikes_in_radius(None, 12.5, 41.9, 30.0) == 0
+    # record malformati (dict, non tuple) -> skippati, mai crash
+    assert ltg.count_strikes_in_radius([{"lon": 12.5}], 12.5, 41.9, 30.0) == 0
+
+
+def test_lightning_spatial_score_verified_values():
+    # costante 100 -> jump 0 -> 100 * (0.7*1.0 + 0.3*0.0) = 70.0
+    assert ltg.lightning_spatial_score([100, 100, 100, 100]) == 70.0
+    assert ltg.lightning_spatial_score([50, 50, 50, 50]) == 35.0
+    # slot non scaricati non bloccano lo slot recente
+    assert ltg.lightning_spatial_score([None, 100, 100]) == 70.0
+    assert ltg.lightning_spatial_score([3, 5]) == 4.1
+    # rate recente 0 / sotto min_strikes -> None (componente ASSENTE)
+    assert ltg.lightning_spatial_score([5, 0]) is None
+    assert ltg.lightning_spatial_score([0, 0], min_strikes=1) is None
+    assert ltg.lightning_spatial_score([None, None]) is None
+    assert ltg.lightning_spatial_score([]) is None

@@ -19,6 +19,15 @@ generalizzato), qui entrano solo array numpy allineati per shape.
 
 Fuzzy a tre soglie (basso/medio/alto) per ciascun descrittore, combinato con
 STRUCTURE_WEIGHTS (somma 1.00) nello structure_score 0-100.
+
+UNITA' DEI PRODOTTI (contratto di questo modulo, verificato in B2):
+  il prodotto DPC ETM e' in METRI e il POH e' una FRAZIONE [0,1], mentre le
+  soglie STRUCTURE_ETM_TH (6/9/12) e STRUCTURE_POH_TH (30/50/70) sono in KM e
+  in %. Le API pure di qui ricevono/quindi ETM in KM e POH in %: il chiamante
+  (main, al ritaglio del prodotto per candidato) applica PRIMA le conversioni
+  pure etm_to_km (x/1000) e poh_to_percent (x100). VIL resta kg/m^2 (nessuna
+  conversione). Senza questa normalizzazione un ETM di 9000 m verrebbe letto
+  come 9000 km (membership 1.0 falsa) e un POH 0.50 come 0.5 % (membership 0).
 """
 
 import math
@@ -29,8 +38,8 @@ import numpy as np
 # Costanti — EXPERIMENTAL DEFAULTS (non calibrati su casi reali)
 # ---------------------------------------------------------------------------
 STRUCTURE_VIL_TH = (20.0, 35.0, 50.0)        # kg/m^2  (basso/medio/alto)
-STRUCTURE_ETM_TH = (6.0, 9.0, 12.0)          # km
-STRUCTURE_POH_TH = (30.0, 50.0, 70.0)        # %
+STRUCTURE_ETM_TH = (6.0, 9.0, 12.0)          # km   (su ETM GIA' in km)
+STRUCTURE_POH_TH = (30.0, 50.0, 70.0)        # %    (su POH GIA' in %)
 STRUCTURE_OVERHANG_TH = (0.15, 0.30, 0.50)   # frazione [0,1]
 STRUCTURE_DENSITY_TH = (0.30, 0.55, 0.85)    # kg/m^2 per km di echo top
 STRUCTURE_DEFAULT_DBZ = 40.0                 # soglia dBZ per l'overhang
@@ -40,6 +49,9 @@ STRUCTURE_WEIGHTS = {                        # somma 1.00
     "poh": 0.25,
     "overhang": 0.15,
 }
+# Conversioni unita' dei prodotti DPC -> unita' delle soglie (B2)
+ETM_METRES_PER_KM = 1000.0                   # prodotto ETM: metri -> km
+POH_FRACTION_TO_PERCENT = 100.0              # prodotto POH: frazione -> %
 
 
 # ---------------------------------------------------------------------------
@@ -93,12 +105,34 @@ def _fuzzy3(x, th):
 # ---------------------------------------------------------------------------
 # API pure
 # ---------------------------------------------------------------------------
+def etm_to_km(etm_grid):
+    """ETM prodotto DPC (METRI) -> km per le soglie STRUCTURE_ETM_TH.
+
+    Conversione moltiplicativa x/1000 (9000 m -> 9.0 km), NaN resta NaN.
+    Va applicata dal chiamante PRIMA di structure_score/structure_features,
+    che ricevono quindi ETM gia' in km. input: griglia 2D; output: ndarray
+    float64 della stessa forma (copia)."""
+    return _as_grid(etm_grid, "etm_grid") / ETM_METRES_PER_KM
+
+
+def poh_to_percent(poh_grid):
+    """POH prodotto DPC (FRAZIONE [0,1]) -> % per le soglie STRUCTURE_POH_TH.
+
+    Conversione moltiplicativa x100 (0.50 -> 50.0 %), NaN resta NaN.
+    Va applicata dal chiamante PRIMA di structure_score/structure_features,
+    che ricevono quindi POH gia' in %. input: griglia 2D; output: ndarray
+    float64 della stessa forma (copia)."""
+    return _as_grid(poh_grid, "poh_grid") * POH_FRACTION_TO_PERCENT
+
+
 def vil_density(vil_grid, etm_grid):
     """Densita' VIL/echo-top (kg/m^2 per km) cella per cella.
 
-    vil_grid:  VIL (kg/m^2), etm_grid: echo top (km). Dove ETM <= 0 o non
-    finito il risultato e' 0.0 (cella invalida: nessuna divisione per zero).
-    Ritorna ndarray float64 della stessa forma."""
+    vil_grid:  VIL (kg/m^2); etm_grid: echo top in KM — unita' OBBLIGATORIA:
+    il prodotto DPC ETM e' in METRI e va convertito con etm_to_km (x/1000)
+    PRIMA della chiamata, altrimenti la densita' risulta sbagliata di 1000x.
+    Dove ETM <= 0 o non finito il risultato e' 0.0 (cella invalida: nessuna
+    divisione per zero). Ritorna ndarray float64 della stessa forma."""
     vil = _as_grid(vil_grid, "vil_grid")
     etm = _as_grid(etm_grid, "etm_grid")
     _same_shape(vil, etm)
@@ -128,8 +162,9 @@ def overhang_index(low_grid_2, high_grid_6, threshold=None):
 
 
 def poh_etm_scalars(poh_grid, etm_grid):
-    """Scalari POH (%) e ETM (km) da griglie prodotto.
+    """Scalari POH (%) e ETM (km) da griglie in unita' DI INPUT.
 
+    UNITA' IN INPUT: poh in % (poh_to_percent), etm in km (etm_to_km).
     Ritorna dict: poh_max, poh_mean, etm_max, etm_mean, n_valid. Le chiavi
     sono None quando la griglia non contiene celle finite (dato mancante:
     MAI sostituito con un valore inventato)."""
@@ -150,7 +185,9 @@ def structure_features(vil_grid, etm_grid, poh_grid, low_grid_2, high_grid_6,
                        threshold=None, vil_density_grid=None):
     """Descrittori + membership fuzzy dei 4 componenti (per audit/trasparenza).
 
-    Ritorna dict con gli scalari grezzi e le membership 0..1 (key 'm_*')."""
+    UNITA' IN INPUT: vil kg/m^2, etm KM (etm_to_km), poH % (poh_to_percent),
+    CAPPI dBZ. Ritorna dict con gli scalari grezzi (nell'unita' di input) e
+    le membership 0..1 (key 'm_*')."""
     vil = _as_grid(vil_grid, "vil_grid")
     etm = _as_grid(etm_grid, "etm_grid")
     poh = _as_grid(poh_grid, "poh_grid")
@@ -185,7 +222,9 @@ def structure_score(vil_grid, etm_grid, poh_grid, low_grid_2, high_grid_6,
     """Score struttura verticale 0-100 (float, 1 decimale), fuzzy 3 soglie.
 
     Combina le membership dei descrittori (VIL, ETM, POH, overhang) con i pesi
-    STRUCTURE_WEIGHTS (somma 1.00). Un descrittore non disponibile (None) vale
+    STRUCTURE_WEIGHTS (somma 1.00). UNITA' IN INPUT: vil kg/m^2, etm KM
+    (etm_to_km), POH % (poh_to_percent), CAPPI dBZ — le soglie sono espresse
+    in km/%/kg/m^2. Un descrittore non disponibile (griglia tutta NaN) vale
     membership 0 e NON viene rinormalizzato: dati mancanti abbassano lo score
     (nessun iperparametro). weights: dict opzionale che sovrascrive i pesi
     (stesse chiavi; somma <= 1.0 verificata)."""
