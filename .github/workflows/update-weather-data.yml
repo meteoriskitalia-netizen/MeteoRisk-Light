@@ -133,7 +133,7 @@ jobs:
       # In bootstrap il primo fetch è sempre il reale completo (requisiti G2/G5).
       - name: Fetch sorgente (coordinated, completo 2 leg — raw temporaneo)
         id: fetch
-        if: steps.plan.outputs.plan_state == 'ok'
+        if: steps.plan.outputs.plan_state == 'ok' && steps.plan.outputs.fetch_mode == 'coordinated'
         run: |
           rc=0
           python scripts/fetch_source_data.py --mode "${{ steps.plan.outputs.fetch_mode }}" || rc=$?
