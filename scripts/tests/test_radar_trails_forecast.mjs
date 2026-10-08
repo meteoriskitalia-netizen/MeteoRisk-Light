@@ -46,7 +46,8 @@ const PURE_FNS = [
   'scTrailStepOk', 'scTrailWindow', 'scTrailSegments', 'scTrailUidIndex',
   'scBuildForecastCone', 'scMatchBadgeCandidate', 'scPhenomenaSummary',
   'scPhenomenaGlyph', 'scPhenomenaIsProxy', 'scPhenomenaStateLabel',
-  'scPhenomenaDetailText',
+  'scPhenomenaTypeLabel', 'scPhenomenaDetailText', 'scPhenomenaRowHtml',
+  'scCandidateDirectionDeg',
   'scForecastConfidenceColor', 'scForecastConfidenceOpacity',
 ];
 let pure = '';
@@ -101,6 +102,21 @@ vm.runInNewContext(pure, ctx);
   ok('A12: opacità crescente high > medium > low',
     ctx.scForecastConfidenceOpacity('high') > ctx.scForecastConfidenceOpacity('medium') &&
     ctx.scForecastConfidenceOpacity('medium') > ctx.scForecastConfidenceOpacity('low'));
+  ok('A13: opacity low leggibile (> 0.10)', ctx.scForecastConfidenceOpacity('low') > 0.10,
+    String(ctx.scForecastConfidenceOpacity('low')));
+}
+
+// ---------- A2. DIREZIONE CANDIDATO: forecast preferito, fallback motion ----------
+{
+  ok('A2-1: scCandidateDirectionDeg preferisce forecast (stessa direzione del cono)',
+    ctx.scCandidateDirectionDeg({ forecast: { direction_toward_deg: 90 }, motion: { direction_toward_deg: 180 } }) === 90);
+  ok('A2-2: fallback su motion se forecast assente/non finito',
+    ctx.scCandidateDirectionDeg({ motion: { direction_toward_deg: 45 } }) === 45 &&
+    ctx.scCandidateDirectionDeg({ forecast: { direction_toward_deg: NaN }, motion: { direction_toward_deg: 45 } }) === 45);
+  ok('A2-3: null se entrambi assenti/non numerici',
+    ctx.scCandidateDirectionDeg({}) === null &&
+    ctx.scCandidateDirectionDeg(null) === null &&
+    ctx.scCandidateDirectionDeg({ forecast: { direction_toward_deg: '90' }, motion: {} }) === null);
 }
 
 // ---------- B. TRAILS: assemblaggio da slot fake ----------
@@ -332,10 +348,10 @@ vm.runInNewContext(pure, ctx);
   ok('F12: scTrailStepOk applicato in scTrailSegments, invocato da scRedrawTrails',
     /function scTrailSegments\([\s\S]{0,900}scTrailStepOk\(/.test(src) &&
     /function scRedrawTrails\([\s\S]{0,1600}scTrailSegments\(/.test(src));
-  ok('F13: scRedrawPhenomena usa .sc-phenomena-detail e scPhenomenaStateLabel; niente labels.join nella riga compatta',
-    /sc-phenomena-detail/.test(extractFn('scRedrawPhenomena')) &&
-    /scPhenomenaStateLabel\(/.test(extractFn('scRedrawPhenomena')) &&
-    !/labels\.join\(' · '\)/.test(extractFn('scRedrawPhenomena')));
+  ok('F13: scPhenomenaRowHtml usa .sc-phenomena-detail e scPhenomenaStateLabel; niente labels.join nella riga compatta',
+    /sc-phenomena-detail/.test(extractFn('scPhenomenaRowHtml')) &&
+    /scPhenomenaStateLabel\(/.test(extractFn('scPhenomenaRowHtml')) &&
+    !/labels\.join\(' · '\)/.test(extractFn('scPhenomenaRowHtml')));
   ok('F14: scRedrawTrails accumula segmenti contigui e NON crea polyline per-coppia',
     /scTrailSegments\(/.test(extractFn('scRedrawTrails')) &&
     /dashArray: '6,6'/.test(extractFn('scRedrawTrails')) &&
@@ -345,6 +361,19 @@ vm.runInNewContext(pure, ctx);
   ok('F16: toggle espansione delegato idempotente su #sc-phenomena',
     /function scEnsurePhenomenaClickHandler\([\s\S]{0,700}data-sc-click-bound[\s\S]{0,500}classList\.toggle\('open'\)/.test(src) &&
     /function scRedrawPhenomena\([\s\S]{0,4000}scEnsurePhenomenaClickHandler\(\);/.test(src));
+
+  const rp = extractFn('scRedrawPhenomena');
+  ok('F17: scRedrawPhenomena separa verified; i sospetti in blocco compresso <details class="sc-phenomena-suspects"> con conteggio',
+    /b\.state === 'CORROBORATED' \|\| b\.state === 'VERIFIED'/.test(rp) &&
+    /verified\.push\(/.test(rp) && /suspects\.push\(/.test(rp) &&
+    /<details class="sc-phenomena-suspects">/.test(rp) &&
+    /<summary>' \+ suspects\.length \+ ' sospetti \(/.test(rp) &&
+    /scPhenomenaRowHtml\(/.test(rp));
+  ok('F18: pennant e testo "verso" usano scCandidateDirectionDeg (nessun accesso diretto a motion.direction_toward_deg)',
+    /scCandidateDirectionDeg\(c\)/.test(extractFn('scPennantIcon')) &&
+    !/motion\.direction_toward_deg/.test(extractFn('scPennantIcon')) &&
+    /scCompass\(scCandidateDirectionDeg\(c\)\)/.test(src) &&
+    !/scCompass\(c\.motion\.direction_toward_deg\)/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
