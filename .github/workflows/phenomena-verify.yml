@@ -1,0 +1,119 @@
+name: Phenomena Verify (HAIL + VORTEX — ENGINE-ONLY)
+
+# MeteoRisk phenomena-verify — PARTE 4a+4b (motore ENGINE-ONLY, nessun lato client).
+#   - Fonti: derivati radar gia' pubblicati su main (data/radar/{latest.json,
+#     supercells.json, tracks.json, storms.geojson}) in SOLO lettura.
+#   - Motore: scripts/phenomena/engine.py -> data/phenomena/{events.json,
+#     badges.json} (scrittura atomica + NO-OP GUARD: a contenuto sostanziale
+#     invariato il file non viene toccato -> il commit qui sotto non trova
+#     diff, niente churn di commit da ~144/giorno senza variazioni).
+#   - Fulmini: provider PLUGGABLE, DEFAULT "mli" = MLI EUMETSAT via WMS
+#     anonimo EUMETView (mtg_fd:li_afa, CC-BY-4.0, NESSUN secret, retroattivo
+#     via gitignore); "--lightning-provider dpc" resta selezionabile.
+#   - Failure policy: rc 0 = run pulito (ANCHE con radar degradato: si esegue
+#     solo il prune e i badges si svuotano, mai badge su dati incompleti);
+#     rc 1 = provider ignoto o errore imprevisto -> failure visibile.
+#   - Commit SOLO se data/phenomena/events.json|badges.json cambiano (nessuna
+#     commit su no-op). Il deploy Pages NON e' toccato da questo workflow: i
+#     file arrivano su Pages tramite la build _site di radar-engine e di
+#     update-weather-data (cp -R data/phenomena).
+#   - Tier: SUSPECT / CORROBORATED (mai VERIFIED: quello arriva solo da report
+#     esterni ESWD, non inventati qui).
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [ci-run]
+
+permissions:
+  contents: write
+
+jobs:
+  phenomena-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Gruppo PROPRIO: le run si serializzano tra loro (niente due commit
+    # concorrenti su data/phenomena) senza entrare in coda con i deploy
+    # Pages (group "pages-deploy") o con l'archivio radar-history.
+    concurrency:
+      group: phenomena
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/radar_engine/requirements-dev.txt
+
+      # Suite dedicata (scripts/tests/phenomena): NESSUN test tocca la rete
+      # (opener DPC e client Open-Meteo sempre iniettati oppure --no-network).
+      - name: Unit tests phenomena (nessuna rete)
+        run: |
+          python -m pytest scripts/tests/phenomena -q
+
+      - name: Run phenomena engine (HAIL + VORTEX)
+        id: engine
+        run: |
+          # rc 0 = run pulito (incluso radar degradato -> badges vuoti);
+          # rc 1 = provider ignoto / errore imprevisto -> failure visibile.
+          # Provider esplicito: default engine e' mli, dichiarato anche qui
+          # per chiarezza (gitignore rende DPC retroattivo).
+          python scripts/phenomena/engine.py --radar-dir data/radar --out-dir data/phenomena --lightning-provider mli
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## MeteoRisk — phenomena-verify (HAIL + VORTEX)"
+            echo ""
+            if [ -f data/phenomena/events.json ]; then
+              python -c "import json, collections; d = json.load(open('data/phenomena/events.json')); c = collections.Counter(e.get('type') for e in d.get('events', [])); print('eventi (finestra 24h):', len(d.get('events', [])), dict(c))"
+            else
+              echo "events.json non disponibile (run fallita prima del motore)."
+            fi
+            if [ -f data/phenomena/badges.json ]; then
+              python -c "import json; d = json.load(open('data/phenomena/badges.json')); print('badges attivi (ultimo frame radar):', len(d.get('badges', [])), '— radar_timestamp:', d.get('radar_timestamp'))"
+            fi
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit output derivato (only if changed)
+        if: success()
+        run: |
+          git config user.name "meteorisk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ ! -f data/phenomena/events.json ] && [ ! -f data/phenomena/badges.json ]; then
+            echo "[INFO] Nessun output phenomena: niente da committare."
+            exit 0
+          fi
+          git add data/phenomena/events.json data/phenomena/badges.json
+          if git diff --cached --quiet; then
+            echo "[INFO] Nessuna modifica agli eventi phenomena."
+            exit 0
+          fi
+          git commit -m "chore(phenomena): verifica eventi HAIL/VORTEX (finestra rolling 24h)"
+          # Retry: altri workflow (radar-engine / update-weather-data)
+          # pushano sullo stesso main -> race possibile.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              echo "[INFO] Push phenomena riuscito."
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "[ERRORE] Push phenomena fallito dopo 5 tentativi."
+              exit 1
+            fi
+            echo "[WARN] Push fallito (tentativo $attempt/5): riprovo."
+            sleep $((attempt * 5))
+          done

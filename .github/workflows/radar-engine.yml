@@ -38,11 +38,26 @@ permissions:
 # ORA SOLO sul job deploy-pages (concurrency a livello di job, group
 # "pages-deploy", cancel-in-progress: false): il job dati/motore parte
 # subito, il deploy si accoda solo ad altri deploy.
+# NOTA (tracking 2h + nowcast): aggiunta inoltre una concurrency a livello
+# di JOB sul SOLO radar-engine (group proprio "radar-history", cancel-in-
+# progress: false). Le due cron del motore ("*/5" e "7,22,37,52") si
+# sovrappongono e gareggerebbero sul fetch+push dell'archivio rolling
+# radar-history (stesso race "fetch first" gia' osservato su main, che
+# rischiava di corrompere la finestra): qui le run del motore si
+# SERIALIZZANO tra loro. Il group "pages-deploy" e la struttura a livello
+# di workflow NON vengono toccati.
 
 jobs:
   radar-engine:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Serializza le 2 cron del motore tra loro (archivio radar-history:
+    # niente fetch/push concorrenti sulla stessa finestra rolling).
+    # cancel-in-progress: false -> la run in coda prosegue, non viene
+    # cancellata. Gruppo PROPRIO: non entra in coda con i deploy del meteo.
+    concurrency:
+      group: radar-history
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,13 +78,31 @@ jobs:
         run: |
           python -m pytest scripts/tests/radar_engine -q
 
+      # L'ARCHIVIO ROLLING 2h (celle+tracks+supercelle) vive nel branch
+      # radar-history (mai su main): ogni run lo ripristina PRIMA del motore,
+      # cosi' history.build_history() mergea lo slot corrente nei 24 slot
+      # precedenti (clone dello step satellite-engine). Branch assente ->
+      # finestra vuota (primo run), nessun errore.
+      - name: Ripristina archivio rolling (branch radar-history)
+        run: |
+          if git fetch --depth 1 origin "+radar-history:refs/heads/radar-history-base" 2>/dev/null; then
+            if git restore --source radar-history-base --worktree -- data/radar/history 2>/dev/null; then
+              echo "[INFO] Archivio rolling ripristinato da radar-history."
+            else
+              echo "[WARN] radar-history esistente senza data/radar/history."
+            fi
+          else
+            echo "[INFO] Branch radar-history assente (primo run): finestra vuota."
+          fi
+
       - name: Run radar engine (Fase 1)
         id: run
         run: |
           # rc 0 ok / rc 3 degraded (fetch parziale, comunque atteso) -> success;
           # rc 4 error (nessun frame valido) -> failure visibile.
           rc=0
-          python scripts/radar_engine/main.py --out-dir data/radar --max-frames 6 || rc=$?
+          python scripts/radar_engine/main.py --out-dir data/radar \
+            --max-frames 6 --history-dir data/radar/history || rc=$?
           echo "engine_rc=$rc"
           if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
             exit "$rc"
@@ -99,25 +132,69 @@ jobs:
             git push
           fi
 
+      # ARCHIVIO ROLLING 2h su branch ORPHAN radar-history (clone dello step
+      # satellite-cache): commit singola senza parent -> history resettata ad
+      # OGNI push, crescita zero, mai su main. La directory NON committata su
+      # main (step precedente tocca solo i 4 file derivati); se non esiste
+      # (run senza archivio / errore motore) esce con successo (niente fail
+      # spurio). Il push e' protetto dalla concurrency del job (group
+      # "radar-history"): le 2 cron non gareggiano sullo stesso fetch/push.
+      - name: Pubblica archivio rolling radar (branch radar-history)
+        if: success()
+        run: |
+          set -euo pipefail
+          if [ ! -d data/radar/history ]; then
+            echo "[INFO] Nessuna directory data/radar/history: archivio non aggiornato."
+            exit 0
+          fi
+          export GIT_INDEX_FILE="$RUNNER_TEMP/radar-history.index"
+          git read-tree --empty
+          git add -f data/radar/history/
+          TREE=$(git write-tree)
+          unset GIT_INDEX_FILE
+          OLD=""
+          if git rev-parse -q --verify radar-history-base >/dev/null; then
+            OLD=$(git rev-parse radar-history-base^{tree})
+          fi
+          if [ "$OLD" = "$TREE" ]; then
+            echo "[INFO] Nessuna modifica all'archivio rolling: push saltato."
+            exit 0
+          fi
+          COMMIT=$(git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit-tree "$TREE" -m "[skip ci] radar: archivio storico (finestra rolling 2h)")
+          for attempt in 1 2 3; do
+            if git push --force origin "$COMMIT:refs/heads/radar-history"; then
+              echo "[INFO] radar-history aggiornata (commit ${COMMIT:0:7})."
+              exit 0
+            fi
+            echo "[WARN] push radar-history fallito (tentativo $attempt/3): riprovo."
+            sleep $((attempt * 5))
+          done
+          echo "[ERRORE] push radar-history fallito dopo 3 tentativi."
+          exit 1
+
       # L'ARTEFATTO di deploy contiene: app, dataset derivati, geografie richieste,
-      # derivati radar (data/radar: latest.json/storms.geojson/tracks.json/supercells.json)
-      # e la finestra rolling satellite/ (branch satellite-cache, ripristinata qui
+      # derivati radar (data/radar: latest.json/storms.geojson/tracks.json/supercells.json),
+      # gli eventi phenomena (data/phenomena: events.json/badges.json, prodotti dal
+      # workflow phenomena-verify e qui SOLO copiati in _site) e la finestra rolling satellite/ (branch satellite-cache, ripristinata qui
       # perché viva solo su quel branch: senza i frame il deploy seguirebbe quello
       # di satellite-engine e li cancellerebbe da Pages) — MAI _raw / _staging /
       # _workdir / payload esterni. Senza questa build il toggle "Supercelle Radar"
       # non troverebbe supercells.json su Pages (Pages serve _site, non il repo root).
       # Serializzazione SOLO sul deploy (job deploy-pages, group "pages-deploy",
       # condiviso con update-weather-data e satellite-engine, cancel-in-progress:
-      # false). Questo job (dati/motore) NON ha concurrency: non entra in coda
-      # dietro i run lunghi del meteo.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + satellite)
+      # false). Questo job (dati/motore) ha concurrency SOLO sul group PROPRIO
+      # "radar-history" (le 2 cron del motore si serializzano tra loro per
+      # l'archivio rolling): non entra in coda dietro i run lunghi del meteo.
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + satellite)
         if: success()
         run: |
           mkdir -p _site/data
-          cp mri-light-1.1.0.8.html _site/index.html
+          cp mri-light-1.2.0.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
+          if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi

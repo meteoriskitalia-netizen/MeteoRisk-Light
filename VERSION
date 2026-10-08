@@ -1,3 +1,14 @@
+MeteoRisk Light - 1.2.0 - NOWCASTING + TRACKING + PHENOMENA VERIFY (bump da 1.1.0.8)
+MAJOR=1
+MINOR=2
+PATCH=0
+BUILD=0
+RELEASE_TYPE=release
+DATE=2026-10-08
+NOTE=nowcasting + tracking + phenomena verify (1.2.0, bump da 1.1.0.8): marker supercelle ridisegnati (pennant SVG direzionale con severita' SSI e stato grandine/rotazione); archivio rolling radar 2h su branch radar-history con tracce storiche nel client; previsione percorso/intensita' fino a 2h con cono di incertezza e confidenza; engine di verifica fenomeni (grandine/rotazione) con provider fulmini MLI EUMETSAT (WMS anonimo, CC-BY-4.0); badge fenomeni nel client con legenda aggiornata; guardia anti-commit-churn sugli output phenomena. NO REGRESSION: bump di versione e allineamento file/riferimenti a 1.2.0 (radar-engine, satellite-engine, phenomena-verify, dataset loader invariati).
+APP_FILE=mri-light-1.2.0.html
+NOWCAST=BUMP 1.2.0 - NOWCASTING + TRACKING + PHENOMENA VERIFY: marker supercelle ridisegnati (pennant SVG direzionale con severita' SSI e stato grandine/rotazione), archivio rolling radar 2h (branch radar-history) con tracce storiche nel client, previsione percorso/intensita' fino a 2h (cono di incertezza + confidenza), engine di verifica fenomeni grandine/rotazione con provider fulmini MLI EUMETSAT (WMS anonimo, CC-BY-4.0), badge fenomeni nel client + legenda aggiornata, guardia anti-commit-churn sugli output phenomena. File e riferimenti rinominati a 1.2.0 (bump da 1.1.0.8).
+
 MeteoRisk Light - 1.1.0.8 - SATELLITE WEBP + STALENESS SOFT + PUSH RESILIENCE (bump da 1.1.0.7)
 MAJOR=1
 MINOR=1

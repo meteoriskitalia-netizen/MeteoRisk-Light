@@ -1,0 +1,18 @@
+# phenomena-verify — dipendenze
+#
+# NESSUNA dipendenza esterna aggiuntiva (scelta esplicita dello step 4a/4b):
+#   - stdlib (json/os/sys/argparse/tempfile/datetime/math/urllib/io/hashlib);
+#   - radar_engine.phase2.lightning  -> fetch/decode fulmini DPC Blitz v2
+#     (riuso della sorgente gia' usata dal motore principale), trend/score e
+#     costanti (EARTH_RADIUS_KM per il campionatore del disco MLI);
+#   - radar_engine.phase2.environment -> pick_current_index per l'H0.
+#
+# Provider MLI (S4b) — decode PNG GetMap EUMETView:
+#   - rasterio via rasterio.open(io.BytesIO(png)) e numpy per il campionatore
+#     (alpha>0 = pixel AFA attivi): rasterio E' gia' dipendenza runtime del
+#     motore principale (scripts/radar_engine/requirements.txt), NESSUN
+#     pacchetto nuovo; il percorso DPC non importa rasterio (lazy).
+#
+# Le dipendenze del motore principale sono elencate in:
+#   scripts/radar_engine/requirements.txt  (runtime)
+#   scripts/radar_engine/requirements-dev.txt  (test: pytest, numpy, ...)

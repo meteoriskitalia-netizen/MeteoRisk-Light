@@ -25,6 +25,7 @@ Utilizzo:
                                       [--product VMI]
                                       [--max-frames 6]
                                       [--keep-frames]
+                                      [--history-dir <dir>]
                                       [--dry-run]
 """
 
@@ -42,6 +43,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import radar_engine as _engine
 from radar_engine import models
 from radar_engine import output
+from radar_engine import history
 from radar_engine import fetch
 from radar_engine import detect as detect_mod
 from radar_engine import tracking as track_mod
@@ -450,7 +452,7 @@ def _phase2_evaluate(bundle, config):
         warnings.append(f"phase2 aggregate weights invalid: {exc}")
 
 
-def _run(config, out_dir, product, max_frames, dry_run):
+def _run(config, out_dir, product, max_frames, dry_run, history_dir=None):
     bundle = models.EngineBundle("ok", _utcnow_str(), output.SOURCE_LABEL)
     bundle.engine = _engine_meta()
 
@@ -563,7 +565,28 @@ def _run(config, out_dir, product, max_frames, dry_run):
     except Exception as exc:  # guasto imprevisto del writer -> OutputError
         return _fail_output(bundle, out_dir,
                             f"unexpected:{exc.__class__.__name__}:{exc}")
+    if history_dir:
+        _archive_history(bundle, history_dir)
     return bundle, _OK if bundle.status == "ok" else _DEGRADED
+
+
+def _archive_history(bundle, history_dir):
+    """Archivio rolling 2h (history.build_history): BEST-EFFORT.
+
+    L'output derivato e' gia' scritto: un errore dell'archivio viene loggato
+    come warning (in bundle.warnings -> summary) e NON cambia l'rc del run."""
+    try:
+        index = history.build_history(bundle, history_dir)
+    except Exception as exc:
+        bundle.warnings.append(f"history archive failed: {exc}")
+        print(f"[history] WARNING: archivio rolling non aggiornato: {exc}")
+        return None
+    if index is None:
+        print("[history] nessuno scan da archiviare.")
+        return None
+    print(f"[history] slots={len(index.get('slots', []))} "
+          f"window={index.get('window_slots')}")
+    return index
 
 
 def _fail_output(bundle, out_dir, reason):
@@ -585,6 +608,7 @@ def main(argv=None):
     ap.add_argument("--product", default="VMI")
     ap.add_argument("--max-frames", type=int, default=None)
     ap.add_argument("--keep-frames", action="store_true")
+    ap.add_argument("--history-dir", default=None)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)
 
@@ -593,7 +617,8 @@ def main(argv=None):
         config["source"]["keep_raw_frames"] = True
     out_dir = os.path.abspath(args.out_dir or config["output"]["out_dir"])
 
-    bundle, rc = _run(config, out_dir, args.product, args.max_frames, args.dry_run)
+    bundle, rc = _run(config, out_dir, args.product, args.max_frames,
+                      args.dry_run, history_dir=args.history_dir)
 
     summary = {
         "status": bundle.status,

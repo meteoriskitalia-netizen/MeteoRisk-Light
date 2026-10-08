@@ -16,7 +16,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.1.0.8.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -39,7 +39,7 @@ ok('A4: playPacer presente e arma il frame successivo',
   has(/function playPacer\(ts\)\s*\{[\s\S]{0,400}syncRAF\s*=\s*requestAnimationFrame\(playPacer\);/));
 ok('A5: stopSyncPlay cancella il rAF',
   has(/function stopSyncPlay\(\)[\s\S]{0,300}if\s*\(syncRAF\)\s*\{\s*cancelAnimationFrame\(syncRAF\);\s*syncRAF\s*=\s*null;\s*\}/));
-ok('A6: pacing a frameDelay = max(100, 1000/syncPlaySpeed) — 1 frame/s a x1 (1.1.0.8)',
+ok('A6: pacing a frameDelay = max(100, 1000/syncPlaySpeed) — 1 frame/s a x1 (1.2.0)',
   has(/var frameDelay\s*=\s*Math\.max\(100,\s*Math\.round\(1000\s*\/\s*syncPlaySpeed\)\);/));
 ok('A7: playPacer avanza solo se ora - lastStepMs >= frameDelay',
   has(/if\s*\(nowT\s*-\s*lastStepMs\s*>=\s*frameDelay\)\s*\{\s*[\s\S]{0,120}playStep\(\);/));
@@ -111,7 +111,7 @@ ok('E5: touch target 44px preservato (min-height var(--touch-min))',
   has(/--touch-min:\s*44px/));
 
 // ---------- F. Versione / nessuna regressione ----------
-  ok('F1: APP_VERSION = 1.1.0.8', has(/APP_VERSION\s*=\s*['"]1\.1\.0\.8['"]/));
+  ok('F1: APP_VERSION = 1.2.0', has(/APP_VERSION\s*=\s*['"]1\.2\.0['"]/));
 ok('F2: changelog 1.0.0.14 PLAYER SAT24-STYLE presente',
   has(/PLAYER SAT24-STYLE \/ FLUIDITA.{0,30} ANIMAZIONE \(1\.0\.0\.14\)/));
 ok('F3: full timeline mantenuta (25 slot = 24x5min, ultime 2h, scelta utente)',

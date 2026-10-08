@@ -30,6 +30,7 @@ frame nella finestra (noll'organizzazione recente).
 
 import math
 
+from . import forecast as forecast_mod
 from . import models
 
 DATA_LIMITS_NOTE = (
@@ -230,7 +231,8 @@ def evaluate(bundle, cfg=None):
     bundle.supercells (solo candidati) e bundle.supercell_tracks_evaluated.
 
     Layer ADDITIVO ed EXPERIMENTAL: mai fallisce il run (errori -> warning in
-    main.py). Ritorna la lista dei candidati."""
+    main.py). Ritorna la lista dei candidati. Ogni candidato riceve la chiave
+    `forecast` (forecast.py, blocco <=2h o None se non computabile)."""
     cfg = cfg or _cfg_defaults()
     latest_frame_index = None
     if getattr(bundle, "cells_by_frame", None):
@@ -243,9 +245,12 @@ def evaluate(bundle, cfg=None):
         ssi, level, candidate, gates, components, _w = _integral_ssi(track, cfg)
         if not candidate:
             continue
-        candidates.append(_candidate_dict(
+        cand = _candidate_dict(
             track, track_type, latest_frame_index, cfg, ssi, level,
-            candidate, gates, components))
+            candidate, gates, components)
+        cand["forecast"] = forecast_mod.build_forecast(
+            {**cand, "track": track}, bundle)
+        candidates.append(cand)
     bundle.supercells = candidates
     bundle.supercell_tracks_evaluated = len(_evaluated_tracks(bundle))
     return candidates
