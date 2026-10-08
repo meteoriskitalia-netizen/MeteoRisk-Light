@@ -39,8 +39,8 @@ ok('A4: playPacer presente e arma il frame successivo',
   has(/function playPacer\(ts\)\s*\{[\s\S]{0,400}syncRAF\s*=\s*requestAnimationFrame\(playPacer\);/));
 ok('A5: stopSyncPlay cancella il rAF',
   has(/function stopSyncPlay\(\)[\s\S]{0,300}if\s*\(syncRAF\)\s*\{\s*cancelAnimationFrame\(syncRAF\);\s*syncRAF\s*=\s*null;\s*\}/));
-ok('A6: pacing a frameDelay = max(100, 800/syncPlaySpeed)',
-  has(/var frameDelay\s*=\s*Math\.max\(100,\s*Math\.round\(800\s*\/\s*syncPlaySpeed\)\);/));
+ok('A6: pacing a frameDelay = max(100, 1000/syncPlaySpeed) — 1 frame/s a x1 (1.1.0.8)',
+  has(/var frameDelay\s*=\s*Math\.max\(100,\s*Math\.round\(1000\s*\/\s*syncPlaySpeed\)\);/));
 ok('A7: playPacer avanza solo se ora - lastStepMs >= frameDelay',
   has(/if\s*\(nowT\s*-\s*lastStepMs\s*>=\s*frameDelay\)\s*\{\s*[\s\S]{0,120}playStep\(\);/));
 ok('A8: playStep avvolto in try/catch (frame fallito non uccide il play)',
