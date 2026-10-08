@@ -1011,6 +1011,13 @@ def test_engine_is_idempotent_on_same_inputs(radar_case, capsys):
 @pytest.mark.skipif(not os.path.isdir(REAL_RADAR_DIR),
                     reason="data/radar della release assente")
 def test_engine_on_real_release_data_respects_schema(tmp_path, capsys):
+    latest_path = os.path.join(REAL_RADAR_DIR, "latest.json")
+    if not os.path.isfile(latest_path):
+        pytest.skip("data/radar/latest.json assente")
+    real_latest = json.load(open(latest_path, encoding="utf-8"))
+    real_radar_iso = real_latest.get("radar_timestamp")
+    if real_latest.get("status") != "ok" or not real_radar_iso:
+        pytest.skip("snapshot radar reale non 'ok' o senza radar_timestamp")
     summary = engine.run(radar_dir=REAL_RADAR_DIR,
                          out_dir=str(tmp_path / "phenomena"), network=False)
     capsys.readouterr()
@@ -1031,14 +1038,14 @@ def test_engine_on_real_release_data_respects_schema(tmp_path, capsys):
         assert "labels" in event["evidence"]
         assert event["evidence"]["anchor"]
     assert events["window_hours"] == WINDOW_HOURS
-    assert badges["radar_timestamp"] == summary["radar_timestamp"] == RADAR_ISO
+    assert badges["radar_timestamp"] == summary["radar_timestamp"] == real_radar_iso
     assert [b["id"] for b in badges["badges"]] == sorted(
         b["id"] for b in badges["badges"])
     events_by_id = {e["id"]: e for e in events["events"]}
     for badge in badges["badges"]:
         assert set(badge) == set(REQUIRED_BADGE_KEYS)
         assert badge["id"] in events_by_id
-        assert ev_store.is_active(events_by_id[badge["id"]], RADAR_ISO)
+        assert ev_store.is_active(events_by_id[badge["id"]], real_radar_iso)
     assert len(events["events"]) == summary["events"]
     assert len(badges["badges"]) == summary["active"]
 
