@@ -191,15 +191,23 @@ class MliFakeOpener:
     """Opener sintetico per MliWmsProvider: (url, timeout_s) -> bytes PNG.
 
     `slots` = {epoch_ms: bytes}; `fail_http_codes` = {epoch_ms: code} alza
-    HTTPError (slot non ancora pubblicato); `fail_urlerror` con `error_times`
-    alza URLError (errore di rete, fail-fast). Numero di chiamate
-    registrato in `calls` (per verificare la cache condivisa dello scan)."""
+    HTTPError a OGNI chiamata allo slot; `error_times` alza URLError a ogni
+    chiamata; `fail_first_http`/`fail_first_error` = {epoch_ms: n} alzano
+    l'errore solo le prime n chiamate (errore TRANSIENTE, poi successo).
+    `calls` registra ogni URL; `seen` il numero di chiamate per slot (per
+    verificare retry per-slot e cache condivisa dello scan)."""
 
-    def __init__(self, slots=None, fail_http_codes=None, error_times=None):
+    def __init__(self, slots=None, fail_http_codes=None, error_times=None,
+                 fail_first_http=None, fail_first_error=None):
         self.slots = dict(slots or {})
         self.fail_http_codes = dict(fail_http_codes or {})
         self.error_times = set(error_times or ())
+        self.fail_first_http = {int(k): int(v)
+                                for k, v in (fail_first_http or {}).items()}
+        self.fail_first_error = {int(k): int(v)
+                                 for k, v in (fail_first_error or {}).items()}
         self.calls = []
+        self.seen = {}
 
     def __call__(self, url, timeout_s):
         self.calls.append(url)
@@ -213,12 +221,23 @@ class MliFakeOpener:
         ms = int(_dt.datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ")
                  .replace(tzinfo=_dt.timezone.utc).timestamp() * 1000)
         ms = ms - ms % PERIOD_MS
+        n = self.seen.get(ms, 0)
+        self.seen[ms] = n + 1
         if ms in self.error_times:
             raise urllib.error.URLError("dns fail")
         if ms in self.fail_http_codes:
             raise urllib.error.HTTPError(url, self.fail_http_codes[ms],
                                          "nope", {}, None)
+        if n < self.fail_first_error.get(ms, 0):
+            raise urllib.error.URLError("transient dns")
+        if n < self.fail_first_http.get(ms, 0):
+            raise urllib.error.HTTPError(url, 502, "bad gateway", {}, None)
         return self.slots.get(ms)
+
+
+def _no_sleep(*_args, **_kwargs):
+    """Sleep no-op iniettato: i test non dormono MAI davvero."""
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -854,6 +873,82 @@ def test_build_observations_track_without_points_falls_back_to_candidate(tmp_pat
     assert obs[0]["organization_score"] == 66
 
 
+def test_build_observations_spatial_dedup_keeps_track_cell_not_storm_object():
+    """Uno storm_object coincidente con una track cell non genera un badge
+    doppio: resta solo la track (priorita' per ordine), con source "points"."""
+    tracks = {"tracks": [{
+        "track_id": 1, "status": "active",
+        "classification": "Organized Convective Cell",
+        "organization_score": 80, "duration_min": 15.0, "n_frames": 4,
+        "points": _points([58.0, 58.0, 58.0, 58.0]),
+    }]}
+    supercells = {"candidates": [{
+        "track_id": 7, "track_type": "storm_object", "position": [12.0, 41.0],
+        "intensity": {"max_dbz": 62.0},
+        "organization": {"organization_score": 72},
+        "motion": {"duration_min": 12.0}, "on_latest_frame": True,
+    }]}
+    obs = engine.build_observations(supercells, tracks, {"features": []},
+                                    RADAR_MS, RADAR_ISO)
+    assert [o["anchor"] for o in obs] == ["cell-1"]
+    assert obs[0]["persistence_source"] == "points"
+
+
+def test_build_observations_storm_object_dedup_radius_boundary():
+    """storm_object < 5 km da una cella -> scartato; > 5 km -> tenuto."""
+    def anchors_for(storm_lat):
+        tracks = {"tracks": [{
+            "track_id": 1, "duration_min": 15.0,
+            "points": _points([58.0, 58.0, 58.0, 58.0]),
+        }]}
+        supercells = {"candidates": [{
+            "track_id": 7, "track_type": "storm_object",
+            "position": [12.0, storm_lat], "intensity": {"max_dbz": 62.0},
+            "motion": {"duration_min": 12.0}, "on_latest_frame": True,
+        }]}
+        return [o["anchor"] for o in engine.build_observations(
+            supercells, tracks, {"features": []}, RADAR_MS, RADAR_ISO)]
+
+    assert anchors_for(41.03) == ["cell-1"]           # ~3.3 km < 5 km
+    assert anchors_for(41.1) == ["cell-1", "storm_object-7"]  # ~11.1 km
+
+
+def test_build_observations_keeps_two_distant_storm_objects():
+    supercells = {"candidates": [
+        {"track_id": 1, "track_type": "storm_object", "position": [12.0, 41.0],
+         "intensity": {"max_dbz": 60.0}, "motion": {"duration_min": 12.0},
+         "on_latest_frame": True},
+        {"track_id": 2, "track_type": "storm_object", "position": [13.0, 42.0],
+         "intensity": {"max_dbz": 60.0}, "motion": {"duration_min": 12.0},
+         "on_latest_frame": True},
+    ]}
+    obs = engine.build_observations(supercells, {}, {"features": []},
+                                    RADAR_MS, RADAR_ISO)
+    assert [o["anchor"] for o in obs] == ["storm_object-1", "storm_object-2"]
+
+
+def test_build_observations_is_deterministic():
+    supercells = {"candidates": [
+        {"track_id": 7, "track_type": "storm_object", "position": [12.5, 41.5],
+         "intensity": {"max_dbz": 62.0}, "motion": {"duration_min": 12.0},
+         "on_latest_frame": True},
+        {"track_id": 8, "track_type": "storm_object", "position": [12.5, 41.5],
+         "intensity": {"max_dbz": 61.0}, "motion": {"duration_min": 9.0},
+         "on_latest_frame": True},
+    ]}
+    tracks = {"tracks": [{
+        "track_id": 1, "duration_min": 15.0,
+        "points": _points([58.0, 58.0, 58.0, 58.0]),
+    }]}
+    first = engine.build_observations(supercells, tracks, {"features": []},
+                                      RADAR_MS, RADAR_ISO)
+    second = engine.build_observations(supercells, tracks, {"features": []},
+                                       RADAR_MS, RADAR_ISO)
+    assert first == second
+    # il secondo storm_object coincide col primo (< 5 km): dedup -> uno solo
+    assert [o["anchor"] for o in first] == ["cell-1", "storm_object-7"]
+
+
 # ===========================================================================
 # Engine e2e
 # ===========================================================================
@@ -1106,7 +1201,8 @@ def test_mli_provider_network_disabled_makes_no_calls():
 def test_mli_provider_counts_trend_and_shared_cache():
     opener = MliFakeOpener(slots={RADAR_MS: MLI_PNG_NOW,
                                   RADAR_MS - PERIOD_MS: MLI_PNG_PREV})
-    provider = pltg.get_provider("mli", network=True, opener=opener)
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
     resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
                                       center_lonlat=[12.0, 41.0])
     assert resp["available"] is True
@@ -1128,13 +1224,16 @@ def test_mli_provider_counts_trend_and_shared_cache():
     following = provider.strikes_in_window(epoch_ms=RADAR_MS + PERIOD_MS,
                                            center_lonlat=[12.0, 41.0])
     assert following["available"] is True
-    assert len(opener.calls) == 4        # nuovo scan + precedente gia' in cache
+    # il base richiesto (RADAR_MS+PERIOD_MS) non e' pubblicato: retry per-slot
+    # (3 tentativi) poi backoff allo slot RADAR_MS; il precedente e' in cache.
+    assert len(opener.calls) == 2 + pltg.LIGHTNING_RETRY_PER_SLOT + 1
 
 
 def test_mli_trend_none_when_previous_scan_missing():
     opener = MliFakeOpener(slots={RADAR_MS: MLI_PNG_NOW},
                            error_times={RADAR_MS - PERIOD_MS})
-    provider = pltg.get_provider("mli", network=True, opener=opener)
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
     resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
                                       center_lonlat=[12.0, 41.0])
     assert resp["available"] is True
@@ -1145,24 +1244,80 @@ def test_mli_trend_none_when_previous_scan_missing():
 
 def test_mli_all_slots_http_error_backoffs_to_unavailable():
     opener = MliFakeOpener(slots={}, fail_http_codes={
-        RADAR_MS - k * PERIOD_MS: 502 for k in range(5)})
-    provider = pltg.get_provider("mli", network=True, opener=opener)
+        RADAR_MS - k * PERIOD_MS: 502
+        for k in range(pltg.MLI_MAX_BACKOFF_STEPS + 1)})
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
     resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
                                       center_lonlat=[12.0, 41.0])
     assert resp["available"] is False
     assert "mli_unavailable" in resp["reason"]
     assert "http_502" in resp["reason"]
-    assert len(opener.calls) == pltg.MLI_MAX_BACKOFF_STEPS + 1
+    assert f"attempts={(pltg.MLI_MAX_BACKOFF_STEPS + 1) * pltg.LIGHTNING_RETRY_PER_SLOT}" \
+        in resp["reason"]
+    assert f"slots_tried={pltg.MLI_MAX_BACKOFF_STEPS + 1}" in resp["reason"]
 
 
-def test_mli_network_error_fails_fast_without_backoff():
-    opener = MliFakeOpener(slots={}, error_times={RADAR_MS})
-    provider = pltg.get_provider("mli", network=True, opener=opener)
+def test_mli_5xx_then_200_same_slot_recovers():
+    opener = MliFakeOpener(slots={RADAR_MS: MLI_PNG_NOW,
+                                  RADAR_MS - PERIOD_MS: MLI_PNG_PREV},
+                           fail_first_http={RADAR_MS: 1})
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
+    resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
+                                      center_lonlat=[12.0, 41.0])
+    assert resp["available"] is True                   # recupera, non fallisce
+    assert resp["reason"] is None
+    assert resp["anchor_ms"] == RADAR_MS
+    assert resp["count_near"] == 64
+    assert opener.seen[RADAR_MS] == 2                  # 1 x 502 + 1 x 200
+
+
+def test_mli_urlerror_then_200_same_slot_recovers():
+    opener = MliFakeOpener(slots={RADAR_MS: MLI_PNG_NOW,
+                                  RADAR_MS - PERIOD_MS: MLI_PNG_PREV},
+                           fail_first_error={RADAR_MS: 1})
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
+    resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
+                                      center_lonlat=[12.0, 41.0])
+    assert resp["available"] is True                   # no fail-fast
+    assert resp["reason"] is None
+    assert resp["count_near"] == 64
+    assert opener.seen[RADAR_MS] == 2                  # 1 x URLError + 1 x 200
+
+
+def test_mli_all_slots_all_attempts_fail_is_diagnostic():
+    opener = MliFakeOpener(slots={}, error_times={
+        RADAR_MS - k * PERIOD_MS
+        for k in range(pltg.MLI_MAX_BACKOFF_STEPS + 1)})
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
     resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
                                       center_lonlat=[12.0, 41.0])
     assert resp["available"] is False
-    assert resp["reason"] == "network:URLError"
-    assert len(opener.calls) == 1                      # nessun retry
+    assert "mli_unavailable" in resp["reason"]
+    assert "network:URLError" in resp["reason"]        # ultimo errore
+    assert f"attempts={(pltg.MLI_MAX_BACKOFF_STEPS + 1) * pltg.LIGHTNING_RETRY_PER_SLOT}" \
+        in resp["reason"]
+    assert f"slots_tried={pltg.MLI_MAX_BACKOFF_STEPS + 1}" in resp["reason"]
+
+
+def test_mli_retries_each_slot_before_backing_off():
+    finished = {RADAR_MS - k * PERIOD_MS: 502
+                for k in range(pltg.MLI_MAX_BACKOFF_STEPS + 1)}
+    opener = MliFakeOpener(slots={}, fail_http_codes=finished)
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
+    resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
+                                      center_lonlat=[12.0, 41.0])
+    assert resp["available"] is False
+    total = ((pltg.MLI_MAX_BACKOFF_STEPS + 1)
+             * pltg.LIGHTNING_RETRY_PER_SLOT)
+    assert len(opener.calls) == total
+    for k in range(pltg.MLI_MAX_BACKOFF_STEPS + 1):
+        slot = RADAR_MS - k * PERIOD_MS
+        assert opener.seen[slot] == pltg.LIGHTNING_RETRY_PER_SLOT
 
 
 def test_mli_without_center_reports_total_only():
@@ -1180,7 +1335,8 @@ def test_mli_without_center_reports_total_only():
 
 def test_mli_center_outside_coverage_is_declined():
     opener = MliFakeOpener(slots={RADAR_MS: MLI_PNG_NOW})
-    provider = pltg.get_provider("mli", network=True, opener=opener)
+    provider = pltg.get_provider("mli", network=True, opener=opener,
+                                 sleep=_no_sleep)
     resp = provider.strikes_in_window(epoch_ms=RADAR_MS,
                                       center_lonlat=[0.0, 0.0])
     assert resp["available"] is False

@@ -35,6 +35,7 @@ evidence.lightning.note dichiara "AFA proxy (no flash puntuali)".
 import datetime as _dt
 import io
 import math
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -52,6 +53,11 @@ DEFAULT_RADIUS_KM = _ltg.LIGHTNING_RADIUS_KM  # 30.0
 # Massima latenza accettabile fra radar_timestamp e lo slot fulmini piu'
 # recente pubblicato: oltre -> dato NON usato come evidenza (stale = nullo).
 LTG_MAX_STALENESS_MS = 30 * 60 * 1000
+# Tentativi per lo STESSO slot prima di arretrare a quello precedente:
+# assorbe errori transitori (5xx intermittenti, DNS/connect reset) senza
+# perdere l'intera run. Delay fra tentativi via MliWmsProvider._sleep.
+LIGHTNING_RETRY_PER_SLOT = 3
+LTG_RETRY_BASE_DELAY_S = 1.0
 
 # ---------------------------------------------------------------------------
 # MLI EUMETSAT (WMS anonimo EUMETView) — GetMap VERIFICATO live 2026-10-08:
@@ -65,8 +71,13 @@ MLI_WIDTH = 1024
 MLI_HEIGHT = 898                              # = round(width * Δlat/Δlon)
 MLI_HTTP_TIMEOUT_S = 30.0
 # Lag di pubblicazione MTG verificato live ~10 min (una GetMap "ora corrente"
-# restituisce 502): backoff di slot da 5 min, poi stale (stessa regola DPC).
-MLI_MAX_BACKOFF_STEPS = 4
+# restituisce 502) + 5xx intermittenti di EUMETView: backoff di slot da 5 min
+# fino a 8 passi (~40 min) con retry per-slot su errori transitori.
+MLI_MAX_BACKOFF_STEPS = 8
+# Staleness MLI COERENTE con la finestra di backoff: un campo pubblicato entro
+# il backoff (<= 40 min) resta utilizzabile come evidenza. DPC conserva il
+# proprio LTG_MAX_STALENESS_MS (30 min) invariato.
+MLI_MAX_STALENESS_MS = MLI_MAX_BACKOFF_STEPS * LTG_PERIOD_MS
 MLI_NOTE = "AFA proxy (no flash puntuali)"
 MLI_ATTRIBUTION = ("Contains modified EUMETSAT Meteosat data © EUMETSAT "
                    "(CC-BY-4.0)")
@@ -86,6 +97,14 @@ def _is_slot_missing(exc):
     arretrare di uno slot; per timeout/DNS NO (fail fast, nessun retry inutile)."""
     msg = str(exc)
     return "not_published_403" in msg or "http_403" in msg
+
+
+def _retry_delay(attempt):
+    """Delay deterministico (s) dopo il tentativo 1-based `attempt` dello slot.
+
+    Base 1s con crescita esponenziale, tetto a 8s: piccolo abbastanza da non
+    bloccare una run, sufficiente a coprire un 5xx transitorio."""
+    return min(8.0, LTG_RETRY_BASE_DELAY_S * (2 ** max(0, int(attempt) - 1)))
 
 
 def _flat_trend():
@@ -464,19 +483,22 @@ class MliWmsProvider(LightningProvider):
     attorno al centro: strikes=[] e evidence con MLI_NOTE ("AFA proxy (no
     flash puntuali)") — nessuna posizione lat/lon e' inventata.
 
-    Ritmo/robustezza specchio di DpcBlitzProvider: slot da 5 min, backoff di
-    MLI_MAX_BACKOFF_STEPS slot sui soli errori HTTP (lag dati MTG ~10 min
-    verificato live: una GetMap "ora corrente" da' 502), fail-fast su errori
-    di rete, staleness >30 min -> available=False, MAI eccezione verso
-    l'alto. `opener` iniettabile: (url, timeout_s) -> bytes, come per DPC.
+    Robustezza: slot da 5 min, backoff di MLI_MAX_BACKOFF_STEPS slot con retry
+    per-slot (LIGHTNING_RETRY_PER_SLOT) su TUTTI gli errori transitori
+    (HTTPError 5xx/403/..., URLError, TimeoutError, OSError, PNG non valido):
+    nessun errore aborta la ricerca, si arretra al slot precedente. Delay fra
+    tentativi via `_sleep` iniettabile (default time.sleep). Un campo
+    decodificato entro MLI_MAX_STALENESS_MS -> available=True; MAI eccezione
+    verso l'alto. `opener` iniettabile: (url, timeout_s) -> bytes, come DPC.
     """
 
     name = "mli"
 
-    def __init__(self, network=True, opener=None, timeout_s=None):
+    def __init__(self, network=True, opener=None, timeout_s=None, sleep=None):
         super().__init__(network=network)
         self.opener = opener          # iniettabile (test); None -> urllib
         self.timeout_s = timeout_s
+        self._sleep = sleep if sleep is not None else time.sleep
         self._fields = {}             # cache per run: slot -> field dict
 
     def fetch_field(self, epoch_ms=None):
@@ -517,35 +539,53 @@ class MliWmsProvider(LightningProvider):
             return resp.read()
 
     def _fetch(self, base):
-        """Backoff di slot su errore HTTP/immagine non valida (lag MTG)."""
+        """Backoff di slot con retry per-slot su errori TRANSITORI (lag MTG/5xx).
+
+        Ogni slot e' tentato fino a LIGHTNING_RETRY_PER_SLOT volte; un errore
+        (HTTPError, URLError, TimeoutError, OSError, PNG non valido) NON aborta
+        la ricerca: si registra l'ultimo errore, si attende `_sleep` e si passa
+        allo slot precedente. Diagnostica (tentativi, slot provati, ultimo
+        errore) nel `reason`. MAI eccezione verso l'alto."""
+        attempts = 0
+        slots_tried = 0
         last = "no_slot"
         for k in range(MLI_MAX_BACKOFF_STEPS + 1):
             slot = base - k * LTG_PERIOD_MS
+            slots_tried += 1
             url = build_mli_getmap_url(_slot_iso(slot))
-            try:
-                body = self._http(url)
-            except urllib.error.HTTPError as exc:
-                last = f"http_{exc.code}"              # slot non ancora pubblicato
-                continue
-            except (urllib.error.URLError, TimeoutError, OSError) as exc:
-                return {"available": False,
-                        "reason": f"network:{exc.__class__.__name__}",
-                        "epoch_ms": base, "anchor_ms": None,
-                        "staleness_ms": None, "mask": None}
-            try:
-                mask = decode_afa_png(body)
-            except Exception as exc:
-                last = f"png_invalid:{exc}"
+            mask = None
+            for attempt in range(LIGHTNING_RETRY_PER_SLOT):
+                attempts += 1
+                try:
+                    body = self._http(url)
+                except urllib.error.HTTPError as exc:
+                    last = f"http_{exc.code}"          # slot non pubblicato/5xx
+                except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                    last = f"network:{exc.__class__.__name__}"
+                except Exception as exc:               # opener inatteso
+                    last = f"http_error:{exc.__class__.__name__}"
+                else:
+                    try:
+                        mask = decode_afa_png(body)
+                    except Exception as exc:
+                        last = f"png_invalid:{exc}"
+                if mask is not None:
+                    break
+                if attempt < LIGHTNING_RETRY_PER_SLOT - 1:
+                    self._sleep(_retry_delay(attempt + 1))
+            if mask is None:
                 continue
             staleness = base - slot
-            if staleness > LTG_MAX_STALENESS_MS:
+            if staleness > MLI_MAX_STALENESS_MS:
                 return {"available": False,
                         "reason": f"stale_mli:{staleness}ms",
                         "epoch_ms": base, "anchor_ms": slot,
                         "staleness_ms": staleness, "mask": None}
             return {"available": True, "reason": None, "epoch_ms": base,
                     "anchor_ms": slot, "staleness_ms": staleness, "mask": mask}
-        return {"available": False, "reason": f"mli_unavailable:{last}",
+        return {"available": False,
+                "reason": (f"mli_unavailable:{last}:attempts={attempts}"
+                           f":slots_tried={slots_tried}"),
                 "epoch_ms": base, "anchor_ms": None, "staleness_ms": None,
                 "mask": None}
 

@@ -273,6 +273,71 @@ def test_outlier_isolato_incrementa_n_outliers_e_mai_high():
 
 
 # ---------------------------------------------------------------------------
+# Fallback con cap di velocita', potatura estremi, campi esposti
+# ---------------------------------------------------------------------------
+def test_fallback_ultimo_punto_assurdo_clamp_e_low():
+    track = _moving_track(n=2, v_kmh=60.0, heading_deg=90.0)
+    last = track.points[-1]
+    last.lonlat = (last.lonlat[0] + 3.0, last.lonlat[1])   # ~250 km in un passo
+    fit = forecast.fit_motion(track.points)
+    assert fit["fit_used"] is False
+    assert fit["clamped"] is True
+    assert fit["velocity_kmh"] <= 110.0
+    assert abs(fit["velocity_kmh"] - 110.0) <= 1e-9
+    block = forecast.build_forecast(_ctx(track), _bundle([track]))
+    assert block["fit_used"] is False
+    assert block["clamped"] is True
+    assert block["velocity_kmh"] <= 110.0
+    assert block["confidence"] == "low"
+    origin = track.points[-1].lonlat
+    dist = tracking.haversine_km(origin, tuple(block["steps"][-1]["position"]))
+    assert dist <= 110.0 * (120.0 / 60.0) + 2.0
+
+
+def test_spike_chiusura_potato_confidenza_non_medium_high():
+    track = _moving_track(n=8, v_kmh=60.0, heading_deg=90.0)
+    spike = track.points[-1]
+    spike.lonlat = (spike.lonlat[0] + 2.0, spike.lonlat[1])   # spike di coda
+    fit = forecast.fit_motion(track.points)
+    assert fit["n_outliers"] >= 1
+    assert fit["basis_frames"] <= 7
+    assert fit["velocity_kmh"] <= 110.0
+    assert _ang_diff(fit["direction_toward_deg"], 90.0) <= 5.0
+    block = forecast.build_forecast(_ctx(track), _bundle([track]))
+    assert block["confidence"] not in ("medium", "high")
+
+
+def test_fit_used_false_implica_confidence_low():
+    track = _moving_track(n=2, v_kmh=60.0)
+    fit = forecast.fit_motion(track.points)
+    assert fit["fit_used"] is False
+    assert forecast._confidence(fit, young=False) == "low"
+
+
+def test_output_espone_direzione_velocita_e_flag():
+    track = _moving_track(n=8, v_kmh=60.0, heading_deg=110.0)
+    block = forecast.build_forecast(_ctx(track), _bundle([track]))
+    assert block["fit_used"] is True
+    assert block["clamped"] is False
+    assert abs(block["velocity_kmh"] - 60.0) <= 1.0
+    brg = tracking.bearing_deg(track.points[-1].lonlat,
+                               tuple(block["steps"][0]["position"]))
+    assert _ang_diff(brg, block["direction_toward_deg"]) <= 3.0
+
+
+def test_tracce_corte_restano_valide_e_non_esplodono():
+    for n in (2, 3):
+        track = _moving_track(n=n, v_kmh=40.0, heading_deg=45.0, track_id=n)
+        block = forecast.build_forecast(_ctx(track), _bundle([track]))
+        assert block is not None
+        assert block["confidence"] == "low"
+        assert block["velocity_kmh"] <= 110.0
+        origin = track.points[-1].lonlat
+        dist = tracking.haversine_km(origin, tuple(block["steps"][-1]["position"]))
+        assert dist <= 40.0 * 2.0 + 5.0
+
+
+# ---------------------------------------------------------------------------
 # Schema e regressione
 # ---------------------------------------------------------------------------
 def test_schema_steps_esattamente_4():
@@ -280,7 +345,9 @@ def test_schema_steps_esattamente_4():
     bundle = _bundle([track])
     block = forecast.build_forecast(_ctx(track), bundle)
     assert set(block) == {"horizon_min", "step_min", "generated_at", "method",
-                          "basis_frames", "confidence", "steps"}
+                          "basis_frames", "confidence", "steps",
+                          "direction_toward_deg", "velocity_kmh",
+                          "fit_used", "clamped"}
     assert block["horizon_min"] == 120
     assert block["step_min"] == 30
     assert block["method"] == "linear_weighted_haversine_decay"

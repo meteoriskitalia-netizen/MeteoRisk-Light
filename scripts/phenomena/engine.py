@@ -64,6 +64,7 @@ LOG = "[phenomena]"
 DEFAULT_RADAR_DIR = "data/radar"
 DEFAULT_OUT_DIR = "data/phenomena"
 DEFAULT_PROVIDER = "mli"  # default S4b: provider senza secret, retroattivo via gitignore
+OBS_DEDUP_KM = 5.0  # dedup spaziale: osservazioni entro questa distanza = stessa tempesta
 
 
 def _num(value):
@@ -73,6 +74,22 @@ def _num(value):
     except (TypeError, ValueError):
         return None
     return v if math.isfinite(v) else None
+
+
+def _haversine_km(a, b):
+    """Distanza sferica (km) fra due [lon, lat]; None se un punto non e' valido.
+
+    Funzione pura, nessuna dipendenza esterna: usata solo per la dedup spaziale
+    delle osservazioni (cella/storm_object coincidenti = stesso fenomeno)."""
+    if not a or not b or len(a) < 2 or len(b) < 2:
+        return None
+    lon1, lat1 = math.radians(a[0]), math.radians(a[1])
+    lon2, lat2 = math.radians(b[0]), math.radians(b[1])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    h = (math.sin(dlat / 2.0) ** 2
+         + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2.0) ** 2)
+    return 2.0 * 6371.0088 * math.asin(min(1.0, math.sqrt(h)))
 
 
 def _load_json(path, label):
@@ -237,7 +254,23 @@ def build_observations(supercells, tracks, storms, radar_ts_ms, radar_ts=None):
             item.update(morph.get(key) or {})
         obs.append(item)
         anchors.add(anchor)
-    return obs
+
+    # Dedup spaziale finale: le track ("points") precedono i candidati, quindi
+    # una cella con track vince su un candidato coincidente (storm_object o
+    # cella) sullo stesso fenomeno, evitando badge doppi (es. VORTEX-cell-2 e
+    # VORTEX-storm_object-2). Ordine preservato -> risultato deterministico.
+    deduped = []
+    for item in obs:
+        pos = item.get("position") or []
+        duplicate = False
+        for kept in deduped:
+            dist = _haversine_km(pos, kept.get("position") or [])
+            if dist is not None and dist <= OBS_DEDUP_KM:
+                duplicate = True
+                break
+        if not duplicate:
+            deduped.append(item)
+    return deduped
 
 
 def run(radar_dir=DEFAULT_RADAR_DIR, out_dir=DEFAULT_OUT_DIR,

@@ -30,6 +30,8 @@ _ALPHA = 0.5                  # peso 0.5^(step di distanza dall'ultimo punto)
 _BASIS_MAX = 8                # ultimi N punti della track come basis
 _FIT_MIN_POINTS = 4           # >=4 punti -> fit lineare, altrimenti vector-avg
 _OUTLIER_SPEED_KMH = 50.0     # segmento > 50 km/h equiv. -> candidato outlier
+_ENDPOINT_MAD_K = 2.5         # soglia estremi: max(50, k*mediana, mediana+k*MAD)
+_ENDPOINT_MIN_KEEP = 5        # potatura estremi solo se restano >=4 punti
 _CONE_MIN_KM = 6.0            # floor del cono di incertezza
 _CONE_DEFAULT_KM = 8.0        # cone_0 senza fit (residui non calcolabili)
 _CONE_GROWTH_KM_MIN = 0.08    # ~4.8 km/h di espansione del cono
@@ -82,15 +84,31 @@ def _weighted_fit(t_min, values, weights):
     return y_bar - b * t_bar, b
 
 
-def _remove_outliers(points):
-    """Scarta i punti-spike isolati dalla basis.
+def _median(values):
+    """Mediana robusta (0.0 su input vuoto)."""
+    ordered = sorted(values)
+    n = len(ordered)
+    if n == 0:
+        return 0.0
+    mid = n // 2
+    if n % 2:
+        return ordered[mid]
+    return 0.5 * (ordered[mid - 1] + ordered[mid])
 
-    Un punto interno e' outlier se ENTRAMBI i segmenti adiacenti superano i
-    50 km/h equivalenti E rimuovendo il punto il percorso si accorcia: il
-    punto spurio e' un salto isolato, non una traiettoria realmente veloce
-    (per un moto rettilineo il chord ~= somma dei segmenti e il punto resta,
-    anche a >50 km/h). Primo e ultimo punto NON vengono mai rimossi (origine
-    e ancore del forecast)."""
+
+def _remove_outliers(points):
+    """Scarta i punti-spike dalla basis (interni e agli estremi).
+
+    Punto interno: outlier se ENTRAMBI i segmenti adiacenti superano i 50
+    km/h equivalenti E rimuovendolo il percorso si accorcia (salto isolato,
+    non traiettoria realmente veloce; per un moto rettilineo il chord ~=
+    somma dei segmenti e il punto resta anche a >50 km/h). Estremi: il
+    primo/ultimo punto viene scartato se la sua velocita' di segmento supera
+    la soglia robusta max(_OUTLIER_SPEED_KMH, k*mediana,
+    mediana + k*MAD) stimata sui segmenti correnti, cosi' un singolo spike
+    di coda (o di testa) non trascina fit e fallback. La potatura degli
+    estremi parte solo se restano >= _ENDPOINT_MIN_KEEP punti (protegge le
+    tracce brevi); l'invariante assoluta e' comunque >= 2 punti."""
     keep = list(points)
     removed = 0
     i = 1
@@ -109,18 +127,39 @@ def _remove_outliers(points):
                 removed += 1
                 continue
         i += 1
+    if len(keep) >= _ENDPOINT_MIN_KEEP:
+        speeds = []
+        for a, b in zip(keep, keep[1:]):
+            dt = (b.timestamp_ms - a.timestamp_ms) / 60000.0
+            d = haversine_km(a.lonlat, b.lonlat)
+            speeds.append(d / dt * 60.0 if dt > 0.0 else math.inf)
+        med = _median(speeds)
+        mad = _median([abs(s - med) for s in speeds])
+        thr = max(_OUTLIER_SPEED_KMH, _ENDPOINT_MAD_K * med,
+                  med + _ENDPOINT_MAD_K * mad)
+        if speeds[-1] > thr:
+            del keep[-1]
+            removed += 1
+        if len(keep) >= _ENDPOINT_MIN_KEEP:
+            dt0 = (keep[1].timestamp_ms - keep[0].timestamp_ms) / 60000.0
+            d0 = haversine_km(keep[0].lonlat, keep[1].lonlat)
+            s0 = d0 / dt0 * 60.0 if dt0 > 0.0 else math.inf
+            if s0 > thr:
+                del keep[0]
+                removed += 1
     return keep, removed
 
 
 def fit_motion(points):
     """Fit cinematico pesato sui centroidi della track.
 
-    Basis = ultimi min(8, n) punti ordinati per tempo meno gli outlier.
-    Con >=4 punti: regressione lineare separata su lon/lat vs tempo (pesi
-    0.5^step); con meno punti o velocita' fuori range: media vettoriale
-    dell'ultimo segmento (vector-avg, cone_0 di default). Ritorna dict con
-    basis_frames, n_outliers, fit_used, velocity_kmh, velocity_km_min,
-    direction_toward_deg, resid_std_km, cone0_km."""
+    Basis = ultimi min(8, n) punti ordinati per tempo meno gli outlier
+    (interni ed estremi). Con >=4 punti: regressione lineare separata su
+    lon/lat vs tempo (pesi 0.5^step); con meno punti o velocita' fuori range:
+    fallback sulla media vettoriale dell'ultimo segmento, con velocita'
+    clampata in _SPEED_RANGE_KMH (clamped=True). Ritorna dict con
+    basis_frames, n_outliers, fit_used, clamped, velocity_kmh,
+    velocity_km_min, direction_toward_deg, resid_std_km, cone0_km."""
     pts = sorted(points, key=lambda p: p.timestamp_ms)
     basis, n_outliers = _remove_outliers(pts[-_BASIS_MAX:])
     n = len(basis)
@@ -129,6 +168,7 @@ def fit_motion(points):
             "basis_frames": n,
             "n_outliers": n_outliers,
             "fit_used": False,
+            "clamped": False,
             "velocity_kmh": 0.0,
             "velocity_km_min": 0.0,
             "direction_toward_deg": 0.0,
@@ -143,10 +183,12 @@ def fit_motion(points):
     weights = _steps_weights(n)
 
     fit_used = False
+    clamped = False
     vel_km_min = 0.0
     vel_kmh = 0.0
     brg = 0.0
     resid_km = _CONE_DEFAULT_KM
+    lo, hi = _SPEED_RANGE_KMH
     if n >= _FIT_MIN_POINTS:
         a_lon, b_lon = _weighted_fit(t_min, lons, weights)
         a_lat, b_lat = _weighted_fit(t_min, lats, weights)
@@ -154,7 +196,6 @@ def fit_motion(points):
         vx = b_lon * _KM_PER_DEG * math.cos(lat_ref)   # km/min verso est
         vy = b_lat * _KM_PER_DEG                        # km/min verso nord
         cand_km_min = math.hypot(vx, vy)
-        lo, hi = _SPEED_RANGE_KMH
         if lo <= cand_km_min * 60.0 <= hi:
             fit_used = True
             vel_km_min = cand_km_min
@@ -174,12 +215,20 @@ def fit_motion(points):
         vel_km_min = seg / dt if dt > 0.0 else 0.0
         vel_kmh = vel_km_min * 60.0
         brg = bearing_deg(p0.lonlat, p1.lonlat) if seg > 0.0 else 0.0
+        if vel_kmh > hi:
+            vel_kmh = hi
+            clamped = True
+        elif vel_kmh < lo:
+            vel_kmh = lo
+            clamped = True
+        vel_km_min = vel_kmh / 60.0
         resid_km = _CONE_DEFAULT_KM
 
     return {
         "basis_frames": n,
         "n_outliers": n_outliers,
         "fit_used": fit_used,
+        "clamped": clamped,
         "velocity_kmh": vel_kmh,
         "velocity_km_min": vel_km_min,
         "direction_toward_deg": brg,
@@ -218,9 +267,12 @@ def _dbz_trend(points):
 
 def _confidence(fit, young):
     """high: basis >=6 + nessun outlier + residui <6 km; medium: basis >=4;
-    low: basis <4 o cella giovane (<20 min)."""
+    low: basis <4, cella giovane (<20 min), fit NON usato (fallback),
+    velocita' clampata o qualsiasi outlier scartato (basis non pulita). Solo
+    fit realmente accettati su basis pulite possono essere medium/high."""
     n = fit["basis_frames"]
-    if n < _FIT_MIN_POINTS or young:
+    if (n < _FIT_MIN_POINTS or young or not fit["fit_used"]
+            or fit["clamped"] or fit["n_outliers"] > 0):
         return "low"
     if n >= 6 and fit["n_outliers"] == 0 and fit["resid_std_km"] < 6.0:
         return "high"
@@ -321,6 +373,10 @@ def _build(candidate_ctx, bundle):
         "method": METHOD,
         "basis_frames": int(fit["basis_frames"]),
         "confidence": _confidence(fit, young),
+        "fit_used": bool(fit["fit_used"]),
+        "clamped": bool(fit["clamped"]),
+        "direction_toward_deg": round(float(fit["direction_toward_deg"]), 1),
+        "velocity_kmh": round(float(fit["velocity_kmh"]), 1),
         "steps": steps,
     }
 
