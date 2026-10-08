@@ -64,7 +64,7 @@ LOG = "[phenomena]"
 DEFAULT_RADAR_DIR = "data/radar"
 DEFAULT_OUT_DIR = "data/phenomena"
 DEFAULT_PROVIDER = "mli"  # default S4b: provider senza secret, retroattivo via gitignore
-OBS_DEDUP_KM = 5.0  # dedup spaziale: osservazioni entro questa distanza = stessa tempesta
+OBS_DEDUP_KM = 8.0  # dedup spaziale: osservazioni entro questa distanza = stessa tempesta
 
 
 def _num(value):
