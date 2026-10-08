@@ -23,7 +23,8 @@ costituenti non vengono ripubblicati, specchiati o incapsulati.
     data/_workdir/api_efficiency/ (non pubblicato).
   - Exit codes: 0 = raw scritto · 2 = pre-flight HARD SAFETY CEILING · 3 =
     capoluoghi mancanti (abort: nessuna pubblicazione parziale) · 1 = errore
-    tecnico (coordinate assenti o fallimento residuo).
+    tecnico (coordinate assenti o fallimento residuo) · 5 = NO-OP `--mode none`
+    (ciclo idle, nessuna richiesta: vedi FIX HOTFIX sotto).
 
 1.0.0.8 — STATELESS FULL COORDINATED FETCH (FIX PIPELINE):
   - La modalità `best_match_only` (refresh parziale del solo leg best_match con
@@ -44,6 +45,23 @@ costituenti non vengono ripubblicati, specchiati o incapsulati.
   - Exit codes 1.0.0.8: 0 = raw scritto · 2 = HARD SAFETY CEILING (safe skip) ·
     3 = capoluoghi mancanti (safe skip) · 4 = BOOTSTRAP FATAL (ceiling o
     capoluoghi su primo dataset: FAIL) · 1 = errore tecnico.
+
+FIX HOTFIX 1.1.0.8 — NO-OP `--mode none` (FALSO ALLARME budget_blocked):
+  - Il ciclo idle (decide_cycle -> cycle_mode=none -> fetch_mode=none) non deve
+    MAI arrivare a un fetch: la Action salta lo step (if su
+    plan_state == 'ok' && fetch_mode == 'coordinated'). Se il comando viene
+    comunque invocato con `--mode none`, il valore e' riconosciuto e il main
+    termina SUBITO come no-op con rc dedicato 5: nessuna lettura delle
+    coordinate, nessuna richiesta API, nessun raw, nessun report.
+  - rc 5 = NO-OP (documentato): workflow_gate lo classifica come clean exit
+    (fetch_ok=false, fetch_reason=mode_none), MAI come ceiling. Il rc 2 di
+    questo script e' riservato in esclusiva al pre-flight HARD SAFETY CEILING
+    (unico riferimento al budget giornaliero).
+  - Errore di uso CLI (argparse) -> rc 1 (parser dedicato, non il default 2):
+    nessun errore di invocazione puo' piu' essere scambiato per un ceiling.
+  - Exit codes completi: 0 = raw scritto · 1 = errore tecnico o errore di uso ·
+    2 = pre-flight HARD SAFETY CEILING (unico) · 3 = capoluoghi mancanti ·
+    4 = BOOTSTRAP FATAL · 5 = NO-OP `--mode none`.
 """
 
 import argparse
@@ -54,6 +72,21 @@ import time
 
 sys.path.insert(0, __file__ and __file__[: __file__.rfind("\\")] or ".")
 import common
+
+# NO-OP `--mode none` (ciclo idle): rc DEDICATO, mai 2 (2 = pre-flight HARD
+# SAFETY CEILING: un ciclo senza lavoro non deve mai sembrare un blocco budget).
+RC_MODE_NONE = 5
+
+
+class _FetchArgParser(argparse.ArgumentParser):
+    """Gli errori di uso escono con rc 1, NON 2: rc 2 e' riservato al
+    pre-flight HARD SAFETY CEILING (nessun errore CLI classificabile come
+    ceiling budget)."""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        print("[fetch_source_data] ERRORE DI USO: %s" % message, file=sys.stderr)
+        raise SystemExit(1)
 
 
 def fetch_batch(batch):
@@ -102,7 +135,7 @@ def retry_budget_available(need):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch source data (raw, temporaneo).")
+    parser = _FetchArgParser(description="Fetch source data (raw, temporaneo).")
     parser.add_argument("--points-json", default=str(common.REPO_ROOT / "data" / "_workdir" / "real_points.json"),
                         help="File coordinate reali generate dal port (default data/_workdir/real_points.json).")
     parser.add_argument("--workers", type=int, default=1,
@@ -111,11 +144,19 @@ def main():
                         help="Stampa il PIANO OTTIMIZZATO (dedup+batch+preflight) senza scaricare.")
     parser.add_argument("--skip-preflight", action="store_true",
                         help="Salta il blocco da hard safety ceiling (uso diagnostico, MAI nelle Action).")
-    parser.add_argument("--mode", choices=["coordinated"], default="coordinated",
-                        help="coordinated (default e UNICO): fetch completo di entrambi i leg "
-                             "(best_match + ecmwf_ifs). Niente refresh parziale best_match_only "
+    parser.add_argument("--mode", choices=["coordinated", "none"], default="coordinated",
+                        help="coordinated (default): fetch completo di entrambi i leg "
+                             "(best_match + ecmwf_ifs). none = NO-OP del ciclo idle (rc 5, nessuna "
+                             "richiesta, nessun raw). Niente refresh parziale best_match_only "
                              "(rimosso: dipendeva dal raw di un ciclo precedente).")
     args = parser.parse_args()
+
+    # FIX HOTFIX 1.1.0.8 — ciclo idle: no-op esplicito e immediato (rc dedicato,
+    # MAI 2), prima di ogni lettura di file o chiamata di rete.
+    if args.mode == "none":
+        print("[fetch_source_data] MODE=none — NO-OP: nessun lavoro richiesto (ciclo idle), "
+              "nessuna richiesta API, nessun raw scritto (rc %d, mai ceiling budget)." % RC_MODE_NONE)
+        return RC_MODE_NONE
 
     if not os.path.exists(args.points_json):
         print("[fetch_source_data] Coordinate non trovate: %s (errore tecnico)" % args.points_json)
