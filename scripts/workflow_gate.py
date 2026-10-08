@@ -33,7 +33,8 @@ Classificazione exit code (contratto stabile):
   plan:          0 = piano ok · 2 = ceiling raggiunto (safe skip) ·
                  3 = ceiling in BOOTSTRAP (FAIL) · 1+ = errore
   fetch:         0 = ok · 2 = ceiling (safe) · 3 = capoluoghi mancanti (safe) ·
-                 4 = BOOTSTRAP FATAL (ceiling/capoluoghi) · 1+ = errore
+                 4 = BOOTSTRAP FATAL (ceiling/capoluoghi) · 5 = NO-OP `--mode
+                 none` (clean exit, fetch mai partito) · 1+ = errore
   build:         0 = ok · 1+ = errore
   validate:      0 = ok · 1+ = errore (PUBLISH SKIP, last known good intatto)
   publish:       0 = ok (nuovo dataset) · 1+ = errore
@@ -113,6 +114,10 @@ def classify_fetch(rc):
         return {"stage": "fetch", "rc": rc, "decision": "fail",
                 "message": "[ERROR] INITIAL DATASET BOOTSTRAP cannot complete (ceiling/capoluoghi) — no dataset exists, workflow FAIL",
                 "outputs": {"fetch_ok": "false", "fetch_reason": "bootstrap_fatal"}, "exit_code": 1}
+    if rc == 5:
+        return {"stage": "fetch", "rc": rc, "decision": "clean_exit",
+                "message": "[INFO] Fetch skipped — mode none (ciclo idle, no-op, nessuna richiesta)",
+                "outputs": {"fetch_ok": "false", "fetch_reason": "mode_none"}, "exit_code": 0}
     return {"stage": "fetch", "rc": rc, "decision": "fail",
             "message": "[ERROR] Source data fetch failed (rc=%d)" % rc,
             "outputs": {"fetch_ok": "false", "fetch_reason": "fetch_error"}, "exit_code": 1}
