@@ -5333,8 +5333,10 @@
         document.getElementById('sync-play-btn').innerText = '⏸ Pausa';
         if (syncInterval) { clearTimeout(syncInterval); syncInterval = null; }
         if (syncRAF) { cancelAnimationFrame(syncRAF); syncRAF = null; }
-        // Intervallo base tra frame (ms), scalato dalla velocità
-        var frameDelay = Math.max(100, Math.round(800 / syncPlaySpeed));
+        // Intervallo base tra frame (ms): FPS = moltiplicatore velocità (1.1.0.8).
+        // 1000ms = 1 frame/s a x1, 500ms a x2, 250ms a x4, 125ms a x8 (prima era
+        // 800ms a x1 = 1.25 frame/s: alla 1x scorreva troppo veloce).
+        var frameDelay = Math.max(100, Math.round(1000 / syncPlaySpeed));
         // SCHEDULER SAT24-STYLE (1.0.0.14): il play è pilotato da requestAnimationFrame
         // al posto della catena di setTimeout — pacing fluido sul modello del player di
         // sat24.com (pre-buffer + swap rapidi), nessuna deriva dei timer, e a tab
@@ -5354,6 +5356,10 @@
         // Paso singolo: pacer satellite + applicazione frame + warm-ahead.
         function playStep() {
             if (!isSyncPlaying) return;
+            // 1.1.0.8 — PREFETCH/DECODE RADAR IN OGNI TICK: prepara (scarica +
+            // pre-decodifica) i 1-2 frame radar successivi sul pool DEDICATO radar,
+            // anche mentre il pacer satellite aspetta la conferma del suo frame.
+            try { warmNextRadarFrame(); } catch (e) {}
             // PACER SATELLITE ("sempre la stessa immagine"): NON avanzare finché il
             // frame satellite attuale non è stato CONFERMATO (satelliteLayer aggiornato
             // sul frame appena richiesto). Senza questo blocco, una conferma che arriva
@@ -5369,6 +5375,23 @@
                         return; // non confermato: resta sul frame attuale, il pacer riprova
                     }
                 }
+            }
+            // PACER RADAR (1.1.0.8, stile satellite): il frame radar successivo deve
+            // essere gia' scaricato e DECODIFICATO (pool dedicato radar, img.decode()
+            // con fallback onload/onerror) prima di avanzare. Se non e' pronto si
+            // aspetta il tick successivo SENZA disegnare nulla: nessun draw vuoto,
+            // nessun doppio draw, niente lampeggio. Hard-limit anti-stallo come il
+            // pacer satellite (dati radar non disponibili -> si avanza comunque).
+            var rTarget = radarNextPrepTarget();
+            if (!rTarget.needed || (rTarget.ready && !radarDrawInFlight())) {
+                radarWaitMs = 0;
+                radarWaitKey = '';
+            } else {
+                var nowW = (window.performance && performance.now) ? performance.now() : Date.now();
+                var wKey = rTarget.nextIdx + '#' + rTarget.ri;
+                if (radarWaitKey !== wKey) { radarWaitKey = wKey; radarWaitMs = nowW; }
+                else if (!radarWaitMs) radarWaitMs = nowW;
+                if (nowW - radarWaitMs < RADAR_READY_HARD_LIMIT_MS) return;  // nessun draw: riprova al tick prossimo
             }
             // Guardia anti-crash (1.0.0.14): un errore in un singolo frame (tile,
             // canvas, eccezione del provider) NON deve MAI uccidere l'animazione.
@@ -5411,6 +5434,11 @@
         if (btn) btn.innerText = '▶ Play';
         if (syncInterval) { clearTimeout(syncInterval); syncInterval = null; }
         if (syncRAF) { cancelAnimationFrame(syncRAF); syncRAF = null; }
+        // 1.1.0.8: reset stato pacer/pre-decode radar (nessun draw o attesa residui
+        // tra una ripartenza del play e la successiva).
+        radarDrawPending = false;
+        radarWaitMs = 0;
+        radarWaitKey = '';
         // FIX: incrementa satFrameGen per invalidare callback async pendenti
         // (resolveEumetsatLoad) che potrebbero riattivare layer dopo lo stop.
         satFrameGen++;
@@ -5477,6 +5505,20 @@
     // _mriSatWarm non ancora completed (onload/onerror li rimuovono).
     var SAT_WARM_CONCURRENCY_CAP = 4;
     var warmPreloadPool = [];
+    // 1.1.0.8 — RADAR PRE-DECODE (stile satellite): pool DEDICATO radar, separato dal
+    // pool satellite warmPreloadPool. I tile dei 1-2 frame radar successivi vengono
+    // scaricati e pre-decodificati (img.decode() con fallback onload/onerror) PRIMA di
+    // disegnare: il play non avanza finché il frame successivo non è pronto e un solo
+    // draw resta in volo -> niente draw vuoto, niente doppio disegno, niente flash.
+    var RADAR_PRELOAD_CAP = 2;            // max frame radar preparati in avanti (pool dedicato)
+    var radarPreloadPool = [];            // Image dedicate radar (marcate _mriRadarPrep)
+    var radarPrepFrames = [];             // stato prep per frame: {ri, vpKey, urlBase, ready, ...}
+    var radarDrawPending = false;         // un solo disegno radar in volo (anti doppio draw)
+    var radarDrawStartMs = 0;
+    var RADAR_DRAW_HARD_LIMIT_MS = 2500;  // watchdog draw: se l'evento 'load' non arriva, sblocca
+    var RADAR_READY_HARD_LIMIT_MS = 2500; // anti-stallo pacer radar (come SAT_ACK_HARD_LIMIT_MS)
+    var radarWaitMs = 0;                  // inizio attesa del pacer radar (0 = nessuna attesa)
+    var radarWaitKey = '';                // target dell'attesa (nextIdx#ri): cambia -> reset
     // 1.0.1.3: rimossa buildEumetsatTileUrl() — il player EUMETSAT non usa piu' i tile
     // 256px; ogni frame e' un'immagine GetMap singola via buildEumetsatLiveGetMap.
     function clampedEumetsatIso(iso) {
@@ -5635,42 +5677,130 @@
         } catch(e) {}
     }
 
-    function warmNextRadarFrame() {
-        if (!isSyncPlaying || !isRadarActive || !radarFrames.length || !syncTimeline.length) return;
-        if (warmPreloadPool.length >= WARM_CONCURRENCY_CAP * 2) return;  // tetto condiviso
-        try {
-        // Il frame radar che verra' mostrato al prossimo slot della timeline
-        var p = getRadarProvider();
-        if (p.type !== 'xyz') return;   // solo XYZ: URL tile derivabili
-        var z = map.getZoom();
+    // ==== 1.1.0.8 — RADAR PRE-DECODE / PACER (stile satellite) ====
+    // Chiave viewport (zoom + pixel bounds): una preparazione vale solo per lo
+    // zoom/pan corrente; un cambio viewport invalida gli stati al tick successivo.
+    function radarVpKey() {
         var pb = map.getPixelBounds();
+        return map.getZoom() + '|' + pb.min.x + ',' + pb.min.y + ',' + pb.max.x + ',' + pb.max.y;
+    }
+    // Stato di pre-decode VALIDO per il frame radar ri, oppure null (da preparare).
+    // Validita': stessa viewport + stessa URL base (provider/host/prodotto/frame invariati).
+    function radarPrepStateFor(ri) {
+        try {
+            if (!radarFrames[ri]) return null;
+            var p = getRadarProvider();
+            if (!p || p.type !== 'xyz') return null;
+            var vk = radarVpKey();
+            var ub = p.buildTileUrl(radarHost, radarFrames[ri]);
+            for (var i = 0; i < radarPrepFrames.length; i++) {
+                var st = radarPrepFrames[i];
+                if (st.ri === ri && st.vpKey === vk && st.urlBase === ub) return st;
+            }
+        } catch (e) {}
+        return null;
+    }
+    // Scarica e pre-decodifica UN tile del frame: il tile conta come pronto solo a
+    // decodifica completa (fallback onload/onerror -> mai stallo se decode fallisce).
+    function radarPrepLoadTile(st, p, url) {
+        var img = new Image();
+        // Stesso mode di richiesta del layer runtime: il layer DPC carica i tile con
+        // crossOrigin anonymous, quindi anche il preload usa anonymous (stessa entry
+        // di cache); gli altri provider caricano in no-cors come Leaflet.
+        if (p.id === 'dpc') img.crossOrigin = 'anonymous';
+        var done = false;
+        var onDone = function() {
+            if (done) return;
+            done = true;
+            st.settled++;
+            if (st.settled >= st.total) st.ready = true;
+        };
+        img.onload = onDone;
+        img.onerror = onDone;
+        img._mriRadarPrep = st;
+        radarPreloadPool.push(img);
+        img.src = url;
+        try { if (typeof img.decode === 'function') img.decode().then(onDone, onDone); } catch (e) { onDone(); }
+    }
+    // Prepara l'intero frame radar ri (tile del viewport corrente) nel pool dedicato.
+    function radarPrepBuild(ri, p, pb, vpKey) {
+        var urlBase = p.buildTileUrl(radarHost, radarFrames[ri]);
+        var st = { ri: ri, vpKey: vpKey, urlBase: urlBase, total: 0, settled: 0, ready: false };
+        var z = map.getZoom();
         var minX = Math.floor(pb.min.x / 256), maxX = Math.floor(pb.max.x / 256);
         var minY = Math.floor(pb.min.y / 256), maxY = Math.floor(pb.max.y / 256);
-        // 1.0.0.14: precarica fino a RADAR_WARM_AHEAD frame avanti con budget condiviso
-        var budget = WARM_CONCURRENCY_CAP;
+        var total = (maxX - minX + 1) * (maxY - minY + 1);
+        if (!(total > 0)) { st.ready = true; return st; }
+        st.total = total;
+        for (var x = minX; x <= maxX; x++) {
+            for (var y = minY; y <= maxY; y++) {
+                radarPrepLoadTile(st, p, urlBase.replace('{z}', z).replace('{x}', x).replace('{y}', y));
+            }
+        }
+        return st;
+    }
+    // Prossimo frame radar che il play mostrerebbe + stato del suo pre-decode.
+    // needed=false -> nessun gate radar (radar spento / provider non-XYZ / ...);
+    // ready=true   -> gia' scaricato e decodificato: il play puo' avanzare.
+    function radarNextPrepTarget() {
+        var out = { nextIdx: -1, ri: -1, needed: false, ready: true };
+        try {
+            var p = getRadarProvider();
+            if (!p || p.type !== 'xyz') return out;
+            if (!isRadarActive || !syncTimeline.length || !radarFrames.length) return out;
+            out.nextIdx = (syncIndex >= syncTimeline.length - 1) ? 0 : syncIndex + 1;
+            var slot = syncTimeline[out.nextIdx];
+            var refUnix = effectiveSatUnixForSlot(slot);
+            out.ri = (out.nextIdx === syncTimeline.length - 1) ? (radarFrames.length - 1) : nearestRadarIndex(refUnix);
+            if (out.ri < 0) return out;
+            out.needed = true;
+            var st = radarPrepStateFor(out.ri);
+            out.ready = !!(st && st.ready);
+        } catch (e) { out.needed = false; out.ready = true; }
+        return out;
+    }
+    // Un solo disegno radar in volo: true mentre il draw e' in corso, con scadenza
+    // watchdog (se l'evento 'load' non arriva mai, lo sblocco e' automatico).
+    function radarDrawInFlight() {
+        if (!radarDrawPending) return false;
+        if (Date.now() - radarDrawStartMs > RADAR_DRAW_HARD_LIMIT_MS) { radarDrawPending = false; return false; }
+        return true;
+    }
+
+    function warmNextRadarFrame() {
+        if (!isSyncPlaying || !isRadarActive || !radarFrames.length || !syncTimeline.length) return;
+        try {
+        // Prepara (scarica + pre-decodifica) i prossimi frame radar sul pool dedicato.
+        var p = getRadarProvider();
+        if (!p || p.type !== 'xyz') return;   // solo XYZ: URL tile derivabili
+        var pb = map.getPixelBounds();
+        var vk = map.getZoom() + '|' + pb.min.x + ',' + pb.min.y + ',' + pb.max.x + ',' + pb.max.y;
+        var needRi = [];
+        // 1.0.0.14: fino a RADAR_WARM_AHEAD frame avanti; budget 1.1.0.8 = RADAR_PRELOAD_CAP
+        // frame nel pool DEDICATO radar (cap basso, separato da quello satellite).
+        var budget = RADAR_PRELOAD_CAP;
         for (var ahead = 1; ahead <= RADAR_WARM_AHEAD && budget > 0; ahead++) {
             var nextIdx = (syncIndex + ahead <= syncTimeline.length - 1) ? syncIndex + ahead : 0;
             var slot = syncTimeline[nextIdx];
             var refUnix = effectiveSatUnixForSlot(slot);
             var ri = (nextIdx === syncTimeline.length - 1) ? (radarFrames.length - 1) : nearestRadarIndex(refUnix);
-            if (ri < 0) continue;
-            for (var x = minX; x <= maxX && budget > 0; x++) {
-                for (var y = minY; y <= maxY && budget > 0; y++) {
-                    var t = p.buildTileUrl(radarHost, radarFrames[ri]);
-                    t = t.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-                    var img = new Image();
-                    var iRef = img;
-                    img.onload = img.onerror = function() {
-                        var i2 = warmPreloadPool.indexOf(iRef);
-                        if (i2 !== -1) warmPreloadPool.splice(i2, 1);
-                    };
-                    warmPreloadPool.push(img);
-                    img.src = t;
-                    budget--;
-                }
-            }
+            if (ri < 0 || needRi.indexOf(ri) !== -1) continue;
+            needRi.push(ri);
+            budget--;
+            if (!radarPrepStateFor(ri)) radarPrepFrames.push(radarPrepBuild(ri, p, pb, vk));
         }
-        trimWarmPool();
+        // Evict: solo i frame ancora necessari e ancora validi (provider/host/frame/
+        // viewport invariati); gli stati invalidati vengono ricreati al prossimo giro.
+        radarPrepFrames = radarPrepFrames.filter(function(st) {
+            if (needRi.indexOf(st.ri) === -1) return false;
+            try {
+                return st.vpKey === vk && st.urlBase === p.buildTileUrl(radarHost, radarFrames[st.ri]);
+            } catch (e) { return false; }
+        });
+        // Potatura del pool dedicato: via le immagini i cui stati sono stati scartati.
+        radarPreloadPool = radarPreloadPool.filter(function(im) {
+            return im && im._mriRadarPrep && radarPrepFrames.indexOf(im._mriRadarPrep) !== -1;
+        });
         } catch(e) {
             // 1.0.0.14: il warm-ahead non deve MAI propagare eccezioni al play
         }
@@ -5706,6 +5836,9 @@
         satLoadedFrames = new Set();
         radarLoadedFrames = new Set();
         warmPreloadPool = [];   // 1.0.0.14: svuota anche il pool dei preload warm-ahead
+        radarPreloadPool = [];  // 1.1.0.8: svuota il pool DEDICATO radar pre-decode
+        radarPrepFrames = [];
+        radarDrawPending = false;
         liveStrikeCache = [];
         infoplazaImgCache = {};
         limapsImgCache = {};
@@ -6543,6 +6676,9 @@
     // Rimuove TUTTI i layer radar tracciati (per cambio provider)
     function cleanupAllRadarLayers() {
         radarTileLayer = null;   // 1.0.0.14: il layer persistente viene ricreato al frame successivo
+        radarPreloadPool = [];   // 1.1.0.8: invalida anche il pool di pre-decode radar
+        radarPrepFrames = [];
+        radarDrawPending = false;
         allRadarLayers.forEach(function(l) {
             if (l && map.hasLayer(l)) {
                 try { map.removeLayer(l); } catch(e) {}
@@ -6646,6 +6782,11 @@
     function showRadarFrameAt(index) {
         if (!radarFrames[index]) return;
         if (radarCacheKey === index && currentRadarTile && map.hasLayer(currentRadarTile)) return;
+        // 1.1.0.8 — UN SOLO DRAW IN VOLO: durante il play non si avvia un secondo
+        // disegno finché quello in corso non conclude (niente doppio draw/lampeggio).
+        // radarCacheKey NON viene toccato: la stessa richiesta può ripetere il
+        // tentativo al tick successivo (nessun frame perduto).
+        if (isSyncPlaying && radarDrawInFlight()) return;
         radarCacheKey = index;
         // FIX: generation counter — i callback async controllano se sono stale
         var myGen = ++radarFrameGen;
@@ -6703,6 +6844,7 @@
                 checkPreloadDone();
                 if (!radarTileLayer._ctxDone && radarTileLayer._ctxTilesOk > 0) {
                     radarTileLayer._ctxDone = true;
+                    radarDrawPending = false;  // 1.1.0.8: draw concluso, prossimo ammesso
                     if (radarFrameGen === myGen2) {
                         crossfadeLayers(radarTileLayer, oldLayerRef);
                         currentRadarTile = radarTileLayer;
@@ -6725,6 +6867,7 @@
                 if (!radarTileLayer || !map.hasLayer(radarTileLayer) || radarTileLayer === currentRadarTile) return;
                 if (radarFrameGen === myGen2 && !radarTileLayer._ctxDone && radarTileLayer._ctxTilesOk > 0) {
                     radarTileLayer._ctxDone = true;
+                    radarDrawPending = false;  // 1.1.0.8: fallback concluso, prossimo ammesso
                     crossfadeLayers(radarTileLayer, oldLayerRef);
                     currentRadarTile = radarTileLayer;
                     radarLoadedFrames.add(syncIndex);
@@ -6732,7 +6875,11 @@
                 }
             }, TILE_FALLBACK_DELAY_MS);
             if (typeof pendingRadarTimers !== 'undefined' && pendingRadarTimers) pendingRadarTimers.push(fbTimer2);
-            try { radarTileLayer.setUrl(urlToSet); } catch(e) { try { map.removeLayer(radarTileLayer); } catch(e2) {} }
+            // 1.1.0.8: il draw e' ufficialmente "in volo": aperto subito prima di
+            // setUrl e chiuso dai listener di conferma (_ctxDone) o dal fallback.
+            radarDrawPending = true;
+            radarDrawStartMs = Date.now();
+            try { radarTileLayer.setUrl(urlToSet); } catch(e) { radarDrawPending = false; try { map.removeLayer(radarTileLayer); } catch(e2) {} }
             applyRadarOffsetTransform();
             // Usa inferito ESATTO sotto in order to only update stats (compat WMS non applicabile)
             if (radarTileLayer && map.hasLayer(radarTileLayer)) {
@@ -6745,6 +6892,9 @@
         // (via evento 'load' o via timeout di fallback). Centralizza la logica in un
         // unico posto per evitare che le due copie possano divergere in futuro.
         function resolveRadarLoad(newLayer, radarTilesOk) {
+            // 1.1.0.8: il draw si e' concluso (load, fallback o errore): sblocca il
+            // prossimo draw ammesso dal pacer radar.
+            radarDrawPending = false;
             // 1.0.0.14: il layer radar persistente non viene MAI rimosso dai callback
             // stale della generazione precedente (sarebbe il layer riusato dei frame
             // successivi): i riferimenti si aggiornano solo tramite setUrl / cleanupAll.
@@ -6792,6 +6942,8 @@
             var newLayer = L.tileLayer.wms(p.wmsUrl, wmsOpts).addTo(map);
             allRadarLayers.push(newLayer);
             applyRadarOffsetTransform();
+            radarDrawPending = true;  // 1.1.0.8: draw WMS in volo (chiuso in resolveRadarLoad)
+            radarDrawStartMs = Date.now();
             var radarNewTilesStarted = false;
             var radarTilesOk = 0;
             newLayer.on('tileloadstart', () => {
@@ -6832,6 +6984,8 @@
             radarTileLayer = newLayer;  // 1.0.0.14: da qui il frame viene riusato via setUrl (SAT24-style)
             allRadarLayers.push(newLayer);
             applyRadarOffsetTransform();
+            radarDrawPending = true;  // 1.1.0.8: primo draw XYZ in volo (chiuso in resolveRadarLoad)
+            radarDrawStartMs = Date.now();
             var radarNewTilesStarted = false;
             var radarTilesOk = 0;
             newLayer.on('tileloadstart', () => {
