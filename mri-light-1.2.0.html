@@ -138,8 +138,10 @@
 .sc-toggles { display: flex; gap: 6px; flex-wrap: wrap; padding: 4px 10px 6px 10px; }
 .sc-toggle { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; }
 .sc-toggle.on { border-color: #a855f7; background: #2e1065; color: #e9d5ff; }
-.sc-phenomena-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #e2e8f0; padding: 3px 10px; border-top: 1px solid #1f2937; }
+.sc-phenomena-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10px; color: #e2e8f0; padding: 3px 10px; border-top: 1px solid #1f2937; cursor: pointer; }
 .sc-phenomena-glyph { display: inline-flex; width: 14px; height: 14px; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+.sc-phenomena-detail { flex-basis: 100%; display: none; margin-top: 2px; font-size: 11px; color: #94a3b8; line-height: 1.35; }
+.sc-phenomena-detail.open { display: block; }
         .live-header { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #f1f5f9; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulse-live 1.5s ease-in-out infinite; }
         @keyframes pulse-live { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -8388,6 +8390,8 @@
     var scShowTrails = true;        // toggle UI (default ON)
     var scShowForecast = true;      // toggle UI (default ON, opacità per confidence)
     var scShowPhenomena = true;     // toggle UI (default ON)
+    var scLastCands = [];           // ultimi candidati renderizzati (refresh pennant con badge)
+    var scTrailUidMap = {};         // track_type#track_id -> 'u#uid' (dai slot history)
 
     function scBtn() { return document.getElementById('btn-sc-radar'); }
 
@@ -8495,6 +8499,90 @@
         return dirs[idx] + ' ' + Math.round(deg) + '°';
     }
 
+    // Pennant direzionale: bandierina SVG ruotata verso motion.direction_toward_deg
+    // (0=N, senso orario). Dimensione/spessore/opacità crescono con SSI; colore dal
+    // livello (scLevelColor); se phen (badge grandine/rotazione) è presente aggiunge
+    // il glifo e l'accento colore. Doppio stroke scuro/chiaro per leggibilità.
+    function scPennantIcon(candidate, phen) {
+        var c = candidate || {};
+        var ssi = (typeof c.ssi === 'number' && isFinite(c.ssi)) ? Math.max(0, Math.min(100, c.ssi)) : 0;
+        var size = 24 + Math.round(ssi * 0.14);
+        var weight = Math.round((1.2 + ssi * 0.023) * 10) / 10;
+        var onLatest = c.on_latest_frame !== false;
+        var opacity = onLatest ? Math.round((0.7 + 0.3 * ssi / 100) * 100) / 100 : 0.45;
+        var color = scLevelColor(c.level);
+        var accent = (phen && phen.type === 'HAIL') ? '#7dd3fc' : ((phen && phen.type === 'VORTEX') ? '#fb923c' : null);
+        var glyph = phen ? scPhenomenaGlyph(phen) : '';
+        var dir = (c.motion && typeof c.motion.direction_toward_deg === 'number' && isFinite(c.motion.direction_toward_deg)) ? c.motion.direction_toward_deg : null;
+        var transform = (dir === null) ? '' : ' transform="rotate(' + dir + ' 17 17)"';
+        var dash = onLatest ? '' : ' stroke-dasharray="3,3"';
+        var svg =
+            '<svg width="' + size + '" height="' + size + '" viewBox="0 0 34 34" style="pointer-events:auto;overflow:visible;">' +
+            '<g' + transform + dash + '>' +
+            '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="none" stroke="#0b1220" stroke-width="' + (weight + 2.4) + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
+            '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="' + (accent || color) + '" fill-opacity="' + (0.18 + 0.22 * ssi / 100) + '" stroke="' + color + '" stroke-width="' + weight + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
+            '</g>' +
+            (glyph ? '<circle cx="17" cy="17" r="6" fill="rgba(15,23,42,.85)" stroke="' + (accent || '#e2e8f0') + '" stroke-width="1.4"/>' +
+                '<text x="17" y="20.5" text-anchor="middle" font-size="9" font-weight="700" fill="' + (accent || '#e2e8f0') + '">' + glyph + '</text>' : '') +
+            '</svg>';
+        return L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2], html: svg });
+    }
+
+    // badge -> candidato (via scMatchBadgeCandidate): mappa per chiave candidato con
+    // il badge più vicino entro la soglia; serve a mostrare il glifo sul pennant.
+    function scBuildPhenMap(badges, cands) {
+        var map = {};
+        var bestKm = {};
+        if (!Array.isArray(badges)) return map;
+        for (var i = 0; i < badges.length; i++) {
+            var b = badges[i];
+            if (!b) continue;
+            var match = scMatchBadgeCandidate(b, cands);
+            if (!match) continue;
+            var key = scTrackKey(match.candidate);
+            if (!(key in map) || match.distance_km < bestKm[key]) {
+                map[key] = b;
+                bestKm[key] = match.distance_km;
+            }
+        }
+        return map;
+    }
+
+    // Marker candidati come pennant: phen preso dai badge correnti (se il layer
+    // fenomeni è attivo). Riusato da renderScRadar e scRefreshMarkerIcons.
+    function scBuildCandidateMarkers(cands) {
+        var markers = [];
+        if (!Array.isArray(cands)) return markers;
+        var badges = (scShowPhenomena && scPhenomenaData && Array.isArray(scPhenomenaData.badges)) ? scPhenomenaData.badges : [];
+        var phenMap = scBuildPhenMap(badges, cands);
+        for (var i = 0; i < cands.length; i++) {
+            var c = cands[i];
+            if (!(c && c.position && c.position.length === 2)) continue;
+            var phen = phenMap[scTrackKey(c)] || null;
+            var m = L.marker([c.position[1], c.position[0]], {
+                icon: scPennantIcon(c, phen), pane: 'supercellPane', interactive: true
+            });
+            var info = 'SSI ' + c.ssi + ' — ' + scLevelLabel(c.level) +
+                (c.phase === 'birth' ? ' (nascita)' : '') +
+                '<br>Track ' + (c.track_type === 'storm_object' ? 'sistema #' : 'cella #') + c.track_id +
+                '<br>' + c.position[1].toFixed(3) + '°N, ' + c.position[0].toFixed(3) + '°E' +
+                (c.motion && c.motion.velocity_kmh != null ? '<br>' + c.motion.velocity_kmh + ' km/h verso ' + scCompass(c.motion.direction_toward_deg) : '');
+            m.bindTooltip(info, { direction: 'top', opacity: 0.95 });
+            markers.push(m);
+        }
+        return markers;
+    }
+
+    // Ricostruisce i pennant dagli ultimi candidati con i badge correnti (glifo
+    // grandine/rotazione). Chiamata da scRedrawPhenomena dopo il caricamento badge.
+    function scRefreshMarkerIcons() {
+        if (scRadarLayer && map && map.hasLayer(scRadarLayer)) map.removeLayer(scRadarLayer);
+        scRadarLayer = null;
+        if (!isScRadarActive || !map) return;
+        var markers = scBuildCandidateMarkers(Array.isArray(scLastCands) ? scLastCands : []);
+        if (markers.length) scRadarLayer = L.layerGroup(markers).addTo(map);
+    }
+
     // ---- A3-2: chip metrica candidato (scala SSI esistente 65/80, baseline n/d) ----
     function scMetricChip(label, v) {
         var cls = 'sc-chip sc-chip-sustained';
@@ -8595,32 +8683,13 @@
                 });
             }
         }
-        // Overlay mappa: circleMarker per candidato (solo candidati).
+        // Overlay mappa: pennant direzionale per candidato (solo candidati).
+        scLastCands = cands;
         if (scRadarLayer && map && map.hasLayer(scRadarLayer)) map.removeLayer(scRadarLayer);
         scRadarLayer = null;
-        var markers = [];
-        cands.forEach(function(c) {
-            if (!(c.position && c.position.length === 2)) return;
-            var opts = {
-                color: scLevelColor(c.level),
-                weight: 2,
-                fillColor: scLevelColor(c.level),
-                fillOpacity: c.on_latest_frame ? 0.85 : 0.30,
-                radius: c.phase === 'birth' ? 11 : 8,
-                pane: 'flashMarkerPane'
-            };
-            if (!c.on_latest_frame) opts.dashArray = '4,4';
-            var m = L.circleMarker([c.position[1], c.position[0]], opts);
-            var info = 'SSI ' + c.ssi + ' — ' + scLevelLabel(c.level) +
-                (c.phase === 'birth' ? ' (nascita)' : '') +
-                '<br>Track ' + (c.track_type === 'storm_object' ? 'sistema #' : 'cella #') + c.track_id +
-                '<br>' + c.position[1].toFixed(3) + '°N, ' + c.position[0].toFixed(3) + '°E' +
-                (c.motion && c.motion.velocity_kmh != null ? '<br>' + c.motion.velocity_kmh + ' km/h verso ' + scCompass(c.motion.direction_toward_deg) : '');
-            m.bindTooltip(info, { direction: 'top', opacity: 0.95 });
-            markers.push(m);
-        });
+        var markers = scBuildCandidateMarkers(cands);
         if (markers.length) {
-            if (markers.length) scRadarLayer = L.layerGroup(markers).addTo(map);
+            scRadarLayer = L.layerGroup(markers).addTo(map);
         }
         scRedrawDerived();
     }
@@ -8684,7 +8753,17 @@
     // scAssembleTrails, scBuildForecastCone, scMatchBadgeCandidate,
     // scPhenomenaSummary, scPhenomenaGlyph, scPhenomenaIsProxy,
     // scForecastConfidenceColor/Opacity. Nessuna animazione (reduced-motion safe).
+    // Chiave di raggruppamento traccia: preferisce l'uid stabile ('u#<uid>') quando
+    // presente (track dei nuovi slot); fallback 'track_type#track_id' per slot vecchi.
+    // Accetta sia una voce-track (oggetto con uid/track_uid) sia la coppia (id, tipo).
     function scTrailKey(trackId, trackType) {
+        if (trackId && typeof trackId === 'object') {
+            var tr = trackId;
+            var uid = (tr.uid !== undefined && tr.uid !== null && tr.uid !== '') ? tr.uid
+                : ((tr.track_uid !== undefined && tr.track_uid !== null && tr.track_uid !== '') ? tr.track_uid : null);
+            if (uid !== null) return 'u#' + String(uid);
+            return String(tr.track_type || 'cell') + '#' + String(tr.track_id);
+        }
         return String(trackType || 'cell') + '#' + String(trackId);
     }
 
@@ -8716,9 +8795,10 @@
     }
 
     // Assembla le tracce 2h dall'archivio rolling: input = payload slot (ordine
-    // qualsiasi) -> { 'cell#id'|'storm_object#id': [{lonlat,t,max_dbz}] } ordinato
-    // per tempo, dedup per radar_timestamp_ms (primo arrivo), track con meno di
-    // minPoints punti escluse. Null-safe: nessun throw su input malformati.
+    // qualsiasi) -> { 'u#uid'|'cell#id': [{lonlat,t,max_dbz}] } ordinato per tempo,
+    // dedup per radar_timestamp_ms (primo arrivo), track con meno di minPoints punti
+    // escluse. I punti con lonlat non valido/non finito/fuori range Italia sono
+    // scartati. Null-safe: nessun throw su input malformati.
     function scAssembleTrails(slots, minPoints) {
         var min = (minPoints === undefined || minPoints === null) ? 2 : minPoints;
         var acc = {};
@@ -8731,8 +8811,12 @@
             for (var j = 0; j < s.tracks.length; j++) {
                 var tr = s.tracks[j];
                 if (!tr || tr.track_id === null || tr.track_id === undefined) continue;
-                if (!(tr.lonlat && tr.lonlat.length === 2)) continue;
-                var key = scTrailKey(tr.track_id, tr.track_type);
+                var lonlat = tr.lonlat;
+                if (!(lonlat && lonlat.length === 2)) continue;
+                var lon = lonlat[0], lat = lonlat[1];
+                if (!isFinite(lon) || !isFinite(lat)) continue;
+                if (lon < 3.5 || lon > 21.5 || lat < 33.5 || lat > 49.0) continue;
+                var key = scTrailKey(tr);
                 if (!acc[key]) acc[key] = [];
                 var arr = acc[key];
                 var dup = false;
@@ -8740,7 +8824,7 @@
                     if (arr[k].t === t) { dup = true; break; }
                 }
                 if (dup) continue;
-                arr.push({ lonlat: [tr.lonlat[0], tr.lonlat[1]], t: t, max_dbz: (tr.max_dbz === undefined ? null : tr.max_dbz) });
+                arr.push({ lonlat: [lon, lat], t: t, max_dbz: (tr.max_dbz === undefined ? null : tr.max_dbz) });
             }
         }
         var out = {};
@@ -8750,6 +8834,99 @@
             if (list.length >= min) out[keys[ki]] = list;
         }
         return out;
+    }
+
+    // Gate di continuità: true se il passo prev->cur è plausibile. Falso se la
+    // distanza supera min(180, 30 + 5*dtMin) km (dtMin = minuti tra i due punti,
+    // clampati a >= 0). Se il timestamp manca, si applica il gate fisso a 60 km.
+    function scTrailStepOk(prev, cur) {
+        if (!(prev && prev.lonlat && prev.lonlat.length === 2 &&
+              cur && cur.lonlat && cur.lonlat.length === 2)) return false;
+        var d = scHaversineKm(prev.lonlat, cur.lonlat);
+        if (d === null) return false;
+        var limit;
+        if (isFinite(prev.t) && isFinite(cur.t)) {
+            var dtMin = (cur.t - prev.t) / 60000;
+            if (!isFinite(dtMin) || dtMin < 0) dtMin = 0;
+            limit = Math.min(180, 30 + 5 * dtMin);
+        } else {
+            limit = 60;
+        }
+        return d <= limit;
+    }
+
+    // Finestra temporale della scia: tiene i punti con t >= (ultimo.t - windowMs).
+    // Se il timestamp manca, fallback agli ultimi 25 punti (comportamento storico).
+    function scTrailWindow(points, windowMs) {
+        if (!Array.isArray(points)) return [];
+        if (points.length < 2) return points.slice();
+        var last = points[points.length - 1];
+        if (!(last && isFinite(last.t))) return points.slice(-25);
+        var minT = last.t - windowMs;
+        var out = [];
+        for (var i = 0; i < points.length; i++) {
+            if (points[i] && isFinite(points[i].t) && points[i].t >= minT) out.push(points[i]);
+        }
+        return out;
+    }
+
+    // Segmenti contigui: spezza la sequenza quando un punto è invalido o il passo
+    // non supera scTrailStepOk. Ogni segmento è disegnato come UNA polilinea, così
+    // i trattini restano continui e si interrompono solo a salti reali.
+    function scTrailSegments(points) {
+        var out = [];
+        if (!Array.isArray(points) || !points.length) return out;
+        var cur = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            var okPt = p && p.lonlat && p.lonlat.length === 2 &&
+                isFinite(p.lonlat[0]) && isFinite(p.lonlat[1]);
+            if (!okPt) {
+                if (cur.length) { out.push(cur); cur = []; }
+                continue;
+            }
+            if (!cur.length) { cur.push(p); continue; }
+            if (scTrailStepOk(cur[cur.length - 1], p)) cur.push(p);
+            else { out.push(cur); cur = [p]; }
+        }
+        if (cur.length) out.push(cur);
+        return out;
+    }
+
+    // Indice di compatibilità: track_type#track_id -> 'u#uid' dagli slot history,
+    // con lo slot più recente che vince. Serve a collegare i candidati live (che
+    // non portano uid) alle scie raggruppate per uid.
+    function scTrailUidIndex(slots) {
+        var map = {};
+        if (!Array.isArray(slots)) return map;
+        var ordered = slots.slice().sort(function(a, b) {
+            var ta = (a && isFinite(a.radar_timestamp_ms)) ? a.radar_timestamp_ms : 0;
+            var tb = (b && isFinite(b.radar_timestamp_ms)) ? b.radar_timestamp_ms : 0;
+            return ta - tb;
+        });
+        for (var i = 0; i < ordered.length; i++) {
+            var trs = ordered[i] && ordered[i].tracks;
+            if (!Array.isArray(trs)) continue;
+            for (var j = 0; j < trs.length; j++) {
+                var tr = trs[j];
+                if (!tr || tr.uid === undefined || tr.uid === null || tr.uid === '') continue;
+                if (tr.track_id === null || tr.track_id === undefined) continue;
+                map[String(tr.track_type || 'cell') + '#' + String(tr.track_id)] = 'u#' + String(tr.uid);
+            }
+        }
+        return map;
+    }
+
+    // Chiave della scia per un candidato live: uid esplicito, altrimenti indice
+    // scTrailUidMap, altrimenti fallback track_type#track_id.
+    function scTrailLookupKey(c) {
+        if (!c) return '';
+        var uid = (c.track_uid !== undefined && c.track_uid !== null && c.track_uid !== '') ? c.track_uid
+            : ((c.uid !== undefined && c.uid !== null && c.uid !== '') ? c.uid : null);
+        if (uid !== null) return 'u#' + String(uid);
+        var fallback = scTrailKey(c.track_id, c.track_type);
+        if (scTrailUidMap && scTrailUidMap[fallback]) return scTrailUidMap[fallback];
+        return fallback;
     }
 
     // Cono di incertezza forecast: anello CHIUSO dal path origine->steps con
@@ -8897,6 +9074,7 @@
             var slots = idx && Array.isArray(idx.slots) ? idx.slots.slice(-25) : [];
             if (!slots.length) { scClearTrails(); return; }
             var payloads = await scFetchHistorySlots(slots);
+            scTrailUidMap = scTrailUidIndex(payloads);
             scTrailsData = scAssembleTrails(payloads);
             scRedrawTrails();
         } catch (e) {
@@ -8908,6 +9086,7 @@
         if (scTrailLayer && map && map.hasLayer(scTrailLayer)) map.removeLayer(scTrailLayer);
         scTrailLayer = null;
         scTrailsData = null;
+        scTrailUidMap = {};
     }
 
     function scRedrawTrails() {
@@ -8919,18 +9098,18 @@
         for (var ci = 0; ci < cands.length; ci++) {
             var c = cands[ci];
             if (!c || !c.on_latest_frame) continue;
-            var pts = scTrailsData[scTrailKey(c.track_id, c.track_type)];
+            var pts = scTrailsData[scTrailLookupKey(c)];
             if (!pts || pts.length < 2) continue;
-            var recent = pts.slice(-25);
+            var recent = scTrailWindow(pts, 120 * 60000);
+            if (!recent || recent.length < 2) continue;
             var color = scLevelColor(c.level);
-            for (var i = 0; i < recent.length - 1; i++) {
-                var a = recent[i], b = recent[i + 1];
-                if (!(a.lonlat && a.lonlat.length === 2 && b.lonlat && b.lonlat.length === 2)) continue;
-                var frac = (i + 1) / (recent.length - 1);
-                lines.push(L.polyline(
-                    [[a.lonlat[1], a.lonlat[0]], [b.lonlat[1], b.lonlat[0]]],
-                    { pane: 'trailPane', color: color, weight: 2, dashArray: '4,6',
-                      opacity: Math.round((0.2 + 0.6 * frac) * 100) / 100, interactive: false }));
+            var segs = scTrailSegments(recent);
+            for (var si = 0; si < segs.length; si++) {
+                var seg = segs[si];
+                if (!seg || seg.length < 2) continue;
+                var latlngs = [];
+                for (var pi = 0; pi < seg.length; pi++) latlngs.push([seg[pi].lonlat[1], seg[pi].lonlat[0]]);
+                lines.push(L.polyline(latlngs, { pane: 'trailPane', color: color, weight: 2, dashArray: '6,6', opacity: 0.55, interactive: false }));
             }
         }
         if (lines.length) scTrailLayer = L.layerGroup(lines).addTo(map);
@@ -9003,6 +9182,20 @@
         return String(type || '—');
     }
 
+    function scPhenomenaStateLabel(state) {
+        if (state === 'SUSPECT') return 'Sospetto';
+        if (state === 'CORROBORATED') return 'Confermato';
+        return state ? String(state) : '—';
+    }
+
+    function scPhenomenaDetailText(badge) {
+        if (!badge) return '';
+        var parts = [];
+        if (Array.isArray(badge.labels) && badge.labels.length) parts.push(badge.labels.join(' · '));
+        if (scPhenomenaIsProxy(badge.evidence)) parts.push('(proxy riflettività)');
+        return parts.join(' — ');
+    }
+
     async function refreshScPhenomena() {
         if (!isScRadarActive) return;
         if (document.hidden) return;
@@ -9022,49 +9215,77 @@
         if (box) { box.innerHTML = ''; box.style.display = 'none'; }
     }
 
+    function scEnsurePhenomenaClickHandler() {
+        var box = scRadarEl('sc-phenomena');
+        if (!box || box.getAttribute('data-sc-click-bound') === '1') return;
+        box.setAttribute('data-sc-click-bound', '1');
+        box.addEventListener('click', function(e) {
+            var row = e.target && e.target.closest ? e.target.closest('.sc-phenomena-row') : null;
+            if (!row || !box.contains(row)) return;
+            var detail = row.querySelector('.sc-phenomena-detail');
+            if (detail) detail.classList.toggle('open');
+        });
+    }
+
     function scRedrawPhenomena() {
         scClearPhenomena();
         var box = scRadarEl('sc-phenomena');
-        if (!isScRadarActive || !scShowPhenomena) return;
-        var badges = scPhenomenaData && Array.isArray(scPhenomenaData.badges) ? scPhenomenaData.badges : [];
+        var active = isScRadarActive && scShowPhenomena;
+        var badges = (active && scPhenomenaData && Array.isArray(scPhenomenaData.badges)) ? scPhenomenaData.badges : [];
         var cands = scRadarData && Array.isArray(scRadarData.candidates) ? scRadarData.candidates : [];
         var markers = [];
         var html = '';
+        var entries = [];
         for (var i = 0; i < badges.length; i++) {
-            var b = badges[i];
-            if (!b) continue;
-            var match = scMatchBadgeCandidate(b, cands);
+            if (!badges[i]) continue;
+            entries.push({ badge: badges[i], match: scMatchBadgeCandidate(badges[i], cands) });
+        }
+        entries.sort(function(x, y) {
+            var rx = x.match ? (x.badge.state === 'CORROBORATED' ? 0 : 1) : 2;
+            var ry = y.match ? (y.badge.state === 'CORROBORATED' ? 0 : 1) : 2;
+            if (rx !== ry) return rx - ry;
+            if (x.match && y.match) return x.match.distance_km - y.match.distance_km;
+            return 0;
+        });
+        for (var ei = 0; ei < entries.length; ei++) {
+            var b = entries[ei].badge;
+            var match = entries[ei].match;
             var glyph = scPhenomenaGlyph(b);
             var color = b.type === 'HAIL' ? '#7dd3fc' : (b.type === 'VORTEX' ? '#fb923c' : '#94a3b8');
-            var anchor = match ? match.candidate.position : b.position;
-            if (anchor && anchor.length === 2) {
-                var tip = scPhenomenaTypeLabel(b.type) + ' — ' + (b.state || '—') +
-                    (Array.isArray(b.labels) && b.labels.length ? '<br>' + b.labels.join('<br>') : '');
-                markers.push(L.marker([anchor[1], anchor[0]], {
-                    pane: 'supercellPane', interactive: true,
-                    icon: L.divIcon({ className: '', iconSize: [16, 16], iconAnchor: [8, 8], html: scPhenomenaMarkerHtml(b) })
-                }).bindTooltip(tip, { direction: 'top', opacity: 0.95 }));
+            if (!match) {
+                var anchor = b.position;
+                if (anchor && anchor.length === 2) {
+                    var tip = scPhenomenaTypeLabel(b.type) + ' — ' + scPhenomenaStateLabel(b.state) +
+                        (Array.isArray(b.labels) && b.labels.length ? '<br>' + b.labels.join('<br>') : '');
+                    markers.push(L.marker([anchor[1], anchor[0]], {
+                        pane: 'supercellPane', interactive: true,
+                        icon: L.divIcon({ className: '', iconSize: [16, 16], iconAnchor: [8, 8], html: scPhenomenaMarkerHtml(b) })
+                    }).bindTooltip(tip, { direction: 'top', opacity: 0.95 }));
+                }
             }
-            var labels = Array.isArray(b.labels) && b.labels.length ? b.labels.join(' · ') : '';
+            var hasLabels = Array.isArray(b.labels) && b.labels.length;
             var proxy = scPhenomenaIsProxy(b.evidence);
-            html += '<div class="sc-phenomena-row">' +
+            var detailHtml = hasLabels ? b.labels.join('<br>') : '';
+            if (proxy) detailHtml += (detailHtml ? '<br>' : '') + '<i style="color:#94a3b8;">(proxy riflettività)</i>';
+            var detailText = scPhenomenaDetailText(b);
+            html += '<div class="sc-phenomena-row"' + (detailText ? ' title="' + detailText.replace(/"/g, '&quot;') + '"' : '') + '>' +
                 '<span class="sc-phenomena-glyph" style="color:' + color + ';">' + glyph + '</span>' +
-                '<span><b>' + scPhenomenaTypeLabel(b.type) + '</b> · ' + (b.state || '—') +
-                (labels ? ' — ' + labels : '') +
-                (proxy ? ' <i style="color:#94a3b8;">(proxy riflettività)</i>' : '') +
-                (match ? ' · candidato a ' + match.distance_km + ' km' : '') +
-                '</span></div>';
+                '<span class="sc-phenomena-head"><b>' + scPhenomenaTypeLabel(b.type) + '</b> · ' + scPhenomenaStateLabel(b.state) +
+                (match ? ' · ' + match.distance_km + ' km' : '') + '</span>' +
+                '<div class="sc-phenomena-detail">' + detailHtml + '</div></div>';
         }
         if (badges.length && box) {
             box.innerHTML = '<div class="legend-title" style="padding:4px 10px 0 10px;">Fenomeni radar (badge)</div>' + html;
             box.style.display = 'block';
         }
+        scEnsurePhenomenaClickHandler();
         if (markers.length) scPhenomenaLayer = L.layerGroup(markers).addTo(map);
         var sum = scPhenomenaSummary(badges);
         if (sum.total > 0) {
             var sm = scRadarEl('status-msg');
             if (sm) sm.innerText = 'Fenomeni attivi: ' + sum.total + ' (' + sum.hail + ' grandine, ' + sum.vortex + ' rotazione)';
         }
+        scRefreshMarkerIcons();
     }
 
     function scRedrawDerived() {

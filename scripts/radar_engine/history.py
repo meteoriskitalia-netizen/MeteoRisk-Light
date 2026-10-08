@@ -63,7 +63,8 @@ def slot_name(iso):
 
 
 def _index_empty():
-    return {"as_of": None, "window_slots": WINDOW_SLOTS, "slots": []}
+    return {"as_of": None, "window_slots": WINDOW_SLOTS, "next_uid": 1,
+            "slots": []}
 
 
 def read_index(root):
@@ -79,8 +80,15 @@ def read_index(root):
         window = int(data.get("window_slots") or WINDOW_SLOTS)
     except (TypeError, ValueError):
         window = WINDOW_SLOTS
+    try:
+        next_uid = int(data.get("next_uid") or 1)
+    except (TypeError, ValueError):
+        next_uid = 1
+    if next_uid < 1:
+        next_uid = 1
     slots = sorted({str(s) for s in data["slots"] if isinstance(s, str)})
-    return {"as_of": data.get("as_of"), "window_slots": window, "slots": slots}
+    return {"as_of": data.get("as_of"), "window_slots": window,
+            "next_uid": next_uid, "slots": slots}
 
 
 def read_slot(root, slot):
@@ -114,18 +122,30 @@ def _atomic_write_text(path, text):
         raise models.OutputError("atomic_write_failed:{}".format(exc)) from exc
 
 
-def _write_index(root, slots, window_slots):
-    """Riscrive index.json con slot ordinati (no-op se gia' aggiornato)."""
+def _write_index(root, slots, window_slots, next_uid=None):
+    """Riscrive index.json con slot ordinati (no-op se gia' aggiornato).
+
+    next_uid=None preserva il contatore corrente (fallback 1 se assente)."""
     slots = sorted({str(s) for s in slots})
     window_slots = int(window_slots)
     current = read_index(root)
+    if next_uid is None:
+        next_uid = current["next_uid"]
+    try:
+        next_uid = int(next_uid)
+    except (TypeError, ValueError):
+        next_uid = current["next_uid"]
+    if next_uid < 1:
+        next_uid = 1
     if (os.path.exists(os.path.join(root, INDEX_NAME))
             and current["slots"] == slots
-            and current["window_slots"] == window_slots):
+            and current["window_slots"] == window_slots
+            and current["next_uid"] == next_uid):
         return current
     payload = {
         "as_of": models.utcnow_iso(),
         "window_slots": window_slots,
+        "next_uid": next_uid,
         "slots": slots,
     }
     _atomic_write_text(os.path.join(root, INDEX_NAME),
@@ -133,13 +153,14 @@ def _write_index(root, slots, window_slots):
     return payload
 
 
-def merge_slot(root, slot_payload):
+def merge_slot(root, slot_payload, next_uid=None):
     """Scrive/sovrascrive slots/<slot>.json (atomico) e aggiorna l'index."""
     slot = str(slot_payload["slot"])
     _atomic_write_text(os.path.join(root, SLOTS_DIR, slot + ".json"),
                        json.dumps(_safe(slot_payload), ensure_ascii=False))
     index = read_index(root)
-    _write_index(root, list(index["slots"]) + [slot], index["window_slots"])
+    _write_index(root, list(index["slots"]) + [slot], index["window_slots"],
+                 next_uid)
 
 
 def prune_slots(root, keep=WINDOW_SLOTS):
@@ -199,7 +220,114 @@ def _safe(value):
     return str(value)
 
 
-def _track_entry(track, latest_frame_index, track_type):
+def haversine_km(lon1, lat1, lon2, lat2):
+    """Distanza haversine pura in km tra due punti lon/lat (gradi)."""
+    radius = 6371.0088
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlam = math.radians(lon2 - lon1)
+    a = (math.sin(dphi / 2.0) ** 2
+         + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2.0) ** 2)
+    return 2.0 * radius * math.asin(min(1.0, math.sqrt(a)))
+
+
+def _lonlat(payload):
+    """(lon, lat) finiti da un dict con chiave 'lonlat', None se assenti."""
+    coord = payload.get("lonlat") if isinstance(payload, dict) else None
+    if not isinstance(coord, (list, tuple)) or len(coord) != 2:
+        return None
+    try:
+        lon = float(coord[0])
+        lat = float(coord[1])
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(lon) and math.isfinite(lat)):
+        return None
+    return lon, lat
+
+
+def _dt_minutes(new_ms, prev_ms):
+    """Minuti assoluti tra due timestamp; 5.0 se assenti/non finiti."""
+    try:
+        new = float(new_ms)
+        prev = float(prev_ms)
+    except (TypeError, ValueError):
+        return 5.0
+    if not (math.isfinite(new) and math.isfinite(prev)):
+        return 5.0
+    return abs(new - prev) / 60000.0
+
+
+def _previous_slot(slots, current):
+    """Ultimo slot dell'index strettamente precedente a current (o None)."""
+    earlier = [s for s in slots if s < current]
+    return earlier[-1] if earlier else None
+
+
+def _apply_uids(payload, prev_payload, next_uid):
+    """Assegna uid stabili alle track e track_uid alle supercelle.
+
+    Associa ogni track nuova alla track piu' vicina (greedy nearest-first)
+    dello slot precedente con lo stesso track_type e uid presente, entro una
+    soglia di continuita' dipendente dal passo temporale. Ritorna il nuovo
+    next_uid (avanzato solo per le nuove identita')."""
+    tracks = payload.get("tracks") or []
+    prev_tracks = (prev_payload or {}).get("tracks") or []
+    dt_min = _dt_minutes(payload.get("radar_timestamp_ms"),
+                         (prev_payload or {}).get("radar_timestamp_ms"))
+    max_km = min(120.0, 20.0 + 3.0 * dt_min)
+
+    candidates = []
+    for new_idx, new_track in enumerate(tracks):
+        new_coord = _lonlat(new_track)
+        if new_coord is None:
+            continue
+        for prev_idx, prev_track in enumerate(prev_tracks):
+            if prev_track.get("track_type") != new_track.get("track_type"):
+                continue
+            prev_uid = prev_track.get("uid")
+            if prev_uid is None:
+                continue
+            prev_coord = _lonlat(prev_track)
+            if prev_coord is None:
+                continue
+            dist = haversine_km(new_coord[0], new_coord[1],
+                                prev_coord[0], prev_coord[1])
+            if dist <= max_km:
+                candidates.append((dist, new_idx, prev_idx, prev_uid))
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    assigned = {}
+    used_new = set()
+    used_prev = set()
+    for _dist, new_idx, prev_idx, prev_uid in candidates:
+        if new_idx in used_new or prev_idx in used_prev:
+            continue
+        assigned[new_idx] = prev_uid
+        used_new.add(new_idx)
+        used_prev.add(prev_idx)
+
+    for new_idx, new_track in enumerate(tracks):
+        if new_idx in assigned:
+            new_track["uid"] = assigned[new_idx]
+        else:
+            new_track["uid"] = next_uid
+            next_uid += 1
+
+    uid_by_key = {}
+    for track in tracks:
+        key = (track.get("track_type"), track.get("track_id"))
+        if track.get("track_id") is None or track.get("uid") is None:
+            continue
+        uid_by_key.setdefault(key, track["uid"])
+    for supercell in payload.get("supercells") or []:
+        key = (supercell.get("track_type"), supercell.get("track_id"))
+        supercell["track_uid"] = uid_by_key.get(key)
+    return next_uid
+
+
+def _track_entry(track, latest_frame_index, track_type, uid=None):
     """Voce track sul frame piu' recente; None se non viva a quel frame."""
     if latest_frame_index is None:
         return None
@@ -212,6 +340,7 @@ def _track_entry(track, latest_frame_index, track_type):
         return None
     motion = getattr(track, "motion", None) or {}
     return {
+        "uid": _as_int(uid),
         "track_id": _as_int(getattr(track, "track_id", None)),
         "track_type": track_type,
         "status": getattr(track, "status", None),
@@ -235,6 +364,7 @@ def _supercell_entry(candidate):
         "supercell_id": candidate.get("supercell_id"),
         "track_id": _as_int(candidate.get("track_id")),
         "track_type": candidate.get("track_type"),
+        "track_uid": None,
         "ssi": _as_int(candidate.get("ssi")),
         "level": candidate.get("level"),
         "phase": candidate.get("phase"),
@@ -304,8 +434,13 @@ def build_history(bundle_like, out_root, window_slots=WINDOW_SLOTS):
     if _slot_valid(read_slot(root, slot), slot):
         index = read_index(root)
         if slot not in index["slots"] or index["window_slots"] != int(window_slots):
-            _write_index(root, list(index["slots"]) + [slot], window_slots)
+            _write_index(root, list(index["slots"]) + [slot], window_slots,
+                         index["next_uid"])
     else:
-        merge_slot(root, payload)
+        index = read_index(root)
+        prev_slot = _previous_slot(index["slots"], slot)
+        prev_payload = read_slot(root, prev_slot) if prev_slot else None
+        next_uid = _apply_uids(payload, prev_payload, index["next_uid"])
+        merge_slot(root, payload, next_uid)
     prune_slots(root, keep=window_slots)
     return read_index(root)

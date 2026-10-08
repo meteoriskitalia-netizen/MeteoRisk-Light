@@ -43,8 +43,10 @@ function extractFn(name) {
 
 const PURE_FNS = [
   'scTrailKey', 'scHaversineKm', 'scBearingDeg', 'scAssembleTrails',
+  'scTrailStepOk', 'scTrailWindow', 'scTrailSegments', 'scTrailUidIndex',
   'scBuildForecastCone', 'scMatchBadgeCandidate', 'scPhenomenaSummary',
-  'scPhenomenaGlyph', 'scPhenomenaIsProxy',
+  'scPhenomenaGlyph', 'scPhenomenaIsProxy', 'scPhenomenaStateLabel',
+  'scPhenomenaDetailText',
   'scForecastConfidenceColor', 'scForecastConfidenceOpacity',
 ];
 let pure = '';
@@ -125,6 +127,114 @@ vm.runInNewContext(pure, ctx);
   ok('B6: storm_object id diverso e 1 punto -> filtrato', !('storm_object#1' in trails));
   ok('B7: max_dbz propagato nel punto', t1 && t1[2].max_dbz === 50);
   ok('B8: scTrailKey distingue i track_type', ctx.scTrailKey(1, 'cell') !== ctx.scTrailKey(1, 'storm_object'));
+
+  // UID stabile: chiave preferita quando presente; fallback per slot vecchi.
+  ok('B9: scTrailKey preferisce uid (voce-track) -> u#7',
+    ctx.scTrailKey({ uid: 7, track_id: 1, track_type: 'cell' }) === 'u#7');
+  ok('B10: scTrailKey fallback track_type#id senza uid',
+    ctx.scTrailKey({ track_id: 1, track_type: 'cell' }) === 'cell#1' &&
+    ctx.scTrailKey({ track_id: 2, track_type: 'storm_object' }) === 'storm_object#2');
+
+  // Due slot con lo STESSO uid ma track_id diversi -> stessa scia per uid.
+  {
+    const s1 = { radar_timestamp_ms: 1000, tracks: [
+      { uid: 5, track_id: 1, track_type: 'cell', lonlat: [12.0, 42.0] } ] };
+    const s2 = { radar_timestamp_ms: 2000, tracks: [
+      { uid: 5, track_id: 9, track_type: 'cell', lonlat: [12.1, 42.0] } ] };
+    const trUid = ctx.scAssembleTrails([s1, s2]);
+    ok('B11: stesso uid (track_id diverso) -> scia unica u#5 di 2 punti',
+      trUid['u#5'] && trUid['u#5'].length === 2 &&
+      trUid['u#5'][0].lonlat[0] === 12.0 && trUid['u#5'][1].lonlat[0] === 12.1);
+  }
+  // Due uid diversi con lo STESSO track_id grezzo -> nessuno stitching.
+  {
+    const s1 = { radar_timestamp_ms: 1000, tracks: [
+      { uid: 5, track_id: 1, track_type: 'cell', lonlat: [12.0, 42.0] } ] };
+    const s2 = { radar_timestamp_ms: 2000, tracks: [
+      { uid: 5, track_id: 1, track_type: 'cell', lonlat: [12.1, 42.0] },
+      { uid: 7, track_id: 1, track_type: 'cell', lonlat: [13.0, 43.0] } ] };
+    const s3 = { radar_timestamp_ms: 3000, tracks: [
+      { uid: 7, track_id: 1, track_type: 'cell', lonlat: [13.1, 43.0] } ] };
+    const trSep = ctx.scAssembleTrails([s1, s2, s3]);
+    ok('B12: uid diversi con stesso track_id -> due scie separate (no stitching)',
+      trSep['u#5'] && trSep['u#5'].length === 2 &&
+      trSep['u#7'] && trSep['u#7'].length === 2 &&
+      trSep['u#5'].every(p => p.lonlat[0] < 13) && trSep['u#7'].every(p => p.lonlat[0] >= 13));
+  }
+  // Validazione: punti non finiti / fuori range Italia scartati.
+  {
+    const sv1 = { radar_timestamp_ms: 1000, tracks: [
+      { track_id: 1, track_type: 'cell', lonlat: [12.0, 42.0] },
+      { track_id: 2, track_type: 'cell', lonlat: [999, 42.0] },
+      { track_id: 3, track_type: 'cell', lonlat: [12.0, NaN] },
+      { track_id: 4, track_type: 'cell', lonlat: [2.0, 42.0] },
+    ] };
+    const sv2 = { radar_timestamp_ms: 2000, tracks: [
+      { track_id: 1, track_type: 'cell', lonlat: [12.05, 42.0] },
+      { track_id: 2, track_type: 'cell', lonlat: [12.0, 42.0] },
+      { track_id: 3, track_type: 'cell', lonlat: [12.0, 42.0] },
+      { track_id: 4, track_type: 'cell', lonlat: [12.0, 42.0] },
+    ] };
+    const cv = ctx.scAssembleTrails([sv1, sv2]);
+    ok('B13: scarta punti fuori range/non finiti (cell#2/#3/#4 esclusi, cell#1 ok)',
+      cv['cell#1'] && cv['cell#1'].length === 2 &&
+      !('cell#2' in cv) && !('cell#3' in cv) && !('cell#4' in cv));
+  }
+  // Gate di continuità sul singolo passo.
+  ok('B14: scTrailStepOk true per moto plausibile (~8 km in 5 min)',
+    ctx.scTrailStepOk({ lonlat: [12.0, 42.0], t: 0 }, { lonlat: [12.1, 42.0], t: 300000 }) === true);
+  ok('B15: scTrailStepOk false per salto enorme ([8,45]->[17,38] in 5 min)',
+    ctx.scTrailStepOk({ lonlat: [8, 45], t: 0 }, { lonlat: [17, 38], t: 300000 }) === false);
+  ok('B16: scTrailStepOk false con coordinate non valide',
+    ctx.scTrailStepOk({ lonlat: [12.0, 42.0] }, { lonlat: [NaN, 42.0] }) === false);
+
+  // Indice uid: track_type#track_id -> u#uid (slot più recente vince).
+  {
+    const idx = ctx.scTrailUidIndex([
+      { radar_timestamp_ms: 1000, tracks: [{ uid: 5, track_id: 1, track_type: 'cell', lonlat: [12.0, 42.0] }] },
+      { radar_timestamp_ms: 2000, tracks: [{ uid: 6, track_id: 1, track_type: 'cell', lonlat: [12.1, 42.0] }] },
+    ]);
+    ok('B17: scTrailUidIndex mappa cell#1 -> u#6 (ultimo slot)', idx['cell#1'] === 'u#6');
+  }
+
+  // Finestra temporale 2h (120 min) e fallback senza timestamp.
+  {
+    const ptsW = [];
+    for (let i = 0; i < 40; i++) ptsW.push({ lonlat: [12 + i * 0.01, 42], t: i * 600000 });
+    const win = ctx.scTrailWindow(ptsW, 120 * 60000);
+    ok('B18: scTrailWindow tiene solo t >= ultimo-120min (13 punti: i=27..39)',
+      win.length === 13 && win[0].t === 27 * 600000 && win[win.length - 1].t === 39 * 600000,
+      String(win.length));
+    const noT = [];
+    for (let i = 0; i < 40; i++) noT.push({ lonlat: [12, 42] });
+    ok('B19: scTrailWindow senza t -> fallback slice(-25)', ctx.scTrailWindow(noT, 120 * 60000).length === 25);
+    ok('B20: scTrailWindow(null) -> array vuoto', Array.isArray(ctx.scTrailWindow(null, 120 * 60000)) &&
+      ctx.scTrailWindow(null, 120 * 60000).length === 0);
+  }
+
+  // Segmenti contigui: spezzati solo da salti reali o coordinate invalide.
+  {
+    const segPts = [
+      { lonlat: [12.00, 42.0], t: 0 },
+      { lonlat: [12.05, 42.0], t: 300000 },
+      { lonlat: [12.10, 42.0], t: 600000 },
+      { lonlat: [17.00, 38.0], t: 900000 },
+      { lonlat: [17.05, 38.0], t: 1200000 },
+    ];
+    const segs = ctx.scTrailSegments(segPts);
+    ok('B21: scTrailSegments -> 2 segmenti contigui al salto reale (3 + 2 punti)',
+      segs.length === 2 && segs[0].length === 3 && segs[1].length === 2, String(segs.length));
+    const segsBad = ctx.scTrailSegments([
+      { lonlat: [12, 42], t: 0 },
+      { lonlat: [12.05, 42], t: 300000 },
+      { lonlat: [NaN, 42], t: 600000 },
+      { lonlat: [12.1, 42], t: 900000 },
+      { lonlat: [12.15, 42], t: 1200000 },
+    ]);
+    ok('B22: coordinata non valida spezza il segmento (2 segmenti da 2 punti)',
+      segsBad.length === 2 && segsBad[0].length === 2 && segsBad[1].length === 2);
+    ok('B23: scTrailSegments(null) -> array vuoto', ctx.scTrailSegments(null).length === 0);
+  }
 }
 
 // ---------- C. BADGE -> CANDIDATO (soglia 30 km) ----------
@@ -153,6 +263,15 @@ vm.runInNewContext(pure, ctx);
   ok('D3: proxy via lightning.note AFA', ctx.scPhenomenaIsProxy({ lightning: { note: 'AFA proxy (no flash puntuali)' } }) === true);
   ok('D4: proxy via source MLI', ctx.scPhenomenaIsProxy({ source: 'MLI' }) === true);
   ok('D5: nessun proxy con evidence pulita (fonte DPC)', ctx.scPhenomenaIsProxy({ source: 'dpc', lightning: { note: 'flash DPC' } }) === false);
+  ok('D6: state label SUSPECT->Sospetto, CORROBORATED->Confermato',
+    ctx.scPhenomenaStateLabel('SUSPECT') === 'Sospetto' &&
+    ctx.scPhenomenaStateLabel('CORROBORATED') === 'Confermato');
+  ok('D7: state label ignoto -> stringa originale; assente -> —',
+    ctx.scPhenomenaStateLabel('FOO') === 'FOO' && ctx.scPhenomenaStateLabel(null) === '—');
+  ok('D8: detail text unisce labels con · e nota proxy; null -> vuoto',
+    ctx.scPhenomenaDetailText({ labels: ['a', 'b'] }) === 'a · b' &&
+    ctx.scPhenomenaDetailText({ labels: ['a'], evidence: { source: 'MLI' } }) === 'a — (proxy riflettività)' &&
+    ctx.scPhenomenaDetailText(null) === '');
 }
 
 // ---------- E. GRACEFUL: nessun throw su input malformati ----------
@@ -195,12 +314,37 @@ vm.runInNewContext(pure, ctx);
   ok('F6: timer coordinato: refreshScAll su SC_REFRESH_MS (5 min)',
     /scRefreshTimer = setInterval\(refreshScAll, SC_REFRESH_MS\);/.test(src) &&
     /var SC_REFRESH_MS = 5 \* 60 \* 1000;/.test(src));
-  ok('F7: trail tratteggiato con gradiente di opacità verso il presente',
-    /dashArray: '4,6'[\s\S]{0,120}opacity: Math\.round\(\(0\.2 \+ 0\.6 \* frac\)/.test(src));
+  ok('F7: trail continuo (polilinea per segmento, dashArray 6,6, opacity 0.55, niente frac)',
+    /L\.polyline\(latlngs, \{ pane: 'trailPane', color: color, weight: 2, dashArray: '6,6', opacity: 0\.55, interactive: false \}\)/.test(src) &&
+    !/0\.2 \+ 0\.6 \* frac/.test(src));
   ok('F8: renderScRadar ridisegna gli strati derivati (scRedrawDerived)',
     /if \(markers\.length\) \{[\s\S]{0,120}scRadarLayer = L\.layerGroup\(markers\)\.addTo\(map\);[\s\S]{0,80}scRedrawDerived\(\);/.test(src));
   ok('F9: badge glyph HAIL=▲ / VORTEX=↻ nel rendering fenomeni',
     /function scPhenomenaMarkerHtml[\s\S]{0,600}scPhenomenaGlyph\(badge\)/.test(src));
+
+  const rr = extractFn('renderScRadar');
+  ok('F10: renderScRadar costruisce i pennant (SVG) e NON usa L.circleMarker',
+    /scBuildCandidateMarkers|scPennantIcon/.test(rr) && !/L\.circleMarker/.test(rr) &&
+    /function scPennantIcon\([\s\S]*?<svg/.test(src));
+  ok('F11: scRefreshMarkerIcons ricostruisce i pennant e scRedrawPhenomena lo invoca',
+    /function scRefreshMarkerIcons\(\)/.test(src) &&
+    /function scRedrawPhenomena\([\s\S]{0,4000}scRefreshMarkerIcons\(\);/.test(src));
+  ok('F12: scTrailStepOk applicato in scTrailSegments, invocato da scRedrawTrails',
+    /function scTrailSegments\([\s\S]{0,900}scTrailStepOk\(/.test(src) &&
+    /function scRedrawTrails\([\s\S]{0,1600}scTrailSegments\(/.test(src));
+  ok('F13: scRedrawPhenomena usa .sc-phenomena-detail e scPhenomenaStateLabel; niente labels.join nella riga compatta',
+    /sc-phenomena-detail/.test(extractFn('scRedrawPhenomena')) &&
+    /scPhenomenaStateLabel\(/.test(extractFn('scRedrawPhenomena')) &&
+    !/labels\.join\(' · '\)/.test(extractFn('scRedrawPhenomena')));
+  ok('F14: scRedrawTrails accumula segmenti contigui e NON crea polyline per-coppia',
+    /scTrailSegments\(/.test(extractFn('scRedrawTrails')) &&
+    /dashArray: '6,6'/.test(extractFn('scRedrawTrails')) &&
+    !/recent\[i \+ 1\]/.test(extractFn('scRedrawTrails')));
+  ok('F15: finestra temporale 120 min applicata in scRedrawTrails (scTrailWindow pts,120*60000)',
+    /scTrailWindow\(pts, 120 \* 60000\)/.test(src));
+  ok('F16: toggle espansione delegato idempotente su #sc-phenomena',
+    /function scEnsurePhenomenaClickHandler\([\s\S]{0,700}data-sc-click-bound[\s\S]{0,500}classList\.toggle\('open'\)/.test(src) &&
+    /function scRedrawPhenomena\([\s\S]{0,4000}scEnsurePhenomenaClickHandler\(\);/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

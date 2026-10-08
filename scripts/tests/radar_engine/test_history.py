@@ -85,7 +85,8 @@ def test_slot_name_floor_5min():
 def test_read_absent_returns_defaults(tmp_path):
     root = str(tmp_path / "history")
     index = history.read_index(root)
-    assert index == {"as_of": None, "window_slots": 25, "slots": []}
+    assert index == {"as_of": None, "window_slots": 25, "next_uid": 1,
+                     "slots": []}
     assert history.read_slot(root, SLOT0) is None
     os.makedirs(root)
     with open(os.path.join(root, "index.json"), "w", encoding="utf-8") as fh:
@@ -281,3 +282,129 @@ def test_build_history_without_scan_returns_none(tmp_path):
     b = models.EngineBundle("ok", "2026-04-24T10:40:00Z", output.SOURCE_LABEL)
     assert history.build_history(b, root) is None
     assert not os.path.exists(root)               # nessuna cartella creata
+
+
+# ---------------------------------------------------------------------------
+# uid stabile cross-run: continuita' delle tracce tra slot consecutivi
+# ---------------------------------------------------------------------------
+def _bundle_at(lon, lat, ts_ms, track_id=1):
+    """Bundle con 1 track viva a (lon, lat) all'ultimo frame + SC coerente."""
+    c1 = make_cell(lon, lat, ts_ms - 300000, cell_id="c1-{}-{}".format(track_id, ts_ms))
+    c2 = make_cell(lon, lat, ts_ms, cell_id="c2-{}-{}".format(track_id, ts_ms))
+    tr = make_track([c1, c2], track_id)
+    tr.motion = {"velocity_kmh": 30.0, "direction_toward_deg": 90.0}
+    b = models.EngineBundle("ok", "2026-04-24T10:40:00Z", output.SOURCE_LABEL)
+    b.radar_timestamp_iso = c2.timestamp_iso
+    b.radar_timestamp_ms = ts_ms
+    b.cells_by_frame = [[c1], [c2]]
+    b.tracks = [tr]
+    b.supercells = [dict(_SUPERCELL, track_id=track_id)]
+    return b
+
+
+def _bundle_multi(specs, ts_ms):
+    """Bundle con piu' track vive (specs = [(lon, lat, track_id), ...])."""
+    first, last, tracks = [], [], []
+    for i, (lon, lat, track_id) in enumerate(specs):
+        c1 = make_cell(lon, lat, ts_ms - 300000, cell_id="m1-{}-{}".format(i, ts_ms))
+        c2 = make_cell(lon, lat, ts_ms, cell_id="m2-{}-{}".format(i, ts_ms))
+        first.append(c1)
+        last.append(c2)
+        tr = make_track([c1, c2], track_id)
+        tr.motion = {"velocity_kmh": 30.0, "direction_toward_deg": 90.0}
+        tracks.append(tr)
+    b = models.EngineBundle("ok", "2026-04-24T10:40:00Z", output.SOURCE_LABEL)
+    b.radar_timestamp_iso = last[0].timestamp_iso if last else None
+    b.radar_timestamp_ms = ts_ms
+    b.cells_by_frame = [first, last]
+    b.tracks = tracks
+    b.supercells = []
+    return b
+
+
+def _uid(root, slot):
+    return history.read_slot(root, slot)["tracks"][0]["uid"]
+
+
+def test_build_slot_payload_has_uid_placeholders():
+    payload = history.build_slot_payload(_bundle())
+    assert "uid" in payload["tracks"][0]
+    assert payload["tracks"][0]["uid"] is None    # assegnato in build_history
+    assert "track_uid" in payload["supercells"][0]
+    assert payload["supercells"][0]["track_uid"] is None
+
+
+def test_uid_stable_when_cell_moves_little(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0), root)
+    history.build_history(_bundle_at(12.05, 41.0, T0 + 300000), root)
+    slot0 = history.slot_name(_slot_iso(0))
+    slot1 = history.slot_name(_slot_iso(300))
+    assert _uid(root, slot0) == _uid(root, slot1)
+    assert history.read_index(root)["next_uid"] == 2
+
+
+def test_uid_differs_for_distant_same_raw_id(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0, track_id=1), root)
+    history.build_history(_bundle_at(30.0, 41.0, T0 + 300000, track_id=1), root)
+    slot0 = history.slot_name(_slot_iso(0))
+    slot1 = history.slot_name(_slot_iso(300))
+    assert _uid(root, slot0) != _uid(root, slot1)   # niente stitching
+
+
+def test_uid_new_when_jump_beyond_threshold(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0, track_id=1), root)
+    history.build_history(_bundle_at(12.5, 41.0, T0 + 300000, track_id=1), root)
+    slot0 = history.slot_name(_slot_iso(0))
+    slot1 = history.slot_name(_slot_iso(300))
+    assert _uid(root, slot0) != _uid(root, slot1)
+
+
+def test_uid_monotonic_and_next_uid_persists(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0), root)
+    assert history.read_index(root)["next_uid"] == 2
+    history.build_history(
+        _bundle_multi([(30.0, 41.0, 1), (31.0, 41.0, 2)], T0 + 300000), root)
+    slot1 = history.slot_name(_slot_iso(300))
+    uids = [t["uid"] for t in history.read_slot(root, slot1)["tracks"]]
+    assert uids == sorted(uids) and len(set(uids)) == 2
+    assert history.read_index(root)["next_uid"] == 4
+    history.build_history(_bundle_at(12.0, 41.0, T0 + 600000), root)
+    slot2 = history.slot_name(_slot_iso(600))
+    assert _uid(root, slot2) == 4
+    assert history.read_index(root)["next_uid"] == 5
+
+
+def test_build_history_idempotent_keeps_uid_and_next_uid(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0), root)
+    slot0 = history.slot_name(_slot_iso(0))
+    uid_before = _uid(root, slot0)
+    next_before = history.read_index(root)["next_uid"]
+    history.build_history(_bundle_at(12.9, 41.0, T0), root)   # stesso slot
+    assert _uid(root, slot0) == uid_before
+    assert history.read_index(root)["next_uid"] == next_before
+
+
+def test_supercell_track_uid_matches_track(tmp_path):
+    root = str(tmp_path / "history")
+    history.build_history(_bundle_at(12.0, 41.0, T0), root)
+    payload = history.read_slot(root, history.slot_name(_slot_iso(0)))
+    track = payload["tracks"][0]
+    assert payload["supercells"][0]["track_uid"] == track["uid"]
+    assert track["uid"] == 1
+
+
+def test_previous_slot_without_uid_assigns_new(tmp_path):
+    root = str(tmp_path / "history")
+    legacy = _slot_payload(history.slot_name(_slot_iso(0)), _slot_iso(0))
+    legacy["tracks"] = [{"track_id": 1, "track_type": "cell",
+                         "lonlat": [12.0, 41.0]}]        # slot vecchio: senza uid
+    history.merge_slot(root, legacy)
+    history.build_history(_bundle_at(12.05, 41.0, T0 + 300000), root)
+    slot1 = history.slot_name(_slot_iso(300))
+    assert _uid(root, slot1) == 1
+    assert history.read_index(root)["next_uid"] == 2
