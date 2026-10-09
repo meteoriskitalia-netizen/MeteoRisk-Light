@@ -314,29 +314,42 @@ def _phase2_evaluate(bundle, config):
         warnings.append("phase2 structure: no frames")
 
     # --- FULMINI: slot scaricati UNA VOLTA, strike in cache per slot --------
+    # Scansione all'INDIETRO fino a max_backoff_steps: si raccolgono gli slot
+    # pubblicati PIU' RECENTI fino a window_slots disponibili, cosi' un ritardo
+    # di pubblicazione oltre la finestra base non azzera il layer fulmini.
     try:
         window = max(2, min(int(lcfg.get("window_slots", 4)),
                             lightning.LIGHTNING_TREND_WINDOW))
     except (TypeError, ValueError):
         window = lightning.LIGHTNING_TREND_WINDOW
+    try:
+        max_backoff = max(0, int(lcfg.get("max_backoff_steps", 36)))
+    except (TypeError, ValueError):
+        max_backoff = 36
     slot_cache = {}
-    ltg_slots = []
-    for k in range(window - 1, -1, -1):   # dal piu' vecchio al recente
+    ltg_slots_recent = []
+    for k in range(0, max_backoff + 1):   # dal piu' recente all'indietro
+        if len(ltg_slots_recent) >= window:
+            break
         epoch = lightning.ltg_epoch_floor(backoff_steps=k)
         if epoch in slot_cache:
-            ltg_slots.append(slot_cache[epoch])
-            continue
-        try:
-            slot_cache[epoch] = lightning.fetch_ltg(epoch_ms=epoch)["strikes"]
-        except lightning.LightningFetchError as exc:
-            warnings.append(f"phase2 lightning slot-{k}: {exc}")
-            slot_cache[epoch] = None
-        except Exception as exc:          # guasto imprevisto -> slot assente
-            warnings.append(f"phase2 lightning failed: {exc}")
-            slot_cache[epoch] = None
-        ltg_slots.append(slot_cache[epoch])
-    if all(s is None for s in ltg_slots):
-        warnings.append("phase2 lightning: no slots available")
+            slot = slot_cache[epoch]
+        else:
+            try:
+                slot = lightning.fetch_ltg(epoch_ms=epoch)["strikes"]
+            except lightning.LightningFetchError as exc:
+                warnings.append(f"phase2 lightning slot-{k}: {exc}")
+                slot = None
+            except Exception as exc:      # guasto imprevisto -> slot assente
+                warnings.append(f"phase2 lightning failed: {exc}")
+                slot = None
+            slot_cache[epoch] = slot
+        if slot is not None:
+            ltg_slots_recent.append(slot)
+    # dal piu' vecchio al piu' recente (ordine atteso da lightning_spatial_score)
+    ltg_slots = list(reversed(ltg_slots_recent))
+    if not ltg_slots:
+        warnings.append("phase2 lightning: no slots available (wider window)")
 
     # --- LAYER PER CANDIDATO: hook/struttura/fulmini/ambiente ---------------
     # Cache condivise: env per bucket (0.1 gradi), fulmini per slot epoch ->

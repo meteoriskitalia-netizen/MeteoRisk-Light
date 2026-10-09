@@ -6,17 +6,17 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.0
+## Versione attiva: 1.2.1.0
 
-- File applicativo: `mri-light-1.2.0.html` (`APP_VERSION = '1.2.0'`, changelog
-  entry `{ version: '1.2.0', date: '2026-10-08' }`).
-- Contenuto della 1.2.0: nowcasting e tracking radar (archivio rolling 2h su branch
-  `radar-history` con tracce storiche nel client, previsione percorso/intensita' fino a
-  2h con cono di incertezza e confidenza), marker supercelle ridisegnati (pennant SVG
-  direzionale con severita' SSI e stato grandine/rotazione), engine di verifica fenomeni
-  (grandine/rotazione) con provider fulmini MLI EUMETSAT (WMS anonimo, CC-BY-4.0),
-  badge fenomeni nel client con legenda aggiornata e guardia anti-commit-churn sugli
-  output phenomena.
+- File applicativo: `mri-light-1.2.1.0.html` (`APP_VERSION = '1.2.1.0'`, changelog
+  entry `{ version: '1.2.1.0', date: '2026-10-09' }`).
+- Contenuto della 1.2.1.0 (hotfix sopra la 1.2.0): legibilita' dei marker/badge fenomeni
+  (glyph con contorno e sfondo, dimensioni leggibili), direzione e velocita' dei
+  candidati supercella coerenti (pennant, cono e testo "verso" dalla stessa fonte
+  fit/motion), terminologia allineata ("rotazione" -> "struttura asimmetrica (proxy
+  riflettivita', senza Doppler)"), gate di organizzazione (`organization_organized`,
+  Organization Score >= 56) sul candidato supercella, backoff fulmini ampliato
+  (`max_backoff_steps = 36`, scansione indietro fino a 3h).
 - Le release vivono in `releases\MeteoRisk-Light-X.Y.Z-GitHub-Production-Hardening\`.
 - Regola dello storico: si PRESERVA. Mai rinominare una cartella di release esistente;
   per una nuova versione si crea una nuova cartella copiando lo stato attivo e bumpando
@@ -52,9 +52,9 @@ fa da backup. Nessuna garanzia di latenza fissa sui dati.
 Verifiche di riferimento (eseguite su questa release):
 
 ```bash
-python -m pytest scripts\tests\radar_engine -q    # 140 test
-python -m pytest scripts\tests\phenomena -q       # 73 test
-python -m pytest scripts\tests -q                 # 362 test (totale)
+python -m pytest scripts\tests\radar_engine -q    # 153 test
+python -m pytest scripts\tests\phenomena -q       # 80 test
+python -m pytest scripts\tests -q                 # 382 test (totale)
 python -m py_compile scripts\satellite_engine.py  # OK
 python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 4 workflow
 node --test "scripts/tests/**/*.mjs"              # suite .mjs: 13 file, 13 PASS
@@ -75,7 +75,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.1.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify}.yml` — i 4 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

@@ -161,7 +161,8 @@ def _integral_ssi(track, cfg):
     level = classify_level(ssi, cfg)
     gates = _gates(track, cfg)
     candidate = (ssi >= float(cfg.get("candidate_ssi", 65.0))
-                 and gates["intensity_core_dbz"] and gates["min_frames"])
+                 and gates["intensity_core_dbz"] and gates["min_frames"]
+                 and gates["organization_organized"])
     return ssi, level, candidate, gates, components, weights
 
 

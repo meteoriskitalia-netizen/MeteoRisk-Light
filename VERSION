@@ -1,3 +1,14 @@
+MeteoRisk Light - 1.2.1.0 - LEGIBILITY + COERENZA DIREZIONE/VELOCITA' + GATE ORGANIZZAZIONE + BACKOFF FULMINI (bump da 1.2.0)
+MAJOR=1
+MINOR=2
+PATCH=1
+BUILD=0
+RELEASE_TYPE=release
+DATE=2026-10-09
+NOTE=hotfix 1.2.1.0 (bump da 1.2.0): legibilita' marker/badge fenomeni (glyph con contorno e sfondo, dimensioni leggibili); direzione e velocita' dei candidati supercella coerenti (pennant, cono e testo "verso" dalla stessa fonte fit/motion: forecast affidabile -> fit, altrimenti motion); terminologia UI allineata ("rotazione" -> "struttura asimmetrica (proxy riflettivita', senza Doppler)"); gate di organizzazione (organization_organized, Organization Score >= 56) sul candidato supercella; backoff fulmini ampliato (max_backoff_steps=36, scansione indietro fino a 3h). NO REGRESSION: motore radar Fase 1/2, pipeline meteo, satellite engine, phenomena verify e dataset loader invariati; bump di versione e allineamento riferimenti a 1.2.1.0.
+APP_FILE=mri-light-1.2.1.0.html
+LEGIBILITY=BUMP 1.2.1.0 - LEGIBILITY + COERENZA DIREZIONE/VELOCITA' + GATE ORGANIZZAZIONE + BACKOFF FULMINI: marker/badge fenomeni piu' leggibili (glyph con contorno e sfondo, dimensioni leggibili); pennant, cono e testo "verso" mostrano la STESSA direzione e velocita' (forecast affidabile -> fit, altrimenti motion); terminologia UI allineata ("rotazione" -> "struttura asimmetrica (proxy riflettivita', senza Doppler)"); candidato supercella vincolato a organization_organized (Organization Score >= 56); lightning backoff ampliato a max_backoff_steps=36 (scansione indietro fino a 3h). File e riferimenti rinominati a 1.2.1.0 (bump da 1.2.0).
+
 MeteoRisk Light - 1.2.0 - NOWCASTING + TRACKING + PHENOMENA VERIFY (bump da 1.1.0.8)
 MAJOR=1
 MINOR=2

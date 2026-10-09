@@ -139,7 +139,7 @@
 .sc-toggle { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; }
 .sc-toggle.on { border-color: #a855f7; background: #2e1065; color: #e9d5ff; }
 .sc-phenomena-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 10px; color: #e2e8f0; padding: 3px 10px; border-top: 1px solid #1f2937; cursor: pointer; }
-.sc-phenomena-glyph { display: inline-flex; width: 14px; height: 14px; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
+.sc-phenomena-glyph { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; line-height: 1; flex-shrink: 0; border: 1px solid currentColor; border-radius: 50%; background: rgba(15,23,42,.65); }
 .sc-phenomena-detail { flex-basis: 100%; display: none; margin-top: 2px; font-size: 11px; color: #94a3b8; line-height: 1.35; }
 .sc-phenomena-detail.open { display: block; }
 .sc-phenomena-suspects > summary { cursor: pointer; color: #94a3b8; font-size: 10px; padding: 3px 10px; border-top: 1px solid #1f2937; list-style: none; }
@@ -1264,8 +1264,8 @@
             <span class="legend-swatch" style="background:rgba(148,163,184,.18); border-color:#94a3b8;"></span><span>low</span>
         </div>
         <div class="legend-row">
-            <span style="color:#7dd3fc; font-weight:bold;">▲</span><span>grandine (proxy riflettività)</span>
-            <span style="color:#fb923c; font-weight:bold;">↻</span><span>rotazione (proxy riflettività)</span>
+            <span style="color:#7dd3fc; font-weight:700;font-size:18px;vertical-align:middle;">▲</span><span>grandine (struttura asimmetrica (proxy riflettività, senza Doppler))</span>
+            <span style="color:#fb923c; font-weight:700;font-size:18px;vertical-align:middle;">↻</span><span>struttura asimmetrica (proxy riflettività, senza Doppler)</span>
             <span style="color:#94a3b8;">○</span><span>SUSPECT (tratteggiato) · pieno = CORROBORATED/VERIFIED</span>
         </div>
     </div>
@@ -1278,7 +1278,7 @@
     <div class="sc-toggles">
         <button type="button" id="sc-toggle-trails" class="sc-toggle on" onclick="toggleScTrails()" title="Traccia 2h dei candidati attivi (archivio rolling radar-history)">Traccia 2h</button>
         <button type="button" id="sc-toggle-forecast" class="sc-toggle on" onclick="toggleScForecast()" title="Cono di forecast cinematico ≤2h per candidato (opacità per confidence)">Forecast ≤2h</button>
-        <button type="button" id="sc-toggle-phenomena" class="sc-toggle on" onclick="toggleScPhenomena()" title="Badge grandine/rotazione (proxy riflettività, nessun Doppler)">Fenomeni</button>
+        <button type="button" id="sc-toggle-phenomena" class="sc-toggle on" onclick="toggleScPhenomena()" title="Badge grandine/struttura asimmetrica (proxy riflettività, senza Doppler)">Fenomeni</button>
     </div>
     <div id="sc-phenomena" style="display:none;"></div>
     <div id="sc-summary" style="display:none;gap:8px;flex-wrap:wrap;padding:0 10px 6px 10px;font-size:11px;color:#e2e8f0;"></div>
@@ -1723,9 +1723,16 @@
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.0';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-08';
+    const APP_VERSION = '1.2.1.0';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-09';
     const APP_CHANGELOG = [
+        { version: '1.2.1.0', date: '2026-10-09', changes: [
+            'FIX= Legibilità dei marker/badge fenomeni: glyph con contorno e sfondo, dimensioni leggibili',
+            'FIX= Direzione e velocità dei candidati supercella coerenti (stessa fonte fit/motion per pennant, cono e testo "verso")',
+            'FIX= Terminologia allineata: "rotazione" sostituita da "struttura asimmetrica (proxy riflettività, senza Doppler)"',
+            'FIX= Gate organizzazione: il candidato supercella richiede organization_organized (Organization Score >= 56)',
+            'FIX= Backoff fulmini ampliato: scansione indietro fino a max_backoff_steps = 36 slot (3 ore)',
+        ]},
         { version: '1.2.0', date: '2026-10-08', changes: [
             'ADD= Marker supercelle ridisegnati: pennant SVG direzionale con severità SSI e stato grandine/rotazione',
             'ADD= Archivio rolling radar 2h (branch radar-history) con tracce storiche nel client',
@@ -8502,15 +8509,45 @@
         return dirs[idx] + ' ' + Math.round(deg) + '°';
     }
 
-    // Direzione unica del candidato: forecast.direction_toward_deg (stessa del cono)
-    // con fallback su motion.direction_toward_deg; null se assenti. Cosi' pennant e
-    // cono mostrano la STESSA direzione.
+    // Direzione unica del candidato (pennant, cono, testo "verso"). Il forecast
+    // (stessa direzione del cono) si usa SOLO quando il fit cinematico e'
+    // affidabile: fit_used true, NON clampato e confidence high/medium (direzione
+    // coerente con la velocita' del fit). Un forecast senza metadati di qualita'
+    // (payload minimo) resta preferito per retrocompatibilita'; altrimenti
+    // fallback su motion.direction_toward_deg; null se assenti.
     function scCandidateDirectionDeg(c) {
         var cand = c || {};
-        var fdir = cand.forecast ? cand.forecast.direction_toward_deg : null;
-        if (typeof fdir === 'number' && isFinite(fdir)) return fdir;
+        var f = cand.forecast || null;
+        if (f) {
+            var meta = (typeof f.fit_used === 'boolean') ||
+                (typeof f.clamped === 'boolean') ||
+                (typeof f.confidence === 'string');
+            var trusted = (f.fit_used === true) && (f.clamped !== true) &&
+                (f.confidence === 'high' || f.confidence === 'medium');
+            var fdir = f.direction_toward_deg;
+            if ((!meta || trusted) && typeof fdir === 'number' && isFinite(fdir)) return fdir;
+        }
         var mdir = cand.motion ? cand.motion.direction_toward_deg : null;
         if (typeof mdir === 'number' && isFinite(mdir)) return mdir;
+        return null;
+    }
+
+    // Velocita' mostrata accanto alla direzione: stessa fonte di
+    // scCandidateDirectionDeg (forecast affidabile -> velocita' del fit,
+    // altrimenti motion), per non mostrare direzione e velocita' incoerenti.
+    function scCandidateVelocityKmh(c) {
+        var cand = c || {};
+        var f = cand.forecast || null;
+        if (f) {
+            var meta = (typeof f.fit_used === 'boolean') ||
+                (typeof f.clamped === 'boolean') ||
+                (typeof f.confidence === 'string');
+            var trusted = (f.fit_used === true) && (f.clamped !== true) &&
+                (f.confidence === 'high' || f.confidence === 'medium');
+            if ((!meta || trusted) && typeof f.velocity_kmh === 'number' && isFinite(f.velocity_kmh)) return f.velocity_kmh;
+        }
+        var mv = cand.motion ? cand.motion.velocity_kmh : null;
+        if (typeof mv === 'number' && isFinite(mv)) return mv;
         return null;
     }
 
@@ -8527,19 +8564,20 @@
         var opacity = onLatest ? Math.round((0.7 + 0.3 * ssi / 100) * 100) / 100 : 0.45;
         var color = scLevelColor(c.level);
         var accent = (phen && phen.type === 'HAIL') ? '#7dd3fc' : ((phen && phen.type === 'VORTEX') ? '#fb923c' : null);
-        var glyph = phen ? scPhenomenaGlyph(phen) : '';
-        var dir = scCandidateDirectionDeg(c);
-        var transform = (dir === null) ? '' : ' transform="rotate(' + dir + ' 17 17)"';
-        var dash = onLatest ? '' : ' stroke-dasharray="3,3"';
-        var svg =
-            '<svg width="' + size + '" height="' + size + '" viewBox="0 0 34 34" style="pointer-events:auto;overflow:visible;">' +
-            '<g' + transform + dash + '>' +
-            '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="none" stroke="#0b1220" stroke-width="' + (weight + 2.4) + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
-            '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="' + (accent || color) + '" fill-opacity="' + (0.18 + 0.22 * ssi / 100) + '" stroke="' + color + '" stroke-width="' + weight + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
-            '</g>' +
-            (glyph ? '<circle cx="17" cy="17" r="6" fill="rgba(15,23,42,.85)" stroke="' + (accent || '#e2e8f0') + '" stroke-width="1.4"/>' +
-                '<text x="17" y="20.5" text-anchor="middle" font-size="9" font-weight="700" fill="' + (accent || '#e2e8f0') + '">' + glyph + '</text>' : '') +
-            '</svg>';
+            var glyph = phen ? scPhenomenaGlyph(phen) : '';
+            var dir = scCandidateDirectionDeg(c);
+            var transform = (dir === null) ? '' : ' transform="rotate(' + dir + ' 17 17)"';
+            var dash = onLatest ? '' : ' stroke-dasharray="3,3"';
+            var svg =
+                '<svg width="' + size + '" height="' + size + '" viewBox="0 0 34 34" style="pointer-events:auto;overflow:visible;">' +
+                '<g' + transform + dash + '>' +
+                '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="none" stroke="#0b1220" stroke-width="' + (weight + 2.8) + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
+                '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="' + (accent || color) + '" fill-opacity="' + (0.20 + 0.22 * ssi / 100) + '" stroke="#e2e8f0" stroke-width="' + (weight + 1.0) + '" stroke-linejoin="round" opacity="' + opacity + '"/>' +
+                '<path d="M17 2 L30 21 L17 16 L4 21 Z" fill="' + (accent || color) + '" fill-opacity="' + (0.20 + 0.22 * ssi / 100) + '" stroke="' + color + '" stroke-width="' + weight + '" stroke-linejoin="round" opacity="' + opacity + '" stroke-opacity="' + (0.85 + 0.15 * ssi / 100) + '"/>' +
+                '</g>' +
+                (glyph ? '<circle cx="17" cy="17" r="6" fill="rgba(15,23,42,.9)" stroke="' + (accent || '#e2e8f0') + '" stroke-width="1.6"/>' +
+                    '<text x="17" y="20.5" text-anchor="middle" font-size="18" font-weight="700" fill="' + (accent || '#e2e8f0') + '">' + glyph + '</text>' : '') +
+                '</svg>';
         return L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2], html: svg });
     }
 
@@ -8581,7 +8619,7 @@
                 (c.phase === 'birth' ? ' (nascita)' : '') +
                 '<br>Track ' + (c.track_type === 'storm_object' ? 'sistema #' : 'cella #') + c.track_id +
                 '<br>' + c.position[1].toFixed(3) + '°N, ' + c.position[0].toFixed(3) + '°E' +
-                (c.motion && c.motion.velocity_kmh != null ? '<br>' + c.motion.velocity_kmh + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)) : '');
+                (scCandidateVelocityKmh(c) != null ? '<br>' + scCandidateVelocityKmh(c) + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)) : '');
             m.bindTooltip(info, { direction: 'top', opacity: 0.95 });
             markers.push(m);
         }
@@ -8673,8 +8711,9 @@
                     var pos = (c.position && c.position.length === 2)
                         ? c.position[1].toFixed(2) + '°N , ' + c.position[0].toFixed(2) + '°E'
                         : '—';
-                    var vel = c.motion && c.motion.velocity_kmh != null
-                        ? (c.motion.velocity_kmh + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)))
+                    var vkmh = scCandidateVelocityKmh(c);
+                    var vel = vkmh != null
+                        ? (vkmh + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)))
                         : 'vel. —';
                     var birth = c.first_seen ? ' prima segnalazione: ' + c.first_seen : '';
                     var fresh = c.on_latest_frame ? '' : ' <b style="color:#fbbf24;">(non sull\'ultimo frame)</b>';
@@ -9249,11 +9288,11 @@
             ';font:700 9px/13px system-ui,sans-serif;text-align:center;">' + scPhenomenaGlyph(badge) + '</div>';
     }
 
-    function scPhenomenaTypeLabel(type) {
-        if (type === 'HAIL') return 'Grandine';
-        if (type === 'VORTEX') return 'Rotazione';
-        return String(type || '—');
-    }
+                function scPhenomenaTypeLabel(type) {
+                    if (type === 'HAIL') return 'Grandine';
+                    if (type === 'VORTEX') return 'Struttura asimmetrica (proxy riflettività, senza Doppler)';
+                    return String(type || '—');
+                }
 
     function scPhenomenaStateLabel(state) {
         if (state === 'SUSPECT') return 'Sospetto';
@@ -20622,7 +20661,7 @@ function renderContinuousOverlay() {
 <script type="module">
 // staleness — indicatore "dati non aggiornati" (integrazione di staleness.mjs.draft).
 // SCOELTA: modulo INLINE (non file staleness.mjs separato): l'app e' single-file e il
-// workflow copia SOLO mri-light-1.2.0.html come _site/index.html — un modulo esterno
+// workflow copia SOLO mri-light-1.2.1.0.html come _site/index.html — un modulo esterno
 // risulterebbe 404 su Pages. Nessuna dipendenza esterna, nessun build step, nessun
 // cambio ai formati dati (STALENESS.md).
 // Soglie: radar 20 min (scan DPC atteso ~5 min; GHA best-effort con trigger esterno

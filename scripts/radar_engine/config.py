@@ -235,6 +235,8 @@ CONFIG = {
             "window_slots": 4,         # = lightning.LIGHTNING_TREND_WINDOW
             "radius_km": 30.0,         # = lightning.LIGHTNING_RADIUS_KM
             "min_strikes": 1,          # rate < min_strikes -> componente None
+            "max_backoff_steps": 36,   # scansione indietro max (slot 5 min) se
+                                       # gli slot recenti non sono pubblicati
         },
         "ot": {
             # EUMETSAT WV/IR: DN->K NON calibrato (evidence A0: PNG
