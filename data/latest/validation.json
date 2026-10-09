@@ -1,7 +1,7 @@
 {
   "valid": true,
   "outcome": "OK",
-  "checked_at": "2026-10-09T21:24:51.256228+00:00",
+  "checked_at": "2026-10-09T22:04:40.872575+00:00",
   "dataset": {
     "status": "live"
   },
@@ -94,12 +94,12 @@
     {
       "check": "best_match_fetch_timestamp >= ecmwf_fetch_timestamp",
       "status": "PASS",
-      "detail": "best=2026-10-09T21:24:50.116034+00:00 ecmwf=2026-10-09T21:24:50.116034+00:00"
+      "detail": "best=2026-10-09T22:04:39.665864+00:00 ecmwf=2026-10-09T22:04:39.665864+00:00"
     },
     {
       "check": "update_strategy coerente con leg_timestamps",
       "status": "PASS",
-      "detail": "strategy=coordinated best=2026-10-09T21:24:50.116034+00:00 ecmwf=2026-10-09T21:24:50.116034+00:00"
+      "detail": "strategy=coordinated best=2026-10-09T22:04:39.665864+00:00 ecmwf=2026-10-09T22:04:39.665864+00:00"
     },
     {
       "check": "point_count == metadati",
@@ -109,17 +109,17 @@
     {
       "check": "day0 presente",
       "status": "PASS",
-      "detail": "got '2026-10-09'"
+      "detail": "got '2026-10-10'"
     },
     {
       "check": "metadata.day0 == time_base[:10] (giorno di partenza array)",
       "status": "PASS",
-      "detail": "day0=2026-10-09 time_base=2026-10-09T00:00"
+      "detail": "day0=2026-10-10 time_base=2026-10-10T00:00"
     },
     {
       "check": "points.day0 == metadata.day0 (stesso giorno di partenza)",
       "status": "PASS",
-      "detail": "points=2026-10-09 meta=2026-10-09"
+      "detail": "points=2026-10-10 meta=2026-10-10"
     },
     {
       "check": "ids univoci e contigui 0..N-1",
@@ -18158,8 +18158,8 @@
     }
   ],
   "infos": [
-    "sha256 meteorisk-points.json = b9651b6bc2f41ce69508505f5f0c166b0a548d2aa7f9504fcd0f7bcdb6fcee94 (9184363 byte)",
-    "sha256 meteorisk-provinces.json = a6847a00f819a9efd0e1254ba7c59f13b017716039d242ee6f98c079afbfdc11 (125131 byte)"
+    "sha256 meteorisk-points.json = 765f28b4d77b6438332b56861e1778239202e2a3327dd5d8026e96cb13017e84 (9147283 byte)",
+    "sha256 meteorisk-provinces.json = a162cb73056d2f3a654b536247d7eae6d79edac352c8912d2e9ccc2e740c0e8d (124513 byte)"
   ],
   "errors": []
 }
