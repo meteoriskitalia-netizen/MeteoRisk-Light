@@ -142,6 +142,9 @@
 .sc-phenomena-glyph { display: inline-flex; width: 14px; height: 14px; align-items: center; justify-content: center; font-size: 9px; flex-shrink: 0; }
 .sc-phenomena-detail { flex-basis: 100%; display: none; margin-top: 2px; font-size: 11px; color: #94a3b8; line-height: 1.35; }
 .sc-phenomena-detail.open { display: block; }
+.sc-phenomena-suspects > summary { cursor: pointer; color: #94a3b8; font-size: 10px; padding: 3px 10px; border-top: 1px solid #1f2937; list-style: none; }
+.sc-phenomena-suspects > summary::-webkit-details-marker { display: none; }
+.sc-phenomena-suspects[open] > summary { color: #cbd5e1; }
         .live-header { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #f1f5f9; }
         .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; animation: pulse-live 1.5s ease-in-out infinite; }
         @keyframes pulse-live { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -1258,7 +1261,7 @@
         <div class="legend-row">
             <span class="legend-swatch" style="background:rgba(34,197,94,.35); border-color:#22c55e;"></span><span>cono forecast high</span>
             <span class="legend-swatch" style="background:rgba(245,158,11,.28); border-color:#f59e0b;"></span><span>medium</span>
-            <span class="legend-swatch" style="background:rgba(148,163,184,.16); border-color:#94a3b8;"></span><span>low (quasi invisibile)</span>
+            <span class="legend-swatch" style="background:rgba(148,163,184,.18); border-color:#94a3b8;"></span><span>low</span>
         </div>
         <div class="legend-row">
             <span style="color:#7dd3fc; font-weight:bold;">▲</span><span>grandine (proxy riflettività)</span>
@@ -8499,7 +8502,19 @@
         return dirs[idx] + ' ' + Math.round(deg) + '°';
     }
 
-    // Pennant direzionale: bandierina SVG ruotata verso motion.direction_toward_deg
+    // Direzione unica del candidato: forecast.direction_toward_deg (stessa del cono)
+    // con fallback su motion.direction_toward_deg; null se assenti. Cosi' pennant e
+    // cono mostrano la STESSA direzione.
+    function scCandidateDirectionDeg(c) {
+        var cand = c || {};
+        var fdir = cand.forecast ? cand.forecast.direction_toward_deg : null;
+        if (typeof fdir === 'number' && isFinite(fdir)) return fdir;
+        var mdir = cand.motion ? cand.motion.direction_toward_deg : null;
+        if (typeof mdir === 'number' && isFinite(mdir)) return mdir;
+        return null;
+    }
+
+    // Pennant direzionale: bandierina SVG ruotata verso scCandidateDirectionDeg
     // (0=N, senso orario). Dimensione/spessore/opacità crescono con SSI; colore dal
     // livello (scLevelColor); se phen (badge grandine/rotazione) è presente aggiunge
     // il glifo e l'accento colore. Doppio stroke scuro/chiaro per leggibilità.
@@ -8513,7 +8528,7 @@
         var color = scLevelColor(c.level);
         var accent = (phen && phen.type === 'HAIL') ? '#7dd3fc' : ((phen && phen.type === 'VORTEX') ? '#fb923c' : null);
         var glyph = phen ? scPhenomenaGlyph(phen) : '';
-        var dir = (c.motion && typeof c.motion.direction_toward_deg === 'number' && isFinite(c.motion.direction_toward_deg)) ? c.motion.direction_toward_deg : null;
+        var dir = scCandidateDirectionDeg(c);
         var transform = (dir === null) ? '' : ' transform="rotate(' + dir + ' 17 17)"';
         var dash = onLatest ? '' : ' stroke-dasharray="3,3"';
         var svg =
@@ -8566,7 +8581,7 @@
                 (c.phase === 'birth' ? ' (nascita)' : '') +
                 '<br>Track ' + (c.track_type === 'storm_object' ? 'sistema #' : 'cella #') + c.track_id +
                 '<br>' + c.position[1].toFixed(3) + '°N, ' + c.position[0].toFixed(3) + '°E' +
-                (c.motion && c.motion.velocity_kmh != null ? '<br>' + c.motion.velocity_kmh + ' km/h verso ' + scCompass(c.motion.direction_toward_deg) : '');
+                (c.motion && c.motion.velocity_kmh != null ? '<br>' + c.motion.velocity_kmh + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)) : '');
             m.bindTooltip(info, { direction: 'top', opacity: 0.95 });
             markers.push(m);
         }
@@ -8659,7 +8674,7 @@
                         ? c.position[1].toFixed(2) + '°N , ' + c.position[0].toFixed(2) + '°E'
                         : '—';
                     var vel = c.motion && c.motion.velocity_kmh != null
-                        ? (c.motion.velocity_kmh + ' km/h verso ' + scCompass(c.motion.direction_toward_deg))
+                        ? (c.motion.velocity_kmh + ' km/h verso ' + scCompass(scCandidateDirectionDeg(c)))
                         : 'vel. —';
                     var birth = c.first_seen ? ' prima segnalazione: ' + c.first_seen : '';
                     var fresh = c.on_latest_frame ? '' : ' <b style="color:#fbbf24;">(non sull\'ultimo frame)</b>';
@@ -9025,7 +9040,7 @@
     function scForecastConfidenceOpacity(confidence) {
         if (confidence === 'high') return 0.35;
         if (confidence === 'medium') return 0.22;
-        return 0.10;
+        return 0.18;
     }
 
     function scCacheSlot(name, payload) {
@@ -9116,8 +9131,9 @@
     }
 
     // Forecast ≤2h per un candidato: cono + linea tratteggiata + label +NN.
-    // low -> cono quasi invisibile + label "low"; high/medium -> opacità crescente.
-    function drawScForecast(candidate) {
+    // low -> opacità leggibile + bordo piu' spesso (weight 2) + label "low";
+    // high/medium -> opacità/weight invariati.
+    function drawScForecast(candidate, suppressCone) {
         var out = [];
         var fc = candidate && candidate.forecast;
         if (!fc || !Array.isArray(fc.steps) || !fc.steps.length) return out;
@@ -9125,9 +9141,12 @@
         var conf = fc.confidence || 'low';
         var color = scForecastConfidenceColor(conf);
         var base = scForecastConfidenceOpacity(conf);
+        var coneWeight = (conf === 'low') ? 2 : 1;
         var cone = scBuildForecastCone(fc, candidate.position);
-        if (cone && cone.length >= 4) {
-            out.push(L.polygon(cone, { pane: 'forecastPane', color: color, weight: 1, dashArray: '3,4', fillColor: color, fillOpacity: base, interactive: false }));
+        // suppressCone: candidato in conflitto con uno gia' disegnato -> si omette
+        // SOLO il poligono/riempimento del cono; path tratteggiato e label +NN restano.
+        if (cone && cone.length >= 4 && !suppressCone) {
+            out.push(L.polygon(cone, { pane: 'forecastPane', color: color, weight: coneWeight, dashArray: '3,4', fillColor: color, fillOpacity: base, interactive: false }));
         }
         var path = [[candidate.position[1], candidate.position[0]]];
         for (var i = 0; i < fc.steps.length; i++) {
@@ -9156,14 +9175,68 @@
         scForecastLayer = null;
     }
 
+    // Differenza angolare minima tra due direzioni (gradi, 0..180). null se un
+    // valore non e' numerico/finito.
+    function scAngularDeltaDeg(a, b) {
+        if (typeof a !== 'number' || !isFinite(a) || typeof b !== 'number' || !isFinite(b)) return null;
+        return Math.abs(((a - b) % 360 + 540) % 360 - 180);
+    }
+
+    // Due candidati sono in CONFLITTO forecast = vicini (entro maxKm) E con
+    // direzione d'arrivo simile (delta <= maxDeltaDeg): coni che si sovrappongono.
+    // maxKm default = max(8, cone_km del primo step di ciascun forecast), perche' il
+    // cono nasce dall'incertezza spaziale cone_km (minimo 8 km). Se la direzione
+    // manca su uno dei due (scCandidateDirectionDeg -> null) vale la SOLA vicinanza
+    // stretta. Costo/rinuncia: conflitto approssimato con distanza centro-centro +
+    // delta direzioni, NON con l'intersezione reale dei due poligoni del cono.
+    function scForecastConflict(a, b, maxKm, maxDeltaDeg) {
+        if (!a || !b) return false;
+        var pa = a.position, pb = b.position;
+        if (!(pa && pa.length === 2 && pb && pb.length === 2)) return false;
+        var limit = maxKm;
+        if (limit === undefined || limit === null || !isFinite(limit)) {
+            var ca = (a.forecast && a.forecast.steps && a.forecast.steps[0]) ? a.forecast.steps[0].cone_km : null;
+            var cb = (b.forecast && b.forecast.steps && b.forecast.steps[0]) ? b.forecast.steps[0].cone_km : null;
+            limit = 8;
+            if (typeof ca === 'number' && isFinite(ca)) limit = Math.max(limit, ca);
+            if (typeof cb === 'number' && isFinite(cb)) limit = Math.max(limit, cb);
+        }
+        var d = scHaversineKm(pa, pb);
+        if (d === null || d > limit) return false;
+        var da = scCandidateDirectionDeg(a), db = scCandidateDirectionDeg(b);
+        if (da === null || db === null) return true;
+        var delta = scAngularDeltaDeg(da, db);
+        if (delta === null) return true;
+        var ang = (maxDeltaDeg === undefined || maxDeltaDeg === null) ? 30 : maxDeltaDeg;
+        return delta <= ang;
+    }
+
     function scRedrawForecasts() {
         scClearForecasts();
         if (!isScRadarActive || !scShowForecast || !map) return;
         var cands = scRadarData && Array.isArray(scRadarData.candidates) ? scRadarData.candidates : [];
-        var layers = [];
+        var ordered = [];
         for (var i = 0; i < cands.length; i++) {
-            if (!cands[i] || !cands[i].on_latest_frame) continue;
-            layers = layers.concat(drawScForecast(cands[i]));
+            if (cands[i] && cands[i].on_latest_frame) ordered.push(cands[i]);
+        }
+        // Ordine deterministico: SSI desc, poi chiave track (scTrackKey) asc.
+        ordered.sort(function(a, b) {
+            var sa = (typeof a.ssi === 'number' && isFinite(a.ssi)) ? a.ssi : -1;
+            var sb = (typeof b.ssi === 'number' && isFinite(b.ssi)) ? b.ssi : -1;
+            if (sb !== sa) return sb - sa;
+            var ka = scTrackKey(a), kb = scTrackKey(b);
+            return ka < kb ? -1 : (ka > kb ? 1 : 0);
+        });
+        var kept = [];
+        var layers = [];
+        for (var j = 0; j < ordered.length; j++) {
+            var c = ordered[j];
+            var conflict = false;
+            for (var k = 0; k < kept.length; k++) {
+                if (scForecastConflict(c, kept[k])) { conflict = true; break; }
+            }
+            layers = layers.concat(drawScForecast(c, conflict));
+            if (!conflict) kept.push(c);
         }
         if (layers.length) scForecastLayer = L.layerGroup(layers).addTo(map);
     }
@@ -9227,6 +9300,54 @@
         });
     }
 
+    // Riga HTML di un badge (glyph + Type · Stato · dist km + dettaglio espandibile).
+    // Estratta da scRedrawPhenomena per riusarla nei due gruppi (verified / sospetti).
+    function scPhenomenaRowHtml(badge, cands) {
+        var b = badge || {};
+        var match = scMatchBadgeCandidate(b, cands);
+        var glyph = scPhenomenaGlyph(b);
+        var color = b.type === 'HAIL' ? '#7dd3fc' : (b.type === 'VORTEX' ? '#fb923c' : '#94a3b8');
+        var hasLabels = Array.isArray(b.labels) && b.labels.length;
+        var proxy = scPhenomenaIsProxy(b.evidence);
+        var detailHtml = hasLabels ? b.labels.join('<br>') : '';
+        if (proxy) detailHtml += (detailHtml ? '<br>' : '') + '<i style="color:#94a3b8;">(proxy riflettività)</i>';
+        var detailText = scPhenomenaDetailText(b);
+        return '<div class="sc-phenomena-row"' + (detailText ? ' title="' + detailText.replace(/"/g, '&quot;') + '"' : '') + '>' +
+            '<span class="sc-phenomena-glyph" style="color:' + color + ';">' + glyph + '</span>' +
+            '<span class="sc-phenomena-head"><b>' + scPhenomenaTypeLabel(b.type) + '</b> · ' + scPhenomenaStateLabel(b.state) +
+            (match ? ' · ' + match.distance_km + ' km' : '') + '</span>' +
+            '<div class="sc-phenomena-detail">' + detailHtml + '</div></div>';
+    }
+
+    // Raggruppa i sospetti entro maxKm (default 6 km) dal capogruppo: greedy, NON
+    // transitivo (ogni membro sta entro maxKm dal capogruppo, non dai fratelli).
+    // Ogni cluster = { badge, match, members: [{badge,match},...] }; members[0] e'
+    // il capogruppo (migliore per distanza, suspects gia' ordinati per distanza).
+    // Posizione: badge.position con fallback posizione del candidato matchato.
+    // Costo/rinuncia: nessun badge-conteggio per cluster (toccherebbe
+    // scPhenomenaRowHtml, fuori scopo); i membri restano elencati di seguito,
+    // dentro il <details> dei sospetti (gia' compresso per design).
+    function scClusterSuspects(items, maxKm) {
+        var limit = (maxKm === undefined || maxKm === null) ? 6 : maxKm;
+        var out = [];
+        if (!Array.isArray(items)) return out;
+        for (var i = 0; i < items.length; i++) {
+            var it = items[i];
+            if (!it) continue;
+            var p = (it.badge && it.badge.position) ? it.badge.position : null;
+            if (!p && it.match && it.match.candidate) p = it.match.candidate.position;
+            var placed = false;
+            if (p && p.length === 2) {
+                for (var g = 0; g < out.length; g++) {
+                    var d = scHaversineKm(p, out[g].pos);
+                    if (d !== null && d <= limit) { out[g].members.push(it); placed = true; break; }
+                }
+            }
+            if (!placed) out.push({ badge: it.badge, match: it.match, members: [it], pos: p });
+        }
+        return out;
+    }
+
     function scRedrawPhenomena() {
         scClearPhenomena();
         var box = scRadarEl('sc-phenomena');
@@ -9234,24 +9355,12 @@
         var badges = (active && scPhenomenaData && Array.isArray(scPhenomenaData.badges)) ? scPhenomenaData.badges : [];
         var cands = scRadarData && Array.isArray(scRadarData.candidates) ? scRadarData.candidates : [];
         var markers = [];
-        var html = '';
-        var entries = [];
+        var verified = [];
+        var suspects = [];
         for (var i = 0; i < badges.length; i++) {
-            if (!badges[i]) continue;
-            entries.push({ badge: badges[i], match: scMatchBadgeCandidate(badges[i], cands) });
-        }
-        entries.sort(function(x, y) {
-            var rx = x.match ? (x.badge.state === 'CORROBORATED' ? 0 : 1) : 2;
-            var ry = y.match ? (y.badge.state === 'CORROBORATED' ? 0 : 1) : 2;
-            if (rx !== ry) return rx - ry;
-            if (x.match && y.match) return x.match.distance_km - y.match.distance_km;
-            return 0;
-        });
-        for (var ei = 0; ei < entries.length; ei++) {
-            var b = entries[ei].badge;
-            var match = entries[ei].match;
-            var glyph = scPhenomenaGlyph(b);
-            var color = b.type === 'HAIL' ? '#7dd3fc' : (b.type === 'VORTEX' ? '#fb923c' : '#94a3b8');
+            var b = badges[i];
+            if (!b) continue;
+            var match = scMatchBadgeCandidate(b, cands);
             if (!match) {
                 var anchor = b.position;
                 if (anchor && anchor.length === 2) {
@@ -9263,18 +9372,36 @@
                     }).bindTooltip(tip, { direction: 'top', opacity: 0.95 }));
                 }
             }
-            var hasLabels = Array.isArray(b.labels) && b.labels.length;
-            var proxy = scPhenomenaIsProxy(b.evidence);
-            var detailHtml = hasLabels ? b.labels.join('<br>') : '';
-            if (proxy) detailHtml += (detailHtml ? '<br>' : '') + '<i style="color:#94a3b8;">(proxy riflettività)</i>';
-            var detailText = scPhenomenaDetailText(b);
-            html += '<div class="sc-phenomena-row"' + (detailText ? ' title="' + detailText.replace(/"/g, '&quot;') + '"' : '') + '>' +
-                '<span class="sc-phenomena-glyph" style="color:' + color + ';">' + glyph + '</span>' +
-                '<span class="sc-phenomena-head"><b>' + scPhenomenaTypeLabel(b.type) + '</b> · ' + scPhenomenaStateLabel(b.state) +
-                (match ? ' · ' + match.distance_km + ' km' : '') + '</span>' +
-                '<div class="sc-phenomena-detail">' + detailHtml + '</div></div>';
+            if (b.state === 'CORROBORATED' || b.state === 'VERIFIED') verified.push({ badge: b, match: match });
+            else suspects.push({ badge: b, match: match });
         }
-        if (badges.length && box) {
+        var byDistance = function(x, y) {
+            if (x.match && y.match) return x.match.distance_km - y.match.distance_km;
+            if (x.match) return -1;
+            if (y.match) return 1;
+            return 0;
+        };
+        verified.sort(byDistance);
+        suspects.sort(byDistance);
+        var html = '';
+        for (var vi = 0; vi < verified.length; vi++) html += scPhenomenaRowHtml(verified[vi].badge, cands);
+        if (suspects.length) {
+            var hailCount = 0, vortexCount = 0;
+            for (var si = 0; si < suspects.length; si++) {
+                if (suspects[si].badge.type === 'HAIL') hailCount++;
+                else if (suspects[si].badge.type === 'VORTEX') vortexCount++;
+            }
+            var clusters = scClusterSuspects(suspects);
+            var suspectRows = '';
+            for (var ci = 0; ci < clusters.length; ci++) {
+                var cl = clusters[ci];
+                suspectRows += scPhenomenaRowHtml(cl.badge, cands);
+                for (var mi = 1; mi < cl.members.length; mi++) suspectRows += scPhenomenaRowHtml(cl.members[mi].badge, cands);
+            }
+            html += '<details class="sc-phenomena-suspects"><summary>' + suspects.length + ' sospetti (' +
+                vortexCount + ' rotazione, ' + hailCount + ' grandine)</summary>' + suspectRows + '</details>';
+        }
+        if (badges.length && html && box) {
             box.innerHTML = '<div class="legend-title" style="padding:4px 10px 0 10px;">Fenomeni radar (badge)</div>' + html;
             box.style.display = 'block';
         }
