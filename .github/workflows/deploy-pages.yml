@@ -30,7 +30,7 @@ jobs:
       - name: Build static site
         run: |
           mkdir -p _site/data
-          cp mri-light-1.2.2.0.html _site/index.html
+          cp mri-light-1.2.3.0.html _site/index.html
           cp -R data/latest _site/data/latest
           cp -R data/geography _site/data/geography
 
