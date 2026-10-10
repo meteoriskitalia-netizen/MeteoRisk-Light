@@ -16,7 +16,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.1.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.2.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -41,14 +41,29 @@ ok('A5: stopSyncPlay cancella il rAF',
   has(/function stopSyncPlay\(\)[\s\S]{0,300}if\s*\(syncRAF\)\s*\{\s*cancelAnimationFrame\(syncRAF\);\s*syncRAF\s*=\s*null;\s*\}/));
 ok('A6: pacing a frameDelay = max(100, 1000/syncPlaySpeed) — 1 frame/s a x1 (1.2.0)',
   has(/var frameDelay\s*=\s*Math\.max\(100,\s*Math\.round\(1000\s*\/\s*syncPlaySpeed\)\);/));
-ok('A7: playPacer avanza solo se ora - lastStepMs >= frameDelay',
-  has(/if\s*\(nowT\s*-\s*lastStepMs\s*>=\s*frameDelay\)\s*\{\s*[\s\S]{0,120}playStep\(\);/));
+ok('A7: playPacer aggiorna lastStepMs SOLO su avanzamento reale (if (playStep()) lastStepMs = nowT)',
+  has(/if\s*\(nowT\s*-\s*lastStepMs\s*>=\s*frameDelay\)\s*\{\s*if\s*\(playStep\(\)\)\s*lastStepMs\s*=\s*nowT;\s*\}/));
+ok('A7b: nessun aggiornamento incondizionato dell\'orologio dopo la soglia (vecchio bug)',
+  !has(/if\s*\(nowT\s*-\s*lastStepMs\s*>=\s*frameDelay\)\s*\{\s*lastStepMs\s*=\s*nowT;/));
 ok('A8: playStep avvolto in try/catch (frame fallito non uccide il play)',
   has(/function playStep\(\)[\s\S]{0,3000}try\s*\{[\s\S]{0,600}applySyncFrame\(syncIndex\s*\+\s*1\);/));
 ok('A9: warmNextRadarFrame + warmAheadEumetsatTiles dentro il try di playStep',
   has(/try\s*\{[\s\S]{0,900}warmNextRadarFrame\(\);/));
-ok('A10: kick del pacer conservato (window.__kickSatPacer)',
-  has(/window\.__kickSatPacer\s*=\s*kickSatPacerNow;/));
+ok('A10: kick neutralizzato (no funzione, no assegnazione, no call-site, no arretramento orologio)',
+  !has(/function\s+kickSatPacerNow/) &&
+  !has(/window\.__kickSatPacer\s*=/) &&
+  !has(/window\.__kickSatPacer\s*\(\s*\)/) &&
+  !has(/lastStepMs\s*=\s*nowT\s*-\s*Math\.max\(/));
+ok('A11: playStep ritorna booleano su ogni percorso (niente return nudi, >=3 false, >=1 true)',
+  (() => {
+    const s = src.indexOf('function playStep()');
+    const e = src.indexOf('function playPacer(', s);
+    if (s < 0 || e <= s) return false;
+    const body = src.slice(s, e);
+    return !/return\s*;/.test(body) &&
+      (body.match(/return false;/g) || []).length >= 3 &&
+      /return true;/.test(body);
+  })());
 
 // ---------- B. RIUSO DEL LAYER RADAR ----------
 ok('B1: var radarTileLayer = null (layer radar persistente)',
@@ -111,7 +126,7 @@ ok('E5: touch target 44px preservato (min-height var(--touch-min))',
   has(/--touch-min:\s*44px/));
 
 // ---------- F. Versione / nessuna regressione ----------
-  ok('F1: APP_VERSION = 1.2.1.0', has(/APP_VERSION\s*=\s*['"]1\.2\.1\.0['"]/));
+  ok('F1: APP_VERSION = 1.2.2.0', has(/APP_VERSION\s*=\s*['"]1\.2\.2\.0['"]/));
 ok('F2: changelog 1.0.0.14 PLAYER SAT24-STYLE presente',
   has(/PLAYER SAT24-STYLE \/ FLUIDITA.{0,30} ANIMAZIONE \(1\.0\.0\.14\)/));
 ok('F3: full timeline mantenuta (25 slot = 24x5min, ultime 2h, scelta utente)',

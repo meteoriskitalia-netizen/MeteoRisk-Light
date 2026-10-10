@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Test B2 (PHASE2_VERSION 0.4.0) - main.py: layer PER CANDIDATO.
+"""Test (PHASE2_VERSION 0.5.0) - main.py: layer PER CANDIDATO.
 
 Covers gli interventi B2 nel layer Fase 2:
   - _candidate_position / _candidate_window / _crop (coordinate inverse
@@ -216,7 +216,8 @@ def test_phase2_evaluate_per_candidate_no_network(monkeypatch):
     result = bundle.phase2
 
     # I/O una volta per prodotto / per slot, MAI per candidato
-    assert fetch_calls == ["VIL", "ETM", "POH"]
+    # (VIL/ETM/POH + CAPPI_2/CAPPI_6 di struttura + IR_108 per l'OT)
+    assert fetch_calls == ["VIL", "ETM", "POH", "CAPPI_2", "CAPPI_6", "IR_108"]
     assert len(ltg_calls) == 4
 
     c1, c2, c3 = bundle.supercells
@@ -242,13 +243,45 @@ def test_phase2_evaluate_per_candidate_no_network(monkeypatch):
     assert c3["ssi_v2"] == 90
 
     # status dai componenti presenti su almeno un candidato
-    assert result["version"] == "0.4.0"
+    assert result["version"] == "0.5.0"
     assert result["components_status"] == {"hook": 1, "structure": 0,
                                            "env": 0, "ot": 0, "lightning": 1}
     assert result["status"] == "partial"
     assert "phase2 structure: no products available" in result["warnings"]
-    assert "ot_unavailable:dn_to_kelvin_non_configurato" in result["warnings"]
+    assert "phase2 ot ir108: no frames" in result["warnings"]
     assert "candidate without valid position" in " ".join(result["warnings"])
+
+
+def test_phase2_evaluate_ot_from_ir108(monkeypatch):
+    """IR_108 presente con blob freddo -> c["ot"] e c["ot_details"] reali."""
+    def fake_fetch_frames(config, product=None, max_frames=None):
+        if product == "IR_108":
+            data = np.full((ROWS, COLS), -50.0)
+            rr, cc = np.ogrid[:ROWS, :COLS]
+            # IN_GRID (13,41) -> pixel (row 50, col 50) sulla griglia sintetica
+            data[(rr - 50) ** 2 + (cc - 50) ** 2 <= 4] = -60.0
+            return [_frame(data=data)], [], None
+        return [], [], None
+
+    monkeypatch.setattr("radar_engine.fetch.fetch_frames", fake_fetch_frames)
+    monkeypatch.setattr("radar_engine.phase2.lightning.fetch_ltg",
+                        lambda epoch_ms=None, **kw: {"strikes": [], "count": 0})
+    bundle, cfg = _bundle()
+    # footprint ampio: la griglia sintetica e' 0.1 deg -> il ring da 8 px deve
+    # stare dentro la finestra del candidato
+    cfg["phase2"]["ot"]["footprint_radius_km"] = 120.0
+    eng._phase2_evaluate(bundle, cfg)
+
+    c1 = bundle.supercells[0]
+    assert c1["ot"] is not None
+    assert c1["ot_details"]["ot_flag"] is True
+    assert c1["ot_details"]["ctt_min_c"] == -60.0
+    # candidato 2 fuori griglia (lon 30): nessuna finestra IR -> layer assente
+    assert bundle.supercells[1]["ot"] is None
+    assert bundle.supercells[1]["ot_details"] is None
+    # componente ot presente su almeno un candidato
+    assert bundle.phase2["components_status"]["ot"] == 1
+    assert "phase2 ot ir108: no frames" not in bundle.phase2["warnings"]
 
 
 def test_phase2_evaluate_all_layers_absent_keeps_candidates(monkeypatch):

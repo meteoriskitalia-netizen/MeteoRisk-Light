@@ -19,8 +19,14 @@ Decisioni documentate:
     nessun secret); "dpc" resta selezionabile con --lightning-provider.
     provider unavailable / --no-network -> available=False -> SOLO tier SUSPECT
     (nessuna promozione, nessun crash); H0 (freezing level) saltato.
-  - H0 e' un singolo fetch NON bloccante per run: se manca, l'evidence cambia
-    solo il campo freezing_level_* / una label, MAI il tier.
+  - H0 e' valutato PER-CELLA ma con CACHE a griglia (~0.5 gradi, vedi
+    hail.fzl_bucket): piu' celle vicine condividono un fetch NON bloccante;
+    se manca la rete il tier NON viene forzato (mai bloccante).
+  - STRUTTURA VERTICALE: la struttura multi-prodotto (POH/ETM/VIL/overhang)
+    arriva da supercells.json > candidates[*].structure_features; per i track
+    cella e' agganciata per track_id dal candidato omonimo. Se il candidato non
+    la espone, l'osservazione resta senza vertical (fail-closed: nessun valore
+    inventato).
   - idempotente: stesso radar_timestamp + stessi input -> stessi eventi e badge
     (merge per id mai duplicato, eventi/badge ordinati per id).
   - NO-OP GUARD: events.json/badges.json vengono riscritti SOLO se il
@@ -113,9 +119,17 @@ def _load_json(path, label):
 def _morph_from_storms(storms):
     """Morfologia per track_id cella dai Point di storms.geojson.
 
-    Max eccentricity, min solidity, max compattita' su TUTTI i frame della
-    cella (i valori medi sono gia' eccentrici: il gate serve a individuare le
-    code, non a contare celle ovali)."""
+    Ogni Point e' un campione PER FRAME della cella (properties con
+    timestamp/timestamp_ms + eccentricity/solidity/compactness): qui si
+    costruisce `morph_frames`, la lista dei campioni di tutti i frame del
+    track, PIU' gli aggregati (max eccentricity, min solidity, max
+    compattita') che restano SOLO come evidence retro-compatibile.
+
+    Il gate di vortex.is_hookish lavora sui frame: le tre condizioni devono
+    reggere NELLO STESSO frame e in >= vortex.MORPH_HOOK_MIN_FRAMES frame
+    distinti (stesso timestamp = stesso frame, contato una volta sola).
+    Aggregati presi su frame diversi NON promuovono piu' (falsi positivi su
+    celle allungate in un frame e frastagliate in un altro)."""
     morph = {}
     for feat in (storms or {}).get("features") or []:
         if not isinstance(feat, dict):
@@ -128,7 +142,8 @@ def _morph_from_storms(storms):
             continue
         cell = morph.setdefault(str(tid), {"eccentricity_max": None,
                                            "solidity_min": None,
-                                           "compactness_max": None})
+                                           "compactness_max": None,
+                                           "morph_frames": []})
         ecc = _num(props.get("eccentricity"))
         if ecc is not None and (cell["eccentricity_max"] is None
                                 or ecc > cell["eccentricity_max"]):
@@ -141,7 +156,56 @@ def _morph_from_storms(storms):
         if comp is not None and (cell["compactness_max"] is None
                                  or comp > cell["compactness_max"]):
             cell["compactness_max"] = comp
+        cell["morph_frames"].append({
+            "timestamp_ms": _num(props.get("timestamp_ms")),
+            "timestamp": props.get("timestamp"),
+            "eccentricity": ecc,
+            "solidity": sol,
+            "compactness": comp,
+        })
     return morph
+
+
+def _morph_from_points(points):
+    """Frame morfologici per-track dai punti PER-FRAME di tracks.json.
+
+    Ogni punto della finestra che porta almeno una delle tre grandezze di
+    forma (eccentricity/solidity/compactness) contribuisce a `morph_frames`
+    con il proprio timestamp reale; i punti senza morfologia (schema legacy o
+    cella senza forma) sono SCARTATI -> fail-closed, nessun frame inventato.
+    Gli aggregati (max eccentricity, min solidity, max compattita') restano
+    come evidence retro-compatibile e sono calcolati sui frame effettivamente
+    presenti. Cosi' il gate per-frame di vortex.is_hookish vede la serie
+    temporale reale lungo il track (prima storms.geojson portava solo l'ultimo
+    frame, rendendo K>=2 insoddisfacibile sui dati reali)."""
+    frames = []
+    ecc_max = None
+    sol_min = None
+    comp_max = None
+    for p in points or []:
+        if not isinstance(p, dict):
+            continue
+        ecc = _num(p.get("eccentricity"))
+        sol = _num(p.get("solidity"))
+        comp = _num(p.get("compactness"))
+        if ecc is None and sol is None and comp is None:
+            continue                      # punto senza morfologia: non contribuisce
+        ts_ms = _num(p.get("timestamp_ms"))
+        frames.append({
+            "timestamp_ms": ts_ms,
+            "timestamp": p.get("timestamp") or ev_store.ms_to_iso(ts_ms),
+            "eccentricity": ecc,
+            "solidity": sol,
+            "compactness": comp,
+        })
+        if ecc is not None:
+            ecc_max = ecc if ecc_max is None else max(ecc_max, ecc)
+        if sol is not None:
+            sol_min = sol if sol_min is None else min(sol_min, sol)
+        if comp is not None:
+            comp_max = comp if comp_max is None else max(comp_max, comp)
+    return {"eccentricity_max": ecc_max, "solidity_min": sol_min,
+            "compactness_max": comp_max, "morph_frames": frames}
 
 
 def _point_iso(point, radar_ts):
@@ -162,6 +226,65 @@ def _on_latest_frame(point, radar_ts_ms):
         return False
 
 
+def _vertical_from_candidate(cand):
+    """Struttura verticale del candidato (structure_features) in forma
+    compatta per l'osservazione: structure_score + dict `vertical`.
+
+    Unita': POH normalizzato a % (il prodotto DPC POH e' una frazione [0,1],
+    vedi hail._poh_percent; fallback `poc` per snapshot piu' vecchi), ETM in
+    km (fallback difensivo: valori > 1000 sono chiaramente METRI legacy ->
+    divisi per 1000), VIL in kg/m^2 (gia' cosi' in structure_features).
+    Fail-closed: se il candidato non espone la struttura l'osservazione resta
+    senza vertical (nessun valore inventato)."""
+    if not isinstance(cand, dict):
+        return {"structure_score": None, "vertical": None}
+    feats = cand.get("structure_features")
+    if not isinstance(feats, dict):
+        return {"structure_score": _num(cand.get("structure")),
+                "vertical": None}
+    poh = feats.get("poh_max")
+    if poh is None:
+        poh = feats.get("poc")          # alias snapshot piu' vecchi
+    etm = _num(feats.get("etm_max"))
+    if etm is not None and etm > 1000.0:   # metri legacy -> km
+        etm = etm / 1000.0
+    vertical = {
+        "poh_percent": hail_mod._poh_percent(poh),
+        "etm_km": etm,
+        "vil_kg_m2": _num(feats.get("vil_max")),
+        "overhang": _num(feats.get("overhang")),
+    }
+    return {
+        "structure_score": _num(cand.get("structure")),
+        "vertical": (vertical if any(v is not None for v in vertical.values())
+                     else None),
+    }
+
+
+def _ot_from_candidate(cand):
+    """Overshooting top del candidato (chiavi `ot`/`ot_details`) in forma
+    compatta per l'osservazione, oppure None se il candidato non lo espone.
+
+    `ot` e' lo score 0-100 (0.0 = IR valutato ma nessun OT); `ot_details`
+    porta ot_flag/cold_top/ctt_min_c/n_flags del modulo satellite_ot
+    (radar_engine.phase2.satellite_ot). Fail-closed: candidato senza OT -> None
+    (nessun valore inventato)."""
+    if not isinstance(cand, dict):
+        return None
+    score = _num(cand.get("ot"))
+    details = cand.get("ot_details")
+    if score is None and not isinstance(details, dict):
+        return None
+    d = details if isinstance(details, dict) else {}
+    return {
+        "score": score,
+        "ot_flag": bool(d.get("ot_flag")),
+        "cold_top": bool(d.get("cold_top")),
+        "ctt_min_c": _num(d.get("ctt_min_c")),
+        "n_flags": d.get("n_flags"),
+    }
+
+
 def build_observations(supercells, tracks, storms, radar_ts_ms, radar_ts=None):
     """Normalizza gli input radar in osservazioni per hail/vortex.
 
@@ -169,7 +292,14 @@ def build_observations(supercells, tracks, storms, radar_ts_ms, radar_ts=None):
     REALE dalla finestra recente); i candidati cella gia' coperti dalla track
     sono saltati (stessa tempesta). Candidati senza track e gli storm_object ->
     osservazione "duration" (on_latest_frame + duration_min), con id anchor
-    "{track_type}-{track_id}" per non collidere i track_id fra domini."""
+    "{track_type}-{track_id}" per non collidere i track_id fra domini.
+
+    Morfologia: per una track i `morph_frames` sono costruiti dai PUNTI
+    per-frame di tracks.json dentro la finestra recente (via _morph_from_points),
+    cosi' il gate K-frame di vortex vede la serie temporale REALE. Solo se il
+    track non porta morfologia nei punti (schema legacy) si ricade sul singolo
+    Point di storms.geojson (_morph_from_storms); per i candidati senza track
+    resta il Point di storms.geojson."""
     obs = []
     morph = _morph_from_storms(storms or {})
     covered = set()
@@ -213,11 +343,21 @@ def build_observations(supercells, tracks, storms, radar_ts_ms, radar_ts=None):
             "classification": track.get("classification"),
             "n_frames": track.get("n_frames"),
         }
-        item.update(morph.get(key) or {})
+        morph_track = _morph_from_points(recent)
+        if morph_track["morph_frames"]:
+            item.update(morph_track)         # morfologia PER-FRAME dal track
+        else:
+            item.update(morph.get(key) or {"eccentricity_max": None,
+                                           "solidity_min": None,
+                                           "compactness_max": None,
+                                           "morph_frames": []})
         cand = cell_candidates.get(key)
-        if cand is not None and item["organization_score"] is None:
-            item["organization_score"] = _num(
-                (cand.get("organization") or {}).get("organization_score"))
+        if cand is not None:
+            if item["organization_score"] is None:
+                item["organization_score"] = _num(
+                    (cand.get("organization") or {}).get("organization_score"))
+            item.update(_vertical_from_candidate(cand))
+            item["satellite_ot"] = _ot_from_candidate(cand)
         obs.append(item)
         covered.add(key)
 
@@ -252,6 +392,8 @@ def build_observations(supercells, tracks, storms, radar_ts_ms, radar_ts=None):
         }
         if track_type == "cell":
             item.update(morph.get(key) or {})
+        item.update(_vertical_from_candidate(cand))
+        item["satellite_ot"] = _ot_from_candidate(cand)
         obs.append(item)
         anchors.add(anchor)
 
@@ -334,17 +476,25 @@ def run(radar_dir=DEFAULT_RADAR_DIR, out_dir=DEFAULT_OUT_DIR,
     observations = build_observations(supercells, tracks, storms,
                                       radar_ts_ms, radar_ts)
 
-    # H0: UN fetch per run, non bloccante, solo se qualcosa da valutare.
-    freezing_level_m = None
-    if observations and (h0_client is not None or network):
-        for item in observations:
-            pos = item.get("position") or []
-            if len(pos) >= 2:
-                freezing_level_m = hail_mod.fetch_freezing_level(
-                    pos[1], pos[0], client=h0_client)
-                break
+    # H0 PER-CELLA con cache a griglia (~0.5 gradi): piu' celle vicine
+    # condividono un fetch NON bloccante; rete spenta/manco -> None (mai
+    # bloccante: l'H0 da solo non promuove il tier).
+    h0_enabled = bool(observations) and (h0_client is not None or network)
+
+    def _h0_for(item):
+        pos = item.get("position") or []
+        if len(pos) < 2:
+            return None
+        try:
+            lon, lat = float(pos[0]), float(pos[1])
+        except (TypeError, ValueError):
+            return None
+        if not (math.isfinite(lon) and math.isfinite(lat)):
+            return None
+        return (lat, lon)
 
     incoming = []
+    fzl_cache = {}
     for item in observations:
         try:
             response = provider.strikes_in_window(
@@ -353,6 +503,15 @@ def run(radar_dir=DEFAULT_RADAR_DIR, out_dir=DEFAULT_OUT_DIR,
         except Exception as exc:            # nessuna eccezione verso l'alto
             response = lightning_mod.unavailable(
                 provider.name, f"error:{exc.__class__.__name__}", radius)
+        freezing_level_m = None
+        if h0_enabled:
+            poslatlon = _h0_for(item)
+            if poslatlon is not None:
+                key = hail_mod.fzl_bucket(poslatlon[1], poslatlon[0])
+                if key not in fzl_cache:
+                    fzl_cache[key] = hail_mod.fetch_freezing_level(
+                        key[0], key[1], client=h0_client)
+                freezing_level_m = fzl_cache[key]
         event = hail_mod.evaluate_hail(item, response, freezing_level_m)
         if event is not None:
             incoming.append(event)
@@ -362,6 +521,10 @@ def run(radar_dir=DEFAULT_RADAR_DIR, out_dir=DEFAULT_OUT_DIR,
 
     merged = ev_store.merge_events(existing, incoming, generated_at,
                                    WINDOW_HOURS, prune_anchor=radar_ts)
+    # Aggregazione per tempesta DOPO il prune: una cella ri-identificata con
+    # id diversi a ogni run (track_id rinumerati) resta UN evento nella
+    # finestra, non N. Badge ed events.json riflettono lo stesso store.
+    merged["events"] = ev_store.aggregate_events(merged["events"])
     events_written = ev_store.write_json_if_changed(
         events_path, merged, ev_store.VOLATILE_EVENT_KEYS)
     badges = ev_store.build_badges(merged["events"], radar_ts, generated_at)

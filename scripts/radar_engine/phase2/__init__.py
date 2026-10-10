@@ -14,7 +14,8 @@ Moduli:
   vertical_structure- strutture verticali (VIL, echo top, POH, overhang)
   environment       - indici ambientali NWP (SCP/STP/SHIP, SRH, CAPE/CIN)
   lightning         - frame fulmini via WMS DPC + trend Gatlin
-  overshoot         - overshooting top da BTD WV-IR
+  overshoot         - overshooting top da BTD WV-IR (WV non disponibile DPC)
+  satellite_ot      - overshooting top da IR_108 DPC (proxy IRW-texture)
   aggregate         - SSI v2 = combinazione pesata dei layer Fase 2
 
 Tutte le funzioni di calcolo sono PURE (nessuna I/O, nessuno stato condiviso,
@@ -29,4 +30,4 @@ su una griglia globale condivisa; aggregate.aggregate_ssi_v2 ESCLUDE i
 componenti None e RINORMALIZZA i pesi sui presenti (somma 1.00).
 """
 
-PHASE2_VERSION = "0.4.0"   # B2: componenti per cella + rinormalizzazione pesi
+PHASE2_VERSION = "0.5.0"   # OT da IR_108 (satellite_ot) attivo per candidato

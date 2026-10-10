@@ -6,17 +6,31 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.1.0
+## Versione attiva: 1.2.2.0
 
-- File applicativo: `mri-light-1.2.1.0.html` (`APP_VERSION = '1.2.1.0'`, changelog
-  entry `{ version: '1.2.1.0', date: '2026-10-09' }`).
-- Contenuto della 1.2.1.0 (hotfix sopra la 1.2.0): legibilita' dei marker/badge fenomeni
-  (glyph con contorno e sfondo, dimensioni leggibili), direzione e velocita' dei
-  candidati supercella coerenti (pennant, cono e testo "verso" dalla stessa fonte
-  fit/motion), terminologia allineata ("rotazione" -> "struttura asimmetrica (proxy
-  riflettivita', senza Doppler)"), gate di organizzazione (`organization_organized`,
-  Organization Score >= 56) sul candidato supercella, backoff fulmini ampliato
-  (`max_backoff_steps = 36`, scansione indietro fino a 3h).
+- File applicativo: `mri-light-1.2.2.0.html` (`APP_VERSION = '1.2.2.0'`, changelog
+  entry `{ version: '1.2.2.0', date: '2026-10-10' }`).
+- Contenuto della 1.2.2.0 (release sopra la 1.2.1.0):
+  - **Player**: rimosso il "kick" di velocita' (il pacing al 1x resta 1000 ms/frame).
+  - **Bordi/confini**: i confini regionali/provinciali sono ora visibili sopra il
+    satellite (nuovo pane dedicato, stroke-only).
+  - **Grandine**: nuovo toggle dedicato in UI.
+  - **CAPPI**: CAPPI_2/CAPPI_6 attivati (overhang non piu' neutro).
+  - **Vortex**: proxy hook echo su K frame coerenti + morfologia per-frame persistita
+    (`tracks.json`).
+  - **Grandine multi-prodotto**: POH primario + struttura verticale (VIL/ETM/CAPPI/overhang)
+    + H0 per-cella + gate fulmini ricalibrato.
+  - **Vortex**: riduzione falsi positivi + deduplica eventi (badge come evento, non per-frame).
+  - **UI**: distinzione esplicita tra rischio ambientale NWP (potenziale) ed evento
+    osservato radar.
+  - **Nuovo**: logica overshooting top da IR_108 (DPC) sulla griglia radar; entra in
+    SSI v2 e come corroboratore satellite di hail/vortex.
+  - **Multifonte**: prototipo isolato adapter OPERA CIRRUS (`radar_engine/fusion/`), non attivo.
+  - **Pannello LIVE**: funzione interna "Supercelle radar" con toggle, raggiungibile
+    anche senza fulmini.
+- **Limiti noti**: l'overshooting top e' un proxy IR-only (senza WV/BTD); l'adapter
+  OPERA CIRRUS e' un prototipo isolato e non attivo; le soglie hail/vortex sono
+  sperimentali.
 - Le release vivono in `releases\MeteoRisk-Light-X.Y.Z-GitHub-Production-Hardening\`.
 - Regola dello storico: si PRESERVA. Mai rinominare una cartella di release esistente;
   per una nuova versione si crea una nuova cartella copiando lo stato attivo e bumpando
@@ -52,9 +66,9 @@ fa da backup. Nessuna garanzia di latenza fissa sui dati.
 Verifiche di riferimento (eseguite su questa release):
 
 ```bash
-python -m pytest scripts\tests\radar_engine -q    # 153 test
-python -m pytest scripts\tests\phenomena -q       # 80 test
-python -m pytest scripts\tests -q                 # 382 test (totale)
+python -m pytest scripts\tests\radar_engine -q    # 167 test
+python -m pytest scripts\tests\phenomena -q       # 118 test
+python -m pytest scripts\tests -q                 # 447 test (totale)
 python -m py_compile scripts\satellite_engine.py  # OK
 python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 4 workflow
 node --test "scripts/tests/**/*.mjs"              # suite .mjs: 13 file, 13 PASS
@@ -75,7 +89,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.1.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.2.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify}.yml` — i 4 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

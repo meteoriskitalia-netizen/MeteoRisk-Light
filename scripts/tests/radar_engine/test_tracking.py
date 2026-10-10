@@ -132,6 +132,15 @@ def test_haversine_and_velocity_real_timestamps():
     assert 7.0 <= d <= 10.0
 
 
+def test_trackpoint_to_dict_serializes_morphology():
+    cell = make_cell(12.0, 41.0, T0, ecc=0.9, solidity=0.8, compactness=4.0)
+    pt = models.TrackPoint(1, 0, cell)
+    d = pt.to_dict()
+    assert d["eccentricity"] == 0.9
+    assert d["solidity"] == 0.8
+    assert d["compactness"] == 4.0
+
+
 def test_ambiguous_tags_not_in_json_output(tmp_path):
     # smoke: un track con ambiguous serializza correttamente a Dict
     tr = Tracker(_cfg())

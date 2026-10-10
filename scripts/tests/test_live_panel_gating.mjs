@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 // TEST 1.0.0.8 — PARTE D (FIX3): gating Live Panel / Blitzortung.
-// Con PUBLIC_EDITION_FEATURES.lightningBlitzortung = false:
-//   - l'UI #live-panel (pannello informativo Blitzortung) NON resta nel DOM;
+// 1.2.2.0: il pannello #live-panel ospita la funzione interna "Supercelle radar"
+// (#live-toggle-supercells + #live-sc-summary/list/phenomena), quindi RESTA nel DOM
+// anche con PUBLIC_EDITION_FEATURES.lightningBlitzortung = false. Con flag OFF viene
+// neutralizzata SOLO la UI specifica dei fulmini (#live-legend/#live-hint), mentre i
+// layer fulmini restano gated nei rispettivi handler. Con flag OFF:
+//   - #live-panel RESTA nel DOM (il toggle supercelle è raggiungibile);
+//   - #live-legend / #live-hint nascosti (display:none);
 //   - refreshBlitzTile / refreshLiveLightningMarkers / flashLightningStrike
 //     ritornano PRIMA di creare layer o scrivere stato (nessuna UI orfana);
 //   - il testo di status del LIVE panel è costruito dalle SOLA fonti attive
@@ -15,7 +20,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.1.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.2.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -44,6 +49,14 @@ pure += '\n' + vsl[0];
 for (const n of ['function refreshBlitzTile', 'function refreshLiveLightningMarkers', 'function flashLightningStrike', 'function applyPublicEditionFeatureVisibility', 'function initBlitzortung']) {
   pure += '\n' + extractFn(n);
 }
+// Toggle interno "Supercelle radar" del pannello LIVE + guardia condivisa
+// scDataActive(): estratti per essere ESEGUITI nel vm (comportamento ON/OFF e
+// gating del fetch supercelle condiviso con il pannello #sc-radar-panel).
+pure += '\nvar isScRadarActive = false;';
+pure += '\nvar liveShowSupercells = false;';
+pure += '\n' + extractFn('function scDataActive');
+pure += '\n' + extractFn('function toggleLiveSupercells');
+pure += '\n' + extractFn('function refreshLiveSupercells');
 // startLivePanel per grep strutturali sullo stato WS (non eseguito qui)
 const slp = extractFn('async function startLivePanel()');
 // changeLightningSource / toggleLightning: grep strutturali sull'init gated
@@ -62,7 +75,23 @@ let tileCalls = 0, layerCalls = 0;
 function makeDoc() {
   const status = { innerText: 'prima' };
   const livePanelNode = { classList: { add() {}, remove() {} } };
-  const els = { 'live-panel': livePanelNode, 'status-msg': status, 'sync-timeline-panel': { classList: { remove() {} } }, 'btn-live': { classList: { toggle() {} }, style: {} } };
+  const els = {
+    'live-panel': livePanelNode,
+    'status-msg': status,
+    'sync-timeline-panel': { classList: { remove() {} } },
+    'btn-live': { classList: { toggle() {} }, style: {} },
+    // UI specifica dei fulmini dentro #live-panel: con flag OFF viene nascosta
+    // (display:none) mentre il pannello RESTA nel DOM.
+    'live-legend': { style: {} },
+    'live-hint': { style: {} },
+    'live-subtitle': { style: {} },
+    // toggle interno "Supercelle radar" + id dedicati della vista LIVE (nessun
+    // id duplicato del pannello #sc-radar-panel).
+    'live-toggle-supercells': { classList: { add() {}, remove() {} }, style: {}, innerHTML: '' },
+    'live-sc-summary': { style: {}, innerHTML: '' },
+    'live-sc-list': { innerHTML: '', appendChild() {}, getAttribute() { return null; }, setAttribute() {}, addEventListener() {} },
+    'live-sc-phenomena': { style: {}, innerHTML: '', getAttribute() { return null; }, addEventListener() {} },
+  };
   livePanelNode.parentNode = { removeChild() { delete els['live-panel']; } };
   return {
     els,
@@ -108,13 +137,27 @@ vm.runInNewContext(pure, ctx);
 
 const doc = ctx.document;
 
-// ---------- 1. UI: #live-panel rimosso quando Blitzortung OFF ----------
+// ---------- 1. UI: #live-panel RESTA quando Blitzortung OFF (ospita supercelle) ----------
 ok('UI: #live-panel presente nel DOM prima della guardia', !!doc.getElementById('live-panel'));
 ctx.applyPublicEditionFeatureVisibility();
-ok('UI: #live-panel RIMOSSO dal DOM (lightningBlitzortung=false)', doc.getElementById('live-panel') === null);
+ok('UI: #live-panel NON rimosso dal DOM (lightningBlitzortung=false)', doc.getElementById('live-panel') !== null);
+ok('UI: legenda fulmini #live-legend nascosta (display:none) con flag OFF',
+  doc.els['live-legend'].style.display === 'none');
+ok('UI: hint fulmini #live-hint nascosto (display:none) con flag OFF',
+  doc.els['live-hint'].style.display === 'none');
 let noThrow = true;
 try { ctx.applyPublicEditionFeatureVisibility(); } catch (e) { noThrow = false; }
 ok('UI: chiamata ripetuta non lancia (null-safe)', noThrow);
+ok('UI: dopo la ripetizione il pannello è ancora nel DOM (idempotente)', doc.getElementById('live-panel') !== null);
+// Con flag ON la UI specifica dei fulmini torna visibile; il pannello resta.
+FLAGS.lightningBlitzortung = true;
+ctx.applyPublicEditionFeatureVisibility();
+ok('UI: con flag ON il pannello resta e legenda/hint NON sono nascosti',
+  doc.getElementById('live-panel') !== null &&
+  doc.els['live-legend'].style.display !== 'none' &&
+  doc.els['live-hint'].style.display !== 'none');
+FLAGS.lightningBlitzortung = false;
+ctx.applyPublicEditionFeatureVisibility();
 
 // ---------- 2. LAYER: nessun tile/marker creato con flag OFF ----------
 tileCalls = 0; layerCalls = 0;
@@ -209,6 +252,69 @@ ok('LAYER: flashLightningStrike non crea layer con flag OFF', layerCalls === 0 &
   //     NON avvia setInterval(refreshBlitzTile).
   ok('INIT: liveBlitzRefreshTimer avviato solo con flag ON',
     /if \(isFeatureEnabled\('lightningBlitzortung'\)\) \{\s*\n\s*liveBlitzRefreshTimer = setInterval\(refreshBlitzTile, LIVE_TILE_REFRESH_MS\);/.test(slp));
+}
+
+// ---------- 7. TOGGLE INTERNO "SUPERCELLE RADAR" del pannello LIVE ----------
+{
+  // 7a) UI: toggle dentro #live-panel + id dedicati, nessun id duplicato di #sc-*
+  ok('LIVE-SC: toggle #live-toggle-supercells dentro #live-panel con onclick toggleLiveSupercells()',
+    /id="live-panel"[\s\S]{0,1700}id="live-toggle-supercells"[\s\S]{0,600}onclick="toggleLiveSupercells\(\)"/.test(src));
+  const liveIds = ['live-sc-summary', 'live-sc-list', 'live-sc-phenomena'];
+  ok('LIVE-SC: id dedicati live-sc-summary/list/phenomena presenti una sola volta',
+    liveIds.every(id => (src.match(new RegExp('id="' + id + '"', 'g')) || []).length === 1));
+  ok('LIVE-SC: id del pannello SC restano unici (sc-summary/sc-list/sc-phenomena)',
+    ['sc-summary', 'sc-list', 'sc-phenomena'].every(id => (src.match(new RegExp('id="' + id + '"', 'g')) || []).length === 1));
+
+  // 7b) guardia condivisa scDataActive() = isScRadarActive || liveShowSupercells
+  ok('LIVE-SC: scDataActive() = isScRadarActive || liveShowSupercells',
+    /function scDataActive\(\) \{\s*\n\s*return isScRadarActive \|\| liveShowSupercells;\s*\n\s*\}/.test(src));
+  ctx.isScRadarActive = false; ctx.liveShowSupercells = false;
+  ok('LIVE-SC: scDataActive false con entrambi OFF', ctx.scDataActive() === false);
+  ctx.liveShowSupercells = true;
+  ok('LIVE-SC: scDataActive true con toggle LIVE ON', ctx.scDataActive() === true);
+  ctx.liveShowSupercells = false; ctx.isScRadarActive = true;
+  ok('LIVE-SC: scDataActive true con pannello SC attivo', ctx.scDataActive() === true);
+  ctx.isScRadarActive = false;
+
+  // 7c) comportamento toggle: ON -> refresh supercelle (fetch condiviso);
+  //     OFF -> liveClearSupercells e NESSUN fetch supercelle extra.
+  let liveClearCalls = 0, refreshAllCalls = 0, liveViewCalls = 0;
+  ctx.scSetToggleBtn = () => {};
+  ctx.liveClearSupercells = () => { liveClearCalls++; };
+  ctx.refreshScAll = () => { refreshAllCalls++; };
+  ctx.liveRenderSupercellViews = () => { liveViewCalls++; };
+  ctx.liveShowSupercells = false;
+  ctx.toggleLiveSupercells();
+  ok('LIVE-SC: toggle ON invoca refreshLiveSupercells -> refreshScAll (fetch unico)', refreshAllCalls === 1 && liveClearCalls === 0);
+  ctx.toggleLiveSupercells();
+  ok('LIVE-SC: toggle OFF invoca liveClearSupercells e NON fetcha', liveClearCalls === 1 && refreshAllCalls === 1);
+
+  // 7d) con #sc-radar-panel attivo: nessun doppio fetch, solo riallineo view LIVE
+  ctx.liveShowSupercells = true; ctx.isScRadarActive = true;
+  refreshAllCalls = 0; liveViewCalls = 0;
+  ctx.refreshLiveSupercells();
+  ok('LIVE-SC: SC attivo -> nessun fetch supercelle doppio (solo view LIVE)', refreshAllCalls === 0 && liveViewCalls === 1);
+  ctx.liveShowSupercells = false; ctx.isScRadarActive = false;
+
+  // 7e) hook gated nel refresh live (SOLO con toggle ON) + guardie strutturali
+  ok('LIVE-SC: refreshLivePanel aggancia supercelle SOLO con toggle ON',
+    /if \(liveShowSupercells\) refreshLiveSupercells\(\);/.test(src));
+  ok('LIVE-SC: refreshLiveSupercells early-return se toggle OFF',
+    /function refreshLiveSupercells\(\) \{\s*\n\s*if \(!liveShowSupercells\) return;/.test(src));
+  ok('LIVE-SC: liveClearSupercells non fa fetch (OFF = nessun fetch extra)',
+    !/fetch\(/.test(extractFn('function liveClearSupercells')));
+  ok('LIVE-SC: OFF rimuove i marker solo se #sc-radar-panel non attivo',
+    /function liveClearSupercells\(\)[\s\S]{0,900}if \(!isScRadarActive\)/.test(extractFn('function liveClearSupercells')));
+
+  // 7f) click handler condiviso anche per la lista LIVE (#live-sc-list):
+  //     scEnsureListClickHandler accetta un listId; liveRenderScSummaryList lo
+  //     aggancia su #live-sc-list; scSelectCandidate evidenzia entrambe le liste.
+  ok('LIVE-SC: scEnsureListClickHandler accetta un listId (default #sc-list)',
+    /function scEnsureListClickHandler\(listId\) \{[\s\S]{0,80}scRadarEl\(listId \|\| 'sc-list'\)/.test(src));
+  ok('LIVE-SC: liveRenderScSummaryList aggancia la selezione su #live-sc-list',
+    /function liveRenderScSummaryList\(cands, cards\)[\s\S]{0,1600}scEnsureListClickHandler\('live-sc-list'\)/.test(src));
+  ok('LIVE-SC: scSelectCandidate evidenzia le righe in entrambe le liste (#sc-list + #live-sc-list)',
+    /querySelectorAll\('#sc-list \.sc-item, #live-sc-list \.sc-item'\)/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);

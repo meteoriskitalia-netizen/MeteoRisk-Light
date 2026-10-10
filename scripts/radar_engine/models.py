@@ -199,6 +199,7 @@ class TrackPoint:
         self.mean_dbz = cell.mean_dbz
         self.solidity = getattr(cell, "solidity", 1.0)
         self.compactness = getattr(cell, "compactness", 1.0)
+        self.eccentricity = getattr(cell, "eccentricity", None)
 
     def to_dict(self):
         return {
@@ -211,6 +212,12 @@ class TrackPoint:
             "area_km2": round(self.area_km2, 2),
             "max_dbz": round(self.max_dbz, 2),
             "mean_dbz": round(self.mean_dbz, 2),
+            "eccentricity": (round(self.eccentricity, 4)
+                             if self.eccentricity is not None else None),
+            "solidity": (round(self.solidity, 4)
+                         if self.solidity is not None else None),
+            "compactness": (round(self.compactness, 4)
+                            if self.compactness is not None else None),
         }
 
 

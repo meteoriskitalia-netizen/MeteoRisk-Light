@@ -215,8 +215,8 @@ CONFIG = {
             "product_vil": "VIL",      # prodotto DPC verificato (A0)
             "product_etm": "ETM",      # prodotto DPC verificato (A0)
             "product_poh": "POH",      # prodotto DPC verificato (A0)
-            "product_low": None,       # CAPPI 2 km: product type DPC ignoto
-            "product_high": None,      # CAPPI 6 km: idem -> overhang assente
+            "product_low": "CAPPI_2",  # CAPPI 2 km: verificato live (findLastProductByType)
+            "product_high": "CAPPI_6", # CAPPI 6 km: verificato live -> overhang attivo
             "local_radius_km": 45.0,   # finestra ±km attorno al candidato
         },
         "environment": {
@@ -239,12 +239,25 @@ CONFIG = {
                                        # gli slot recenti non sono pubblicati
         },
         "ot": {
-            # EUMETSAT WV/IR: DN->K NON calibrato (evidence A0: PNG
-            # grayscale senza taratura) -> dn_to_kelvin=None implica
-            # layer OT = None con warning ot_unavailable:dn_to_kelvin_non_configurato.
-            "dn_to_kelvin": None,      # None | {"offset": K, "scale": K/DN}
-            "btd_threshold_k": 12.0,   # = overshoot.OT_BTD_THRESHOLD_K
-            "ir_threshold_k": 215.0,   # = overshoot.OT_IR_THRESHOLD_K
+            # IR_108 DPC (MSG SEVIRI 10.8 um, GeoTIFF Float32 in °C, PT5M,
+            # STESSA griglia TM della VMI): overshooting top via proxy
+            # IRW-texture (Bedka et al. 2010). Il BTD WV-IR di overshoot.py NON
+            # e' calcolabile (il canale WV 6.2 non e' tra i prodotti DPC): si
+            # usa SOLO l'IR 10.8. dn_to_kelvin non serve piu' (IR_108 e' gia'
+            # in °C, non un PNG grayscale non tarato). Soglie EXPERIMENTAL.
+            "product_ir108": "IR_108",   # prodotto DPC (docs/RADAR_SOURCE_VERIFICATION.md)
+            "footprint_radius_km": 45.0, # finestra ±km attorno al candidato
+            "ctt_threshold_c": -58.0,    # = satellite_ot.IR_CTT_THRESHOLD_C (215 K)
+            "anvil_threshold_c": -48.0,  # = satellite_ot.IR_ANVIL_THRESHOLD_C (225 K)
+            "anomaly_threshold_c": 6.5,  # = satellite_ot.IR_ANOMALY_THRESHOLD_C
+            "ring_radius_px": 8,         # raggio di campionamento ~8 km a 1 km/px
+            "ring_directions": 16,       # 16 direzioni (Bedka 2010)
+            "min_anvil_samples": 5,      # >= 5/16 campioni d'anvillo validi
+            "erosion_kernel": 3,         # erosione 3x3 (rimuove pixel isolati)
+            # Legacy BTD WV-IR (overshoot.py): mantenuto per retro-compatibilita'
+            # della config, non piu' usato dal pipeline OT (canale WV assente).
+            "btd_threshold_k": 12.0,     # = overshoot.OT_BTD_THRESHOLD_K
+            "ir_threshold_k": 215.0,     # = overshoot.OT_IR_THRESHOLD_K
         },
         "aggregate": {
             # Pesi SSI v2: SOMMA ESATTAMENTE 1.00 (aggregate.DEFAULT_WEIGHTS).

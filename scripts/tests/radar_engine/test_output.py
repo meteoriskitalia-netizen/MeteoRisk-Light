@@ -96,6 +96,33 @@ def test_tracks_json(tmp_path):
     assert "Supercell" not in t["classification"]
 
 
+def test_tracks_json_points_include_per_frame_morphology(tmp_path):
+    """tracks.json espone la morfologia PER PUNTO (eccentricity/solidity/
+    compactness dalla DetectedCell): e' la serie temporale per-frame che il
+    gate K di phenomena.vortex.is_hookish deve poter leggere."""
+    c1 = make_cell(12.0, 41.0, T0, area_km2=150, max_dbz=42, cell_id="c1",
+                   ecc=0.95, solidity=0.80, compactness=4.0)
+    c2 = make_cell(12.1, 41.0, T0 + 300000, area_km2=160, max_dbz=44,
+                   cell_id="c2", ecc=0.60, solidity=0.95, compactness=1.5)
+    tr = make_track([c1, c2], 1)
+    b = models.EngineBundle("ok", "2026-04-30T10:00:00Z", output.SOURCE_LABEL)
+    b.cells_by_frame = [[c1], [c2]]
+    b.tracks = [tr]
+    out = str(tmp_path / "radar")
+    paths = output.write_outputs(b, out)
+    with open(paths["tracks.json"], encoding="utf-8") as fh:
+        tj = json.load(fh)
+    pts = tj["tracks"][0]["points"]
+    assert [p["frame_index"] for p in pts] == [0, 1]
+    assert {"eccentricity", "solidity", "compactness"} <= set(pts[0])
+    assert pts[0]["eccentricity"] == 0.95
+    assert pts[0]["solidity"] == 0.80
+    assert pts[0]["compactness"] == 4.0
+    assert pts[1]["eccentricity"] == 0.60
+    assert pts[1]["solidity"] == 0.95
+    assert pts[1]["compactness"] == 1.5
+
+
 def test_no_raw_geotiff_in_out_dir(tmp_path):
     out = str(tmp_path / "radar")
     output.write_outputs(_bundle(tmp_path), out)

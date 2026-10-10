@@ -177,6 +177,35 @@ def _fetch_structure_products(config, scfg, ref_shape, warnings):
     return out
 
 
+def _fetch_ir108(config, ocfg, ref_shape, warnings):
+    """Scarica il frame DPC IR_108 (OVERSHOOTING TOP), griglia di riferimento.
+
+    Ritorna RasterData | None: prodotto non configurato, non scaricabile, senza
+    frame o con shape diverso dalla VMI -> None con warning (nessun dato
+    inventato). Il frame IR_108 usa la STESSA griglia TM della VMI (evidenza
+    file reale: 1200x1400, res 1000 m): uno shape diverso -> pagina
+    probabilmente cambiata -> layer assente (fail-closed)."""
+    product = ocfg.get("product_ir108")
+    if not product:
+        warnings.append("ot_unavailable:ir108_non_configurato")
+        return None
+    try:
+        gframes, gwarn, _ts = fetch.fetch_frames(config, product=product,
+                                                  max_frames=1)
+        warnings.extend(gwarn)
+    except Exception as exc:
+        warnings.append(f"phase2 ot ir108: {exc}")
+        return None
+    if not gframes:
+        warnings.append("phase2 ot ir108: no frames")
+        return None
+    rd = gframes[-1]
+    if tuple(rd.data.shape) != tuple(ref_shape):
+        warnings.append("phase2 ot ir108: shape mismatch")
+        return None
+    return rd
+
+
 def _structure_at_window(products, window, vs):
     """Score + features struttura verticale SULLA FINESTRA del candidato.
 
@@ -249,8 +278,9 @@ def _phase2_evaluate(bundle, config):
     bundle.warnings + sub-score None PER IL CANDIDATO toccato (mai crash del
     run, nessun dato inventato). Da B2 hook/struttura/ambiente/fulmini sono
     calcolati sulla FINESTRA LOCALE del candidato (footprint ±km, cache per
-    slot/bucket condivise fra i candidati) e l'SSI v2 rinormalizza i pesi
-    sui componenti presenti (aggregate 0.4.0). I candidati Fase 1 sono solo
+    slot/bucket condivise fra i candidati); l'OT (0.5.0) usa il prodotto DPC
+    IR_108 e satellite_ot sulla finestra del candidato. L'SSI v2 rinormalizza
+    i pesi sui componenti presenti (aggregate). I candidati Fase 1 sono solo
     ARRICCHITI: ssi/level/... e bundle.status restano intatti (lo status e'
     gia' calcolato alla riga 85 del pipeline, prima di questo layer)."""
     p2_cfg = config.get("phase2") or {}
@@ -266,7 +296,8 @@ def _phase2_evaluate(bundle, config):
     try:
         from radar_engine import phase2 as p2_mod
         from radar_engine.phase2 import (aggregate, environment, hook,
-                                         lightning, vertical_structure)
+                                         lightning, satellite_ot,
+                                         vertical_structure)
     except Exception as exc:
         warnings.append(f"phase2 import failed: {exc}")
         bundle.phase2 = {"status": "unavailable", "warnings": warnings}
@@ -282,9 +313,11 @@ def _phase2_evaluate(bundle, config):
     scfg = p2_cfg.get("structure") or {}
     ecfg = p2_cfg.get("environment") or {}
     lcfg = p2_cfg.get("lightning") or {}
+    otcfg = p2_cfg.get("ot") or {}
     hook_radius = float(hcfg.get("footprint_radius_km", 45.0))
     struct_radius = float(scfg.get("local_radius_km", 45.0))
     ltg_radius = float(lcfg.get("radius_km", 30.0))
+    ot_radius = float(otcfg.get("footprint_radius_km", 45.0))
     try:
         ltg_min_strikes = int(lcfg.get("min_strikes", 1))
     except (TypeError, ValueError):
@@ -296,22 +329,19 @@ def _phase2_evaluate(bundle, config):
         if msg not in warnings:
             warnings.append(msg)
 
-    # --- OVERSHOOTING TOP: DN->K non calibrato in A2 -> layer assente -------
-    ot_score = None
-    if (p2_cfg.get("ot") or {}).get("dn_to_kelvin") is None:
-        warnings.append("ot_unavailable:dn_to_kelvin_non_configurato")
-    else:
-        warnings.append("ot_unavailable:pipeline_satellite_non_inclusa_in_A2")
-
-    # --- STRUTTURA: prodotti DPC scaricati UNA VOLTA (rif. = ultima VMI) ----
+    # --- STRUTTURA + IR_108: prodotti DPC scaricati UNA VOLTA (rif. VMI) ----
     products = {}
+    ir_rd = None
     if frames:
         products = _fetch_structure_products(config, scfg,
                                              frames[-1].data.shape, warnings)
         if not any(rd is not None for rd in products.values()):
             warnings.append("phase2 structure: no products available")
+        # OVERSHOOTING TOP: frame IR_108 (stessa griglia TM della VMI).
+        ir_rd = _fetch_ir108(config, otcfg, frames[-1].data.shape, warnings)
     else:
         warnings.append("phase2 structure: no frames")
+        ir_rd = None
 
     # --- FULMINI: slot scaricati UNA VOLTA, strike in cache per slot --------
     # Scansione all'INDIETRO fino a max_backoff_steps: si raccolgono gli slot
@@ -389,6 +419,37 @@ def _phase2_evaluate(bundle, config):
             except Exception as exc:
                 _warn(f"phase2 structure failed: {exc}")
 
+        # Overshooting top: finestra IR del candidato -> score + dettagli.
+        ot_score = None
+        ot_details = None
+        if ir_rd is not None and lon is not None and frames:
+            ot_window = _candidate_window(frames[-1], lon, lat, ot_radius)
+            if ot_window is not None:
+                try:
+                    ctt = _crop(ot_window, ir_rd.data)
+                    vm = (_crop(ot_window, ir_rd.valid_mask)
+                          if ir_rd.valid_mask is not None else None)
+                    if ctt.size:
+                        ot_details = satellite_ot.evaluate_ir_ot(
+                            ctt, valid_mask=vm,
+                            pixel_area_km2=ir_rd.pixel_area_km2,
+                            ctt_threshold_c=otcfg.get("ctt_threshold_c"),
+                            anvil_threshold_c=otcfg.get("anvil_threshold_c"),
+                            anomaly_threshold_c=otcfg.get(
+                                "anomaly_threshold_c"),
+                            ring_radius_px=otcfg.get("ring_radius_px"),
+                            ring_directions=otcfg.get("ring_directions"),
+                            min_anvil_samples=otcfg.get("min_anvil_samples"),
+                            erosion_kernel=otcfg.get("erosion_kernel"))
+                        if not ot_details.get("valid_pixels"):
+                            ot_details = None    # nessun pixel valido
+                        else:
+                            ot_score = ot_details.get("score")
+                except Exception as exc:
+                    _warn(f"phase2 ot failed: {exc}")
+                    ot_score = None
+                    ot_details = None
+
         lightning_score = None
         if lon is not None:
             try:
@@ -435,6 +496,7 @@ def _phase2_evaluate(bundle, config):
             c["structure_features"] = dict(structure_feats,
                                             poc=structure_feats.get("poh_max"))
         c["ot"] = ot_score
+        c["ot_details"] = ot_details
         c["lightning"] = lightning_score
         c["env"] = env_score
         c["env_scp"] = env_score        # chip 'Env' (0-100; SCP grezzo sopra)

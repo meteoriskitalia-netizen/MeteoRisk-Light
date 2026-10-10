@@ -20,7 +20,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.1.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.2.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -314,8 +314,8 @@ vm.runInNewContext(pure, ctx);
 
 // ---------- F. STRUCTURAL: agganci UI/robustezza nel sorgente ----------
 {
-  ok('F1: refreshScHistory con guardie isScRadarActive + document.hidden',
-    /function refreshScHistory\(\)[\s\S]{0,200}if \(!isScRadarActive\) return;[\s\S]{0,120}if \(document\.hidden\) return;/.test(src));
+  ok('F1: refreshScHistory con guardie scDataActive() + document.hidden',
+    /function refreshScHistory\(\)[\s\S]{0,200}if \(!scDataActive\(\)\) return;[\s\S]{0,120}if \(document\.hidden\) return;/.test(src));
   ok('F2: refreshScHistory fetcha index.json + slot con cache/concorrenza 6',
     /data\/radar\/history\/index\.json/.test(src) && /data\/radar\/history\/slots\//.test(src) &&
     /for \(var w = 0; w < 6; w\+\+\)/.test(src));

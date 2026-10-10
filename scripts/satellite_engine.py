@@ -10,7 +10,7 @@ risoluzione INVARIATA (Europa 2048px, Italia 1024px): stessa identita' del
 frame, dimensioni su disco/Pages molto piu' piccole. I vecchi frame PNG gia'
 presenti su disco vengono migrati localmente senza nuove richieste al WMS.
 
-Faithful port della logica dell'app (mri-light-1.2.0.html):
+Faithful port della logica dell'app (mri-light-1.2.2.0.html):
   - buildEumetsatLiveGetMap: GetMap EPSG:3857 su SATELLITE_EUROPE_BOUNDS
     [[22,-28],[72,55]] (width 2048, height proporzionale, stessa sequenza di
     parametri layers/styles/format/transparent/version/time/width/height/srs/bbox);

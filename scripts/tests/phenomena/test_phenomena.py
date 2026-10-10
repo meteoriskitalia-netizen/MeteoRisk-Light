@@ -16,7 +16,9 @@ network=False):
   - logica HAIL: persistenza >=2 punti, finestra 15 min, CORROBORATED solo con
     fulmini, SUSPECT senza fulmini, sorgente duration, H0 come evidence sola,
     evidence MLI (nota AFA + attribution EUMETSAT) in labels e dict;
-  - logica VORTEX: organization_score, morfologia hook-proxy, persistenza,
+  - logica VORTEX: organization_score, morfologia hook-proxy con coerenza
+    temporale PER-FRAME (firma completa in >= MORPH_HOOK_MIN_FRAMES frame
+    distinti, aggregati sparsi su frame diversi NON promuovono), persistenza,
     CORROBORATED solo con fulmini, disclaimer Doppler sempre presente;
   - events store: merge per id, first_seen minore, prune, ANCORA ai dati,
     scrittura atomica (nessun tmp residuo), badges SOLO attivi;
@@ -30,8 +32,9 @@ network=False):
     piu' schema sui dati reali della release (skip se assente).
 
 I valori soglia usati qui sono quelli di phenomena/{hail,vortex,lightning}.py
-con THRESHOLDS_VERSION = pheno-1.1.0: se cambia una soglia, questo file deve
-cambiare insieme (non e' un test che si misura da solo).
+con THRESHOLDS_VERSION = pheno-1.2.0 (gate hook per-frame con K frame coerenti):
+se cambia una soglia, questo file deve cambiare insieme (non e' un test che si
+misura da solo).
 """
 
 import datetime as _dt
@@ -255,6 +258,32 @@ def _points(values, lon=12.0, lat=41.0):
     return out
 
 
+def _points_morph(specs, lon=12.0, lat=41.0):
+    """Point di track con morfologia PER-FRAME (schema nuovo di tracks.json).
+
+    specs = [(max_dbz, ecc, sol, comp), ...] oldest->newest, termina su
+    RADAR_MS con passo PERIOD_MS: replica un tracks.json con morfologia."""
+    n = len(specs)
+    out = []
+    for i, (dbz, ecc, sol, comp) in enumerate(specs):
+        ms = RADAR_MS - (n - 1 - i) * PERIOD_MS
+        out.append({"timestamp_ms": ms, "timestamp": ev_store.ms_to_iso(ms),
+                    "lonlat": [lon, lat], "max_dbz": float(dbz),
+                    "mean_dbz": float(dbz) - 2.0, "area_km2": 60.0,
+                    "eccentricity": float(ecc), "solidity": float(sol),
+                    "compactness": float(comp)})
+    return out
+
+
+def _obs_from_tracks(points, **track_extra):
+    """Prima osservazione di build_observations con morfologia nei POINT del
+    track (nuovo schema tracks.json), senza storms.geojson."""
+    track = {"track_id": 1, "duration_min": 15.0, "points": points}
+    track.update(track_extra)
+    return engine.build_observations({}, {"tracks": [track]}, {"features": []},
+                                     RADAR_MS, RADAR_ISO)[0]
+
+
 def _obs(points, max_dbz=None, source="points", **extra):
     """Osservazione normalizzata (forma attesa da evaluate_*)."""
     dbz = [p["max_dbz"] for p in points]
@@ -279,6 +308,31 @@ def _obs(points, max_dbz=None, source="points", **extra):
     }
     obs.update(extra)
     return obs
+
+
+def _morph_frame(ts_ms, ecc=0.95, sol=0.80, comp=4.0):
+    """Campione morfologico di UN frame (stesso schema di
+    engine._morph_from_storms / properties Point di storms.geojson)."""
+    return {"timestamp_ms": ts_ms, "timestamp": ev_store.ms_to_iso(ts_ms),
+            "eccentricity": ecc, "solidity": sol, "compactness": comp}
+
+
+def _hook_frames(n=2, **kwargs):
+    """n frame consecutivi (da RADAR_MS indietro) con la firma hook completa."""
+    return [_morph_frame(RADAR_MS - i * PERIOD_MS, **kwargs) for i in range(n)]
+
+
+def _storm_point(ts_ms, ecc=0.95, sol=0.80, comp=4.0, track_id=1,
+                 lon=12.0, lat=41.0):
+    """Feature Point di storms.geojson: UN frame della cella track_id."""
+    return {"type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [lon, lat]},
+            "properties": {"track_id": track_id, "cell_id": f"cell-{track_id}",
+                           "timestamp": ev_store.ms_to_iso(ts_ms),
+                           "timestamp_ms": ts_ms, "area_km2": 60.0,
+                           "max_dbz": 58.0, "mean_dbz": 56.0,
+                           "eccentricity": ecc, "solidity": sol,
+                           "compactness": comp, "source": "test"}}
 
 
 def _write_json(path, payload):
@@ -310,7 +364,7 @@ def _write_radar(radar_dir, track_dbz=(58.0, 58.0, 58.0, 58.0),
                     "first_seen": "2026-10-06T23:45:00Z",
                     "last_seen": RADAR_ISO, "position": [12.5, 41.5],
                     "intensity": {"max_dbz": 62.0},
-                    "organization": {"organization_score": 72,
+                    "organization": {"organization_score": 80,
                                      "classification": "Organized"},
                     "motion": {"velocity_kmh": 40.0, "duration_min": 12.0},
                     "on_latest_frame": True,
@@ -580,6 +634,136 @@ def test_hail_positive_dbz_trend_promotes():
     assert event["evidence"]["dbz_trend_per_frame"] == 1.5
 
 
+# --- Tier MULTI-FONTE (pheno-1.3.0): struttura verticale + H0 per-cella -----
+def _vertical(**kw):
+    """Evidenza verticale compatta (forma prodotta da engine)."""
+    base = {"poh_percent": None, "etm_km": None, "vil_kg_m2": None,
+            "overhang": None}
+    base.update(kw)
+    return base
+
+
+def _strong_structure():
+    return _vertical(poh_percent=80.0, etm_km=11.0, vil_kg_m2=55.0,
+                     overhang=0.40)
+
+
+def test_hail_corroborates_with_high_poh_and_strong_vertical():
+    obs = _obs(_points([58.0, 58.0]), structure_score=88.0,
+               vertical=_strong_structure())
+    event = hail.evaluate_hail(obs, LTG_OFF, None)
+    assert event is not None
+    assert event["state"] == "CORROBORATED"
+    st = event["evidence"]["structure"]
+    assert st["available"] is True
+    assert st["score"] == 88.0
+    assert st["poh_percent"] == 80.0
+    assert st["etm_km"] == 11.0
+    assert st["vil_kg_m2"] == 55.0
+    assert st["overhang"] == 0.40
+    assert st["poh_primary"] is True
+    assert st["strong"] is True
+    corr = event["evidence"]["corroboration"]
+    assert corr["primary"] == "poh"
+    assert corr["structure"] is True
+    assert 70.0 <= event["score"] <= 99.0
+    labels = event["evidence"]["labels"]
+    # promozione SENZA fulmini: la struttura verticale sostituisce il gate
+    assert any("fulmini non disponibili" in lab for lab in labels)
+    assert any("POH >= 50%" in lab for lab in labels)
+
+
+def test_hail_fail_closed_without_poh_or_strong_dbz():
+    # (58,58) senza trend, senza struttura verticale: anche con gate fulmini OK
+    # il primary e' debole -> resta SUSPECT (nessuna promozione da una sola
+    # evidenza: multi-fonte non significa "una qualunque evidenza").
+    event = hail.evaluate_hail(_obs(_points([58.0, 58.0])), LTG_OK, None)
+    assert event is not None
+    assert event["state"] == "SUSPECT"
+    assert event["evidence"]["corroboration"]["primary"] is None
+    assert event["evidence"]["structure"]["available"] is False
+
+
+def test_hail_strong_dbz_with_low_h0_promotes_without_lightning():
+    obs = _obs(_points([62.0, 62.0]))
+    low = hail.evaluate_hail(obs, LTG_OFF, 2500.0)
+    high = hail.evaluate_hail(obs, LTG_OFF, 4200.0)
+    assert low is not None and high is not None
+    assert low["state"] == "CORROBORATED"        # H0 basso corrobora la base forte
+    assert high["state"] == "SUSPECT"            # H0 alto non basta
+    assert low["evidence"]["freezing_level_low"] is True
+    assert low["evidence"]["corroboration"]["h0_low"] is True
+    assert high["evidence"]["corroboration"]["h0_low"] is False
+
+
+def test_hail_poh_fraction_normalization():
+    # DPC POH e' una frazione [0,1] -> convertita a % (0.5354 -> 53.54);
+    # gia' in % resta invariato; None/NaN -> None (mai un valore inventato)
+    assert hail._poh_percent(0.5354) == 53.54
+    assert hail._poh_percent(53.5) == 53.5
+    assert hail._poh_percent(0.0) == 0.0
+    assert hail._poh_percent(None) is None
+    assert hail._poh_percent(float("nan")) is None
+
+
+def test_hail_vertical_partial_absent_is_fail_closed():
+    # solo ETM presente ma debole, senza POH/VIL/overhang: composito basso,
+    # niente promozione (i campi mancanti valgono 0, mai rinormalizzati)
+    obs = _obs(_points([58.0, 58.0]), structure_score=40.0,
+               vertical=_vertical(etm_km=7.0))
+    event = hail.evaluate_hail(obs, LTG_OFF, None)
+    assert event is not None
+    assert event["state"] == "SUSPECT"
+    st = event["evidence"]["structure"]
+    assert st["available"] is True
+    assert st["poh_percent"] is None
+    assert st["poh_primary"] is False
+    assert st["strong"] is False
+
+
+def test_fzl_bucket_grid():
+    # cache H0 per-cella: nodo piu' vicino entro ~0.5 gradi
+    assert hail.fzl_bucket(41.0, 12.0) == (41.0, 12.0)
+    assert hail.fzl_bucket(41.23, 12.11) == (41.0, 12.0)
+    assert hail.fzl_bucket(41.8, 12.4) == (42.0, 12.5)
+    assert hail.fzl_bucket(41.6, 12.4) == (41.5, 12.5)
+    assert hail.fzl_bucket(40.6, 12.9) == (40.5, 13.0)
+
+
+def test_build_observations_attaches_vertical_from_candidate():
+    sc = {"candidates": [
+        {"track_id": 1, "track_type": "cell", "position": [12.0, 41.0],
+         "structure": 88.0,
+         "structure_features": {"poh_max": 0.62, "etm_max": 11000.0,
+                                "vil_max": 55.0, "overhang": 0.40}},
+        {"track_id": 7, "track_type": "storm_object",
+         "position": [12.5, 41.5], "structure": 70.0,
+         "structure_features": {"poh_max": 55.0, "etm_max": 8.0,
+                                "vil_max": 30.0, "overhang": 0.10}},
+    ]}
+    tracks = {"tracks": [
+        {"track_id": 1, "duration_min": 15.0, "points": _points([58.0, 58.0])},
+    ]}
+    obs = engine.build_observations(sc, tracks, {"features": []}, RADAR_MS,
+                                    RADAR_ISO)
+    by_anchor = {o["anchor"]: o for o in obs}
+    cell = by_anchor["cell-1"]
+    assert cell["structure_score"] == 88.0
+    # frazione POH legacy 0.62 -> 62.0%; ETM legacy in METRI 11000 -> 11 km
+    assert cell["vertical"]["poh_percent"] == 62.0
+    assert cell["vertical"]["etm_km"] == 11.0
+    assert cell["vertical"]["vil_kg_m2"] == 55.0
+    so = by_anchor["storm_object-7"]
+    assert so["structure_score"] == 70.0
+    assert so["vertical"]["poh_percent"] == 55.0
+    # candidato senza struttura (feature mancanti) -> fail-closed vertical None
+    bare = engine.build_observations(
+        {"candidates": [{"track_id": 9, "track_type": "storm_object",
+                         "position": [13.0, 42.0]}]},
+        {"tracks": []}, {"features": []}, RADAR_MS, RADAR_ISO)
+    assert bare[0]["vertical"] is None
+
+
 def test_hail_duration_source_for_targets_without_points():
     obs = _obs([], max_dbz=62.0, source="duration", recent_points=[],
                duration_min=12.0, on_latest_frame=True, anchor="storm_object-7",
@@ -648,24 +832,115 @@ def test_hail_score_is_bounded():
 # Logica VORTEX
 # ===========================================================================
 def test_vortex_suspect_from_organization_score():
+    # Soglia alzata a 76 (banda "Highly Organized"): 60 era la soglia del
+    # candidato supercella (56) e faceva emettere ogni cella organizzata.
     event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
-                                        organization_score=65), LTG_OFF)
+                                        organization_score=76), LTG_OFF)
     assert event is not None
     assert event["type"] == "VORTEX"
     assert event["state"] == "SUSPECT"
     assert event["id"] == "VORTEX-cell-1"
-    assert event["evidence"]["organization_score"] == 65
+    assert event["evidence"]["organization_score"] == 76
     assert event["evidence"]["doppler"] is False
 
 
 def test_vortex_morphology_only_is_suspect():
+    # AGGIORNATO (coerenza temporale per-frame): il gate morfologia richiede
+    # ora la firma hook COMPLETA in >= vortex.MORPH_HOOK_MIN_FRAMES frame
+    # distinti. Prima bastava eccentricity_max/solidity_min/compactness_max
+    # presi su frame DIVERSI, che promuoveva celle allungate in un frame e
+    # frastagliate in un altro (falsi positivi su linee/squall line/bow
+    # echo/merger/anvil). L'asserzione di fondo (sola morfologia -> SUSPECT)
+    # resta invariata, con dati che dimostrano la coerenza richiesta.
     event = vortex.evaluate_vortex(
         _obs(_points([50.0, 50.0]), organization_score=None,
-             eccentricity_max=0.95, solidity_min=0.80, compactness_max=4.0),
+             morph_frames=_hook_frames(vortex.MORPH_HOOK_MIN_FRAMES)),
         LTG_OFF)
     assert event is not None
     assert event["state"] == "SUSPECT"
     assert event["evidence"]["hookish_morphology"] is True
+    assert event["evidence"]["morphology"]["hook_frames"] == \
+        vortex.MORPH_HOOK_MIN_FRAMES
+
+
+def test_vortex_hook_scattered_across_frames_is_not_hookish():
+    """Firma hook MAI completa in un singolo frame (ecc/sol/comp sparsi su
+    frame diversi): gli aggregati supererebbero le tre soglie, ma nessun
+    frame le ha insieme -> non hookish e, senza organization_score,
+    nessun evento (era il meccanismo dei falsi positivi)."""
+    scattered = [
+        _morph_frame(RADAR_MS, ecc=0.97, sol=1.00, comp=1.5),      # solo ecc
+        _morph_frame(RADAR_MS - PERIOD_MS, ecc=0.55, sol=0.70,
+                     comp=5.5),                          # solo sol+comp
+        _morph_frame(RADAR_MS - 2 * PERIOD_MS, ecc=0.96, sol=0.90,
+                     comp=4.5),                          # ecc+comp, sol no
+    ]
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=scattered,
+               eccentricity_max=0.97, solidity_min=0.70, compactness_max=5.5)
+    assert vortex.hook_frame_count(obs) == 0
+    assert vortex.is_hookish(obs) is False
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_single_complete_frame_is_not_enough():
+    """La firma hook completa in UN solo frame non basta: servono >= K frame
+    coerenti (K = vortex.MORPH_HOOK_MIN_FRAMES)."""
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=_hook_frames(1),
+               eccentricity_max=0.95, solidity_min=0.80, compactness_max=4.0)
+    assert vortex.hook_frame_count(obs) == 1
+    assert vortex.is_hookish(obs) is False
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_hookish_on_k_coherent_frames():
+    k = vortex.MORPH_HOOK_MIN_FRAMES
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=_hook_frames(k + 1))
+    assert vortex.hook_frame_count(obs) == k + 1
+    assert vortex.is_hookish(obs) is True
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["state"] == "SUSPECT"
+    morph = event["evidence"]["morphology"]
+    assert morph["hook_frames"] == k + 1
+    assert morph["hook_frames_required"] == k
+    assert morph["frames_observed"] == k + 1
+    assert any("coerente su" in lab for lab in event["evidence"]["labels"])
+    assert any(vortex.DOPPLER_DISCLAIMER in lab
+               for lab in event["evidence"]["labels"])
+
+
+def test_vortex_hook_frames_count_only_joint_frames():
+    """Contano solo i frame con TUTTE e tre le condizioni: un frame che ne
+    supera due su tre non entra nel conteggio."""
+    frames = [
+        _morph_frame(RADAR_MS),                                # completo
+        _morph_frame(RADAR_MS - PERIOD_MS, ecc=0.50, sol=0.80,
+                     comp=4.0),                    # ecc sotto soglia
+        _morph_frame(RADAR_MS - 2 * PERIOD_MS),                # completo
+        _morph_frame(RADAR_MS - 3 * PERIOD_MS),                # completo
+    ]
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=frames)
+    assert vortex.hook_frame_count(obs) == 3
+    assert vortex.is_hookish(obs) is True          # >= K (3) -> hookish
+
+
+def test_vortex_same_timestamp_samples_count_as_one_frame():
+    """Due campioni con lo STESSO timestamp sono lo stesso frame: la
+    coerenza temporale non si puo' fabbricare duplicando il campione, e
+    campioni discordanti dello stesso frame lo fanno fallire (fail-closed)."""
+    duplicated = _hook_frames(1) + _hook_frames(1)   # stesso timestamp x2
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=duplicated)
+    assert vortex.hook_frame_count(obs) == 1
+    assert vortex.is_hookish(obs) is False
+    discordant = _hook_frames(1) + [_morph_frame(RADAR_MS, ecc=0.50)]
+    obs2 = _obs(_points([50.0, 50.0]), organization_score=None,
+                morph_frames=discordant)
+    assert vortex.hook_frame_count(obs2) == 0
 
 
 def test_vortex_without_gate_is_not_an_event():
@@ -695,12 +970,16 @@ def test_vortex_corroborated_blocked_without_lightning():
 
 
 def test_vortex_corroborated_blocked_with_low_org():
+    # Input aggiornato al gate per-frame: gli aggregati soli (max/min su
+    # frame diversi) non promuovono piu', quindi la morfologia va data come
+    # frame coerenti (>= K = 3). L'asserzione (org < 80 -> nessuna
+    # promozione) e' quella di prima, invariata.
     event = vortex.evaluate_vortex(
         _obs(_points([50.0, 50.0]), organization_score=55,
-             eccentricity_max=0.95, solidity_min=0.80, compactness_max=4.0),
+             morph_frames=_hook_frames(vortex.MORPH_HOOK_MIN_FRAMES)),
         LTG_UP)
     assert event is not None
-    assert event["state"] == "SUSPECT"        # org < 70: niente promozione
+    assert event["state"] == "SUSPECT"        # org < 80: niente promozione
 
 
 def test_vortex_requires_persistence():
@@ -721,6 +1000,58 @@ def test_vortex_score_is_bounded():
     assert vortex.vortex_score("SUSPECT", 60, LTG_OFF) == 40.0
     assert vortex.vortex_score("CORROBORATED", 80, LTG_UP) <= 99.0
     assert vortex.vortex_score("VERIFIED", None, LTG_OFF) == 100.0
+
+
+# --- Anti-falsi-positivi (pheno-1.4.0): evidenza osservata sostenuta --------
+def test_vortex_org_below_suspect_gate_without_hook_is_none():
+    """organization_score 75 (< 76) senza hook coerente -> nessun evento."""
+    obs = _obs(_points([50.0, 50.0]), organization_score=75)
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_below_min_dbz_is_not_emitted():
+    """Senza core convettivo (max_dbz < 45) nessun badge, anche con org alta."""
+    obs = _obs(_points([30.0, 30.0]), organization_score=80)
+    assert obs["max_dbz"] == 30.0
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_single_look_is_not_sustained():
+    """Persistenza minima (2 punti) ma nessuna evidenza sostenuta (2 frame,
+    n_frames assente): org alta da sola non basta piu'."""
+    obs = _obs(_points([50.0, 50.0]), organization_score=80,
+               morph_frames=[], n_frames=None, duration_min=5.0)
+    assert vortex.observed_frame_count(obs) == 2
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_observed_frame_count_uses_best_source():
+    obs = _obs(_points([50.0, 50.0, 50.0]), organization_score=80,
+               morph_frames=_hook_frames(1), n_frames=5)
+    assert vortex.observed_frame_count(obs) == 5
+
+
+def test_vortex_corroborated_via_hook_and_strong_structure():
+    """Gate primario = hook sostenuto; corroboratore indipendente = struttura
+    verticale forte -> CORROBORATED anche senza fulmini e senza org."""
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=_hook_frames(vortex.MORPH_HOOK_MIN_FRAMES),
+               vertical=_strong_structure())
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["state"] == "CORROBORATED"
+    assert event["evidence"]["structure"]["strong"] is True
+    assert event["evidence"]["corroboration"]["structure"] is True
+
+
+def test_vortex_hook_without_strong_structure_stays_suspect():
+    """Hook sostenuto ma struttura verticale debole/assente -> SUSPECT."""
+    obs = _obs(_points([50.0, 50.0]), organization_score=None,
+               morph_frames=_hook_frames(vortex.MORPH_HOOK_MIN_FRAMES),
+               vertical=_vertical(poh_percent=20.0))
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["state"] == "SUSPECT"
 
 
 # ===========================================================================
@@ -816,6 +1147,92 @@ def test_build_badges_only_active_and_promotes_labels():
 
 
 # ===========================================================================
+# Aggregazione eventi per tempesta (anti-duplicati)
+# ===========================================================================
+def _agg_event(ev_id, etype="VORTEX", first="2026-10-07T00:00:00Z",
+               last="2026-10-07T00:00:00Z", lon=12.0, lat=41.0,
+               state="SUSPECT", score=40.0, frames=1.0):
+    """Evento minimale per i test di aggregate_events."""
+    return {"id": ev_id, "type": etype, "state": state, "score": score,
+            "first_seen": first, "last_seen": last, "position": [lon, lat],
+            "evidence": {"anchor": ev_id.split("-", 1)[1],
+                         "frame_count": frames, "labels": []}}
+
+
+def test_aggregate_events_collapses_same_storm_across_ids():
+    a = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                   last="2026-10-07T00:00:00Z", lon=12.0, lat=41.0, frames=2)
+    b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:20:00Z",
+                   last="2026-10-07T00:20:00Z", lon=12.05, lat=41.02,
+                   state="CORROBORATED", score=72.0, frames=3)
+    out = ev_store.aggregate_events([a, b])
+    assert len(out) == 1
+    event = out[0]
+    assert event["id"] == "VORTEX-cell-1"          # id/first del piu' vecchio
+    assert event["first_seen"] == a["first_seen"]
+    assert event["last_seen"] == b["last_seen"]    # last piu' recente
+    assert event["state"] == "CORROBORATED"        # severita' massima
+    assert event["score"] == 72.0
+    ev = event["evidence"]
+    assert ev["aggregated_events"] == 2
+    assert ev["aggregated_ids"] == ["VORTEX-cell-1", "VORTEX-cell-9"]
+    assert ev["frame_count"] == 5                  # somma dei frame
+    assert ev["event_span_min"] == 20.0
+
+
+def test_aggregate_events_keeps_far_or_late_storms_separate():
+    a = _agg_event("VORTEX-cell-1")
+    far = _agg_event("VORTEX-cell-2", lon=13.0, lat=42.0)     # > 25 km
+    late = _agg_event("VORTEX-cell-3", first="2026-10-07T02:00:00Z",
+                      last="2026-10-07T02:00:00Z")            # > 45 min
+    out = ev_store.aggregate_events([a, far, late])
+    assert sorted(e["id"] for e in out) == [
+        "VORTEX-cell-1", "VORTEX-cell-2", "VORTEX-cell-3"]
+
+
+def test_aggregate_events_never_merges_different_types():
+    vortex_ev = _agg_event("VORTEX-cell-1")
+    hail_ev = _agg_event("HAIL-cell-1", etype="HAIL")
+    out = ev_store.aggregate_events([vortex_ev, hail_ev])
+    assert sorted(e["id"] for e in out) == ["HAIL-cell-1", "VORTEX-cell-1"]
+
+
+def test_aggregate_events_chain_is_transitive():
+    """A-B e B-C entro raggio, A-C oltre: la catena unisce tutti e tre."""
+    a = _agg_event("VORTEX-cell-1", lon=12.0, lat=41.0)
+    b = _agg_event("VORTEX-cell-2", lon=12.2, lat=41.0)   # ~17 km da A
+    c = _agg_event("VORTEX-cell-3", lon=12.4, lat=41.0)   # ~34 km da A, 17 da B
+    out = ev_store.aggregate_events([a, b, c])
+    assert len(out) == 1
+    assert out[0]["evidence"]["aggregated_events"] == 3
+
+
+def test_aggregate_events_empty_and_single_are_stable():
+    a = _agg_event("VORTEX-cell-1")
+    assert ev_store.aggregate_events([a]) == [a]
+    assert ev_store.aggregate_events([]) == []
+    assert ev_store.aggregate_events(None) == []
+
+
+def test_merge_then_aggregate_collapses_reidentified_storm_to_one_badge():
+    """Due run identificano la stessa cella con id diversi: lo store ha due
+    eventi, l'aggregazione ne fa UNO -> UN badge attivo (era il meccanismo di
+    moltiplicazione dei falsi positivi)."""
+    existing = ev_store.empty_events(RADAR_ISO)
+    a = _agg_event("VORTEX-cell-1", last=RADAR_ISO)
+    b = _agg_event("VORTEX-cell-7", last=RADAR_ISO, lon=12.05, lat=41.0)
+    merged = ev_store.merge_events(existing, [a], RADAR_ISO,
+                                   prune_anchor=RADAR_ISO)
+    merged = ev_store.merge_events(merged, [b], RADAR_ISO,
+                                   prune_anchor=RADAR_ISO)
+    assert len(merged["events"]) == 2              # id distinti nello store
+    aggregated = ev_store.aggregate_events(merged["events"])
+    assert len(aggregated) == 1
+    badges = ev_store.build_badges(aggregated, RADAR_ISO, RADAR_ISO)
+    assert [b["id"] for b in badges["badges"]] == ["VORTEX-cell-1"]
+
+
+# ===========================================================================
 # build_observations
 # ===========================================================================
 def test_build_observations_dedupes_cell_candidate_and_keeps_storm_object(tmp_path):
@@ -846,11 +1263,134 @@ def test_build_observations_dedupes_cell_candidate_and_keeps_storm_object(tmp_pa
     assert cell["eccentricity_max"] == 0.95   # morfologia da storms.geojson
     assert cell["solidity_min"] == 0.80
     assert cell["compactness_max"] == 4.0
+    # il Point di storms.geojson e' UN frame: morph_frames lo conserva come
+    # tale (timestamp incluso), non solo gli aggregati
+    assert len(cell["morph_frames"]) == 1
+    assert cell["morph_frames"][0]["timestamp_ms"] == RADAR_MS
+    assert cell["morph_frames"][0]["eccentricity"] == 0.95
     storm_object = obs[1]
     assert storm_object["type"] == "storm_object"
     assert storm_object["persistence_source"] == "duration"
     assert storm_object["max_dbz"] == 62.0
     assert storm_object["duration_min"] == 12.0
+
+
+def _obs_from_storms(features, tmp_path):
+    """Prima osservazione di build_observations con storms.geojson = features."""
+    radar_dir = _write_radar(tmp_path / "radar")
+    _write_json(radar_dir / "storms.geojson",
+                {"type": "FeatureCollection", "features": features})
+    tracks = json.loads((radar_dir / "tracks.json").read_text(encoding="utf-8"))
+    supercells = json.loads((radar_dir / "supercells.json").read_text(
+        encoding="utf-8"))
+    storms = json.loads((radar_dir / "storms.geojson").read_text(
+        encoding="utf-8"))
+    obs = engine.build_observations(supercells, tracks, storms, RADAR_MS,
+                                    RADAR_ISO)
+    return obs[0]
+
+
+def test_build_observations_morph_frames_keep_one_sample_per_frame(tmp_path):
+    """Multi-frame in storms.geojson: un Point per frame -> morph_frames con
+    un campione per timestamp; gli aggregati restano max/min su TUTTI i
+    frame (solo evidence). Un frame completo su due -> non hookish: non si
+    combina la firma di frame diversi."""
+    cell = _obs_from_storms([
+        _storm_point(RADAR_MS, ecc=0.95, sol=0.80, comp=4.0),
+        _storm_point(RADAR_MS - PERIOD_MS, ecc=0.60, sol=0.95, comp=1.5),
+    ], tmp_path)
+    assert [f["timestamp_ms"] for f in cell["morph_frames"]] == [
+        RADAR_MS, RADAR_MS - PERIOD_MS]
+    assert cell["eccentricity_max"] == 0.95        # aggregati invariati
+    assert cell["solidity_min"] == 0.80
+    assert cell["compactness_max"] == 4.0
+    assert vortex.hook_frame_count(cell) == 1
+    assert vortex.is_hookish(cell) is False
+
+
+def test_build_observations_k_coherent_hook_frames_are_hookish(tmp_path):
+    """Firma hook completa in K (=3) frame consecutivi -> hookish: il percorso
+    morfologico resta percorribile quando i dati mostrano coerenza."""
+    k = vortex.MORPH_HOOK_MIN_FRAMES
+    cell = _obs_from_storms([
+        _storm_point(RADAR_MS, ecc=0.95, sol=0.80, comp=4.0),
+        _storm_point(RADAR_MS - PERIOD_MS, ecc=0.93, sol=0.82, comp=3.6),
+        _storm_point(RADAR_MS - 2 * PERIOD_MS, ecc=0.94, sol=0.81, comp=3.8),
+    ], tmp_path)
+    assert vortex.hook_frame_count(cell) == k
+    assert vortex.is_hookish(cell) is True
+
+
+def test_build_observations_morph_frames_from_track_points_per_frame():
+    """Morfologia PER-FRAME dai PUNTI di tracks.json: i frame nella finestra
+    recente diventano campioni con timestamp reale; gli aggregati max/min
+    restano come evidence."""
+    cell = _obs_from_tracks(_points_morph([
+        (58.0, 0.95, 0.80, 4.0),
+        (58.0, 0.93, 0.82, 3.6),
+        (58.0, 0.94, 0.81, 3.8),
+    ]))
+    assert [f["timestamp_ms"] for f in cell["morph_frames"]] == [
+        RADAR_MS - 2 * PERIOD_MS, RADAR_MS - PERIOD_MS, RADAR_MS]
+    assert cell["morph_frames"][0]["eccentricity"] == 0.95
+    assert cell["morph_frames"][0]["solidity"] == 0.80
+    assert cell["morph_frames"][0]["compactness"] == 4.0
+    assert cell["eccentricity_max"] == 0.95
+    assert cell["solidity_min"] == 0.80
+    assert cell["compactness_max"] == 4.0
+    assert vortex.hook_frame_count(cell) == 3
+    assert vortex.is_hookish(cell) is True
+
+
+def test_build_observations_track_hook_on_k_frames_is_hookish():
+    """Un track con >= K frame hook-COERENTI nei points -> VORTEX SUSPECT
+    anche senza organization_score: il gate morfologico per-frame e'
+    percorribile sui dati reali (chiusura del data gap)."""
+    k = vortex.MORPH_HOOK_MIN_FRAMES
+    cell = _obs_from_tracks(_points_morph([(58.0, 0.95, 0.80, 4.0)] * k))
+    assert cell["organization_score"] is None
+    assert vortex.hook_frame_count(cell) == k
+    event = vortex.evaluate_vortex(cell, {"available": False})
+    assert event is not None
+    assert event["state"] == "SUSPECT"
+    assert event["evidence"]["hookish_morphology"] is True
+    assert event["evidence"]["morphology"]["hook_frames"] == k
+
+
+def test_build_observations_track_hook_only_last_frame_is_not_hookish():
+    """Firma hook solo sull'ULTIMO frame -> NON hookish (serve coerenza su K
+    frame): senza org nessun evento. E' esattamente il caso che il vecchio
+    Point-latest di storms.geojson produceva sempre."""
+    cell = _obs_from_tracks(_points_morph([
+        (58.0, 0.60, 0.95, 1.5),
+        (58.0, 0.62, 0.90, 2.0),
+        (58.0, 0.95, 0.80, 4.0),
+    ]))
+    assert cell["organization_score"] is None
+    assert vortex.hook_frame_count(cell) == 1
+    assert vortex.is_hookish(cell) is False
+    assert vortex.evaluate_vortex(cell, {"available": False}) is None
+
+
+def test_build_observations_track_without_morphology_fails_closed():
+    """Punti senza morfologia (schema legacy) -> morph_frames vuoto e nessun
+    aggregato inventato: il gate non puo' essere promosso (fail-closed)."""
+    cell = _obs_from_tracks(_points([58.0, 58.0, 58.0]))
+    assert cell["morph_frames"] == []
+    assert cell["eccentricity_max"] is None
+    assert cell["solidity_min"] is None
+    assert cell["compactness_max"] is None
+    assert vortex.hook_frame_count(cell) == 0
+    assert vortex.is_hookish(cell) is False
+
+
+def test_build_observations_track_morphology_window_limits_frames():
+    """La serie per-frame rispetta la finestra recente (15 min): su 6 frame a
+    passo 5 min entrano solo quelli entro 15 min dal radar (4)."""
+    cell = _obs_from_tracks(_points_morph([(58.0, 0.95, 0.80, 4.0)] * 6))
+    assert len(cell["morph_frames"]) == 4
+    assert cell["morph_frames"][-1]["timestamp_ms"] == RADAR_MS
+    assert cell["morph_frames"][0]["timestamp_ms"] == RADAR_MS - 3 * PERIOD_MS
 
 
 def test_build_observations_track_without_points_falls_back_to_candidate(tmp_path):
@@ -1357,10 +1897,21 @@ def test_lightning_strength_fallback_and_clamp():
 
 
 def test_lightning_corroborates_per_source_thresholds():
+    # MLI 1.3.0: densita'/rate del disco (strength_min 0.05, count_min 107)
     assert pltg.lightning_corroborates(
-        {"available": True, "source": "mli", "strength": 0.02}) is True
+        {"available": True, "source": "mli", "strength": 0.06}) is True
+    assert pltg.lightning_corroborates(
+        {"available": True, "source": "mli", "strength": 0.05}) is True
+    assert pltg.lightning_corroborates(
+        {"available": True, "source": "mli", "strength": 0.02}) is False
     assert pltg.lightning_corroborates(
         {"available": True, "source": "mli", "strength": 0.005}) is False
+    # fallback count_min in pixel per MLI (0.05 * ~2134 disco), quando strength
+    # manca: ~107 px, sotto (106) resta False
+    assert pltg.lightning_corroborates(
+        {"available": True, "source": "mli", "count_near": 107}) is True
+    assert pltg.lightning_corroborates(
+        {"available": True, "source": "mli", "count_near": 106}) is False
     assert pltg.lightning_corroborates(
         {"available": True, "source": "dpc", "count_near": 10}) is True
     assert pltg.lightning_corroborates(
@@ -1530,3 +2081,113 @@ def test_engine_guard_does_not_rewrite_unchanged_output(radar_case, capsys):
     assert open(badges_path, "rb").read() == body_badges
     assert summary["events"] == 4
     assert summary["active"] == 4
+
+
+# ---------------------------------------------------------------------------
+# Overshooting top IR_108 come corroboratore SATELLITE (pheno-1.5.0)
+# ---------------------------------------------------------------------------
+def test_engine_ot_from_candidate_compaction():
+    assert engine._ot_from_candidate(None) is None
+    assert engine._ot_from_candidate({}) is None
+    ot = engine._ot_from_candidate({
+        "ot": 100.0,
+        "ot_details": {"ot_flag": True, "cold_top": True, "ctt_min_c": -63.0,
+                       "n_flags": 9},
+    })
+    assert ot == {"score": 100.0, "ot_flag": True, "cold_top": True,
+                  "ctt_min_c": -63.0, "n_flags": 9}
+    # nessun OT (score 0.0 + details senza flag): comunque un descrittore reale
+    ot0 = engine._ot_from_candidate({
+        "ot": 0.0,
+        "ot_details": {"ot_flag": False, "cold_top": False, "ctt_min_c": -50.0,
+                       "n_flags": 0},
+    })
+    assert ot0["score"] == 0.0 and ot0["ot_flag"] is False
+
+
+def test_engine_ot_propagates_to_candidate_observation():
+    obs = engine.build_observations(
+        {"candidates": [{
+            "track_id": 7, "track_type": "storm_object",
+            "position": [12.5, 41.5], "on_latest_frame": True,
+            "ot": 100.0,
+            "ot_details": {"ot_flag": True, "cold_top": True,
+                           "ctt_min_c": -63.0, "n_flags": 9},
+        }]}, {}, {}, RADAR_MS, RADAR_ISO)
+    assert len(obs) == 1
+    assert obs[0]["satellite_ot"]["ot_flag"] is True
+    assert obs[0]["satellite_ot"]["ctt_min_c"] == -63.0
+    # candidato senza OT -> satellite_ot None (fail-closed)
+    obs_none = engine.build_observations(
+        {"candidates": [{"track_id": 8, "track_type": "storm_object",
+                         "position": [12.5, 41.5], "on_latest_frame": True}]},
+        {}, {}, RADAR_MS, RADAR_ISO)
+    assert obs_none[0]["satellite_ot"] is None
+
+
+def test_engine_ot_propagates_to_track_observation():
+    track = {"track_id": 1, "duration_min": 15.0,
+             "points": _points([58.0, 58.0])}
+    obs = engine.build_observations(
+        {"candidates": [{
+            "track_id": 1, "track_type": "cell", "position": [12.0, 41.0],
+            "ot": 50.0,
+            "ot_details": {"ot_flag": True, "cold_top": True,
+                           "ctt_min_c": -60.0, "n_flags": 5},
+        }]}, {"tracks": [track]}, {"features": []}, RADAR_MS, RADAR_ISO)
+    assert obs[0]["satellite_ot"]["ot_flag"] is True
+    assert obs[0]["satellite_ot"]["ctt_min_c"] == -60.0
+
+
+def test_hail_ot_corroborates_strong_dbz_base():
+    # base forte (62 dBZ) senza fulmini/H0/struttura; OT (IR_108) -> CORROBORATED
+    obs = _obs(_points([62.0, 62.0]),
+               satellite_ot={"score": 100.0, "ot_flag": True,
+                             "ctt_min_c": -64.0, "n_flags": 9,
+                             "cold_top": True})
+    event = hail.evaluate_hail(obs, LTG_OFF, None)
+    assert event is not None
+    assert event["state"] == "CORROBORATED"
+    assert event["evidence"]["corroboration"]["ot"] is True
+    assert event["evidence"]["satellite_ot"]["flag"] is True
+    assert event["evidence"]["satellite_ot"]["ctt_min_c"] == -64.0
+    assert any("overshooting top (IR_108)" in lab
+               for lab in event["evidence"]["labels"])
+
+
+def test_hail_ot_absent_or_false_is_fail_closed():
+    # stessa base forte ma SENZA OT -> resta SUSPECT (comportamento invariato)
+    event = hail.evaluate_hail(_obs(_points([62.0, 62.0])), LTG_OFF, None)
+    assert event["state"] == "SUSPECT"
+    assert event["evidence"]["corroboration"]["ot"] is False
+    # OT presente ma NON flaggato (IR valutato, nessun OT) -> nessuna promozione
+    obs = _obs(_points([62.0, 62.0]),
+               satellite_ot={"score": 0.0, "ot_flag": False,
+                             "ctt_min_c": -40.0, "n_flags": 0,
+                             "cold_top": False})
+    event2 = hail.evaluate_hail(obs, LTG_OFF, None)
+    assert event2["state"] == "SUSPECT"
+    assert event2["evidence"]["corroboration"]["ot"] is False
+
+
+def test_vortex_ot_corroborates_high_organization():
+    # organization alta (80) senza fulmini/struttura; OT -> CORROBORATED
+    obs = _obs(_points([50.0, 50.0]), organization_score=80,
+               satellite_ot={"score": 100.0, "ot_flag": True,
+                             "ctt_min_c": -63.0, "n_flags": 9,
+                             "cold_top": True})
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["state"] == "CORROBORATED"
+    assert event["evidence"]["corroboration"]["ot"] is True
+    assert event["evidence"]["satellite_ot"]["flag"] is True
+    assert any("overshooting top (IR_108)" in lab
+               for lab in event["evidence"]["labels"])
+
+
+def test_vortex_ot_absent_is_fail_closed():
+    obs = _obs(_points([50.0, 50.0]), organization_score=80)
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["state"] == "SUSPECT"
+    assert event["evidence"]["corroboration"]["ot"] is False

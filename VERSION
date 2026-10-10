@@ -1,3 +1,14 @@
+MeteoRisk Light - 1.2.2.0 - PLAYER + CONFINI SOPRA SATELLITE + GRANDINE MULTI-PRODOTTO + VORTEX DEDUP + OVERSHOOTING TOP IR + OPERA CIRRUS PROTOTIPO (bump da 1.2.1.0)
+MAJOR=1
+MINOR=2
+PATCH=2
+BUILD=0
+RELEASE_TYPE=release
+DATE=2026-10-10
+NOTE=release 1.2.2.0 (bump da 1.2.1.0): player senza kick di velocita' (pacing 1x = 1000 ms/frame); confini regionali/provinciali visibili sopra il satellite (nuovo pane dedicato, stroke-only); nuovo toggle grandine in UI; CAPPI_2/CAPPI_6 attivati (overhang non piu' neutro); vortex con proxy hook su K frame coerenti e morfologia per-frame persistita (tracks.json); grandine multi-prodotto (POH primario + struttura verticale VIL/ETM/CAPPI/overhang + H0 per-cella + gate fulmini ricalibrato); riduzione falsi positivi vortex + deduplica eventi (badge come evento, non per-frame); UI con distinzione esplicita tra rischio ambientale NWP (potenziale) ed evento osservato radar; nuovo overshooting top da IR_108 (DPC) sulla griglia radar (entra in SSI v2 e come corroboratore satellite di hail/vortex); prototipo isolato adapter OPERA CIRRUS (radar_engine/fusion/) non attivo; pannello LIVE con funzione interna "Supercelle radar" (toggle), raggiungibile anche senza fulmini. LIMITI NOTI: overshooting top e' un proxy IR-only senza WV/BTD; adapter OPERA CIRRUS e' un prototipo isolato non attivo; soglie hail/vortex sperimentali. Bump di versione e allineamento riferimenti/file a 1.2.2.0.
+APP_FILE=mri-light-1.2.2.0.html
+OVERSHOOT=BUMP 1.2.2.0 - PLAYER + CONFINI SOPRA SATELLITE + GRANDINE MULTI-PRODOTTO + VORTEX DEDUP + OVERSHOOTING TOP IR + OPERA CIRRUS PROTOTIPO: player senza kick di velocita' (pacing 1x = 1000 ms/frame); nuovo pane confini regioni/province sopra il satellite (stroke-only); toggle grandine dedicato; CAPPI_2/CAPPI_6 attivi (overhang non piu' neutro); vortex proxy hook su K frame coerenti + morfologia per-frame persistita in tracks.json; grandine multi-prodotto con POH primario, struttura verticale (VIL/ETM/CAPPI/overhang), H0 per-cella e gate fulmini ricalibrato; riduzione falsi positivi vortex + deduplica eventi (badge come evento, non per-frame); UI rischio ambientale NWP (potenziale) vs evento osservato radar; overshooting top da IR_108 (DPC) sulla griglia radar (SSI v2 + corroboratore hail/vortex); OPERA CIRRUS prototipo isolato non attivo; funzione LIVE "Supercelle radar" con toggle. File e riferimenti rinominati a 1.2.2.0 (bump da 1.2.1.0).
+
 MeteoRisk Light - 1.2.1.0 - LEGIBILITY + COERENZA DIREZIONE/VELOCITA' + GATE ORGANIZZAZIONE + BACKOFF FULMINI (bump da 1.2.0)
 MAJOR=1
 MINOR=2

@@ -35,6 +35,7 @@ resta quello dell'ultima scrittura REALE.
 import datetime as _dt
 import hashlib
 import json
+import math
 import os
 import tempfile
 
@@ -42,6 +43,16 @@ from . import WINDOW_HOURS
 
 EVENTS_NAME = "events.json"
 BADGES_NAME = "badges.json"
+# Aggregazione per tempesta (anti-falsi-positivi/duplicati): i track_id del
+# radar engine sono rinumerati a ogni run, quindi la stessa cella puo' entrare
+# nella finestra 24h con id diversi -> N eventi "diversi" per UNA tempesta.
+# Due eventi dello STESSO type sono lo stesso sistema se NON distano piu' di
+# EVENT_DEDUP_KM fra gli anchor e non oltre EVENT_MERGE_GAP_MIN di intervallo
+# temporale; il gruppo diventa UN evento (id/first_seen del piu' vecchio,
+# last_seen massimo, severita' massima) con evidenza aggregata.
+EVENT_DEDUP_KM = 25.0
+EVENT_MERGE_GAP_MIN = 45.0
+_STATE_RANK = {"SUSPECT": 0, "CORROBORATED": 1, "VERIFIED": 2}
 # Campi volubili esclusi dal confronto (cambiano a ogni run anche senza
 # variazioni di fenomeno: sono l'orologio, non il dato).
 VOLATILE_EVENT_KEYS = ("generated_at",)
@@ -234,6 +245,153 @@ def merge_events(existing, incoming, generated_at, window_hours=WINDOW_HOURS,
     events.sort(key=lambda e: str(e.get("id")))
     return {"generated_at": generated_at, "window_hours": window_hours,
             "events": events}
+
+
+def _num(value):
+    """Numero da int/float/str; None se non interpretabile (bool escluso)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _position_lonlat(event):
+    """(lon, lat) da event.position; None se assente/non numerico."""
+    pos = event.get("position")
+    if not (isinstance(pos, (list, tuple)) and len(pos) >= 2):
+        return None
+    lon = _num(pos[0])
+    lat = _num(pos[1])
+    if lon is None or lat is None:
+        return None
+    return (lon, lat)
+
+
+def _haversine_km(a, b):
+    """Distanza great-circle (km) fra due (lon, lat)."""
+    lon1, lat1 = a
+    lon2, lat2 = b
+    radius = 6371.0088
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    h = (math.sin(dphi / 2.0) ** 2
+         + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2)
+    return 2.0 * radius * math.asin(min(1.0, math.sqrt(h)))
+
+
+def _event_frames(event):
+    """Frame osservati dichiarati dall'evidenza (0 se assenti)."""
+    ev = event.get("evidence") or {}
+    for key in ("frame_count", "observed_frames", "frames_observed"):
+        n = _num(ev.get(key))
+        if n is not None:
+            return int(n)
+    return 0
+
+
+def _same_storm(a, b, radius_km, max_gap_min):
+    """True se due eventi sono lo stesso sistema (type + spazio + tempo)."""
+    if str(a.get("type")) != str(b.get("type")):
+        return False
+    af, al = iso_to_ms(a.get("first_seen")), iso_to_ms(a.get("last_seen"))
+    bf, bl = iso_to_ms(b.get("first_seen")), iso_to_ms(b.get("last_seen"))
+    gap = None
+    if al is not None and bf is not None:
+        gap = bf - al
+    elif bl is not None and af is not None:
+        gap = af - bl
+    if gap is None:
+        # nessun tempo confrontabile: solo lo stesso anchor prova l'identita'
+        return (str((a.get("evidence") or {}).get("anchor"))
+                == str((b.get("evidence") or {}).get("anchor")))
+    if gap > max_gap_min * 60000.0:
+        return False
+    pa, pb = _position_lonlat(a), _position_lonlat(b)
+    if pa is not None and pb is not None:
+        return _haversine_km(pa, pb) <= radius_km
+    return (str((a.get("evidence") or {}).get("anchor"))
+            == str((b.get("evidence") or {}).get("anchor")))
+
+
+def _absorb_event(members):
+    """Fonde un gruppo di eventi omogenei in UN evento aggregato.
+
+    id/first_seen del membro piu' vecchio (determinismo sulla finestra),
+    last_seen massimo, severita' e score massimi, posizione/evidenza del
+    membro piu' forte (a parita' di severita', il piu' recente). Aggiunge
+    solo dati dentro evidence (schema additivo): aggregated_events,
+    aggregated_ids, frame_count (somma), event_span_min."""
+    def first_ms(ev):
+        return iso_to_ms(ev.get("first_seen"))
+
+    def last_ms(ev):
+        return iso_to_ms(ev.get("last_seen"))
+
+    oldest = min(members, key=lambda e: (first_ms(e) is None,
+                                         first_ms(e) or 0.0,
+                                         str(e.get("id"))))
+    base = max(members, key=lambda e: (_STATE_RANK.get(str(e.get("state")), -1),
+                                       last_ms(e) or 0.0))
+    merged = dict(base)
+    merged["id"] = oldest.get("id")
+    if oldest.get("first_seen") is not None:
+        merged["first_seen"] = oldest.get("first_seen")
+    ends = [last_ms(e) for e in members if last_ms(e) is not None]
+    if ends:
+        merged["last_seen"] = ms_to_iso(max(ends))
+    scores = [s for s in (_num(e.get("score")) for e in members) if s is not None]
+    if scores:
+        merged["score"] = max(scores)
+    evidence = dict(merged.get("evidence") or {})
+    evidence["aggregated_events"] = len(members)
+    evidence["aggregated_ids"] = sorted(str(e.get("id")) for e in members)
+    evidence["frame_count"] = sum(_event_frames(e) for e in members)
+    span_first = min([first_ms(e) for e in members
+                      if first_ms(e) is not None], default=None)
+    span_last = max(ends) if ends else None
+    if span_first is not None and span_last is not None:
+        evidence["event_span_min"] = round(
+            (span_last - span_first) / 60000.0, 1)
+    merged["evidence"] = evidence
+    return merged
+
+
+def aggregate_events(events, radius_km=EVENT_DEDUP_KM,
+                     max_gap_min=EVENT_MERGE_GAP_MIN):
+    """Collassa in UN evento per sistema le osservazioni riconosciute distinte.
+
+    Unione transitiva (union-find) su: stesso type + entro radius_km +
+    intervallo temporale <= max_gap_min. Determinismo: risultato ordinato per
+    id. Non tocca i tipi diversi (HAIL e VORTEX restano separati)."""
+    items = [dict(e) for e in (events or [])
+             if isinstance(e, dict) and e.get("id")]
+    n = len(items)
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _same_storm(items[i], items[j], radius_km, max_gap_min):
+                ri, rj = find(i), find(j)
+                if ri != rj:
+                    parent[rj] = ri
+    groups = {}
+    for i in range(n):
+        groups.setdefault(find(i), []).append(items[i])
+    merged = [_absorb_event(m) if len(m) > 1 else m[0]
+              for m in groups.values()]
+    merged.sort(key=lambda e: str(e.get("id")))
+    return merged
 
 
 def is_active(event, radar_timestamp):
