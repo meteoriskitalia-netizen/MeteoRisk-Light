@@ -63,6 +63,25 @@ def _frame(data=None, value=5.0, lon0=LON0, lat0=LAT0, px=PX):
         geo_transform=Transformer.from_crs(crs, "EPSG:4326", always_xy=True))
 
 
+def _frame_custom(rows=ROWS, cols=COLS, value=-50.0, px=PX, epsg=4326,
+                  transform=None, pixel_area=None):
+    """RasterData con griglia/CRS/pixel_area (eventualmente) diversi dal VMI."""
+    data = np.full((rows, cols), float(value))
+    if transform is None:
+        transform = Affine(px, 0.0, LON0, 0.0, -px, LAT0)
+    crs = PjCRS.from_epsg(epsg)
+    valid = np.isfinite(data)
+    if pixel_area is None:
+        pixel_area = (px * 111.0) ** 2
+    return models.RasterData(
+        data=data, valid_mask=valid, nodata_mask=~valid, rows=rows, cols=cols,
+        crs=crs, crs_wkt=crs.to_wkt(), transform=transform,
+        pixel_area_km2=pixel_area, time_ms=0,
+        time_iso="2026-10-07T00:00:00Z", source_path="synthetic",
+        declared_nodata=None,
+        geo_transform=Transformer.from_crs(crs, "EPSG:4326", always_xy=True))
+
+
 def _bundle():
     bundle = models.EngineBundle("ok", "2026-10-07T00:00:00Z", "test")
     bundle.frames = [_frame(), _frame()]
@@ -282,6 +301,81 @@ def test_phase2_evaluate_ot_from_ir108(monkeypatch):
     # componente ot presente su almeno un candidato
     assert bundle.phase2["components_status"]["ot"] == 1
     assert "phase2 ot ir108: no frames" not in bundle.phase2["warnings"]
+
+
+# ---------------------------------------------------------------------------
+# B5: _fetch_ir108 confronta la griglia COMPLETA (non solo la shape)
+# ---------------------------------------------------------------------------
+
+def _ir_warnings(monkeypatch, ref, ir_frame, product="IR_108"):
+    calls = []
+
+    def fake_fetch_frames(config, product=None, max_frames=None):
+        calls.append(product)
+        return [ir_frame], [], None
+
+    monkeypatch.setattr("radar_engine.fetch.fetch_frames", fake_fetch_frames)
+    warnings = []
+    rd = eng._fetch_ir108({}, {"product_ir108": product}, ref, warnings)
+    return rd, warnings, calls
+
+
+def test_fetch_ir108_same_shape_grid_mismatch_returns_none(monkeypatch):
+    """B5: STESSA shape ma CRS/transform/pixel_area diversi dalla VMI."""
+    ref = _frame()                                     # VMI 100x100, px 0.1
+    ir = _frame_custom(px=0.2, epsg=32632,             # 100x100, px 0.2, UTM
+                       pixel_area=(0.2 * 111.0) ** 2)
+    rd, warnings, calls = _ir_warnings(monkeypatch, ref, ir)
+    assert calls == ["IR_108"]
+    assert rd is None
+    assert "phase2 ot ir108: grid mismatch" in warnings
+    assert "phase2 ot ir108: shape mismatch" not in warnings
+
+
+def test_fetch_ir108_same_shape_transform_mismatch_returns_none(monkeypatch):
+    """B5: stessa shape e stesso CRS ma affine traslato -> disallineamento."""
+    ref = _frame()
+    shifted = Affine(PX, 0.0, LON0 + 0.05, 0.0, -PX, LAT0)  # stessa res, sfaldata
+    ir = _frame_custom(transform=shifted)
+    rd, warnings, _calls = _ir_warnings(monkeypatch, ref, ir)
+    assert rd is None
+    assert "phase2 ot ir108: grid mismatch" in warnings
+
+
+def test_fetch_ir108_shape_mismatch_still_rejected(monkeypatch):
+    """B5: shape diversa -> rifiutato come prima (controllo invariato)."""
+    ref = _frame()
+    ir = _frame_custom(rows=90, cols=90)
+    rd, warnings, _calls = _ir_warnings(monkeypatch, ref, ir)
+    assert rd is None
+    assert "phase2 ot ir108: shape mismatch" in warnings
+    assert "phase2 ot ir108: grid mismatch" not in warnings
+
+
+def test_fetch_ir108_identical_grid_accepted(monkeypatch):
+    """B5: griglia identica alla VMI -> raster accettato, nessun warning."""
+    ref = _frame()
+    ir = _frame_custom(px=PX, epsg=4326)
+    rd, warnings, _calls = _ir_warnings(monkeypatch, ref, ir)
+    assert rd is not None
+    assert tuple(rd.data.shape) == (ROWS, COLS)
+    assert "phase2 ot ir108: grid mismatch" not in warnings
+    assert "phase2 ot ir108: shape mismatch" not in warnings
+    assert warnings == []
+
+
+def test_fetch_ir108_none_metadata_never_rejected(monkeypatch):
+    """B5: metadata VMI assenti -> confronto impossibile -> nessun rifiuto."""
+    ref = _frame()
+    ref.crs = None
+    ref.crs_wkt = None
+    ref.transform = None
+    ref.geo_transform = None
+    ref.pixel_area_km2 = None
+    ir = _frame_custom(px=0.2, epsg=32632)
+    rd, warnings, _calls = _ir_warnings(monkeypatch, ref, ir)
+    assert rd is not None                       # compatibilita': non inventare mismatch
+    assert "phase2 ot ir108: grid mismatch" not in warnings
 
 
 def test_phase2_evaluate_all_layers_absent_keeps_candidates(monkeypatch):

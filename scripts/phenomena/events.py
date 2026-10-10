@@ -294,21 +294,43 @@ def _event_frames(event):
     return 0
 
 
+def _time_interval(event):
+    """Intervallo [first, last] in ms per un evento.
+
+    Un solo estremo presente -> l'evento e' trattato come ISTANTE (entrambi
+    gli estremi uguali a quello presente); estremi invertiti -> normalizzati;
+    entrambi assenti -> None (nessun tempo confrontabile)."""
+    first = iso_to_ms(event.get("first_seen"))
+    last = iso_to_ms(event.get("last_seen"))
+    if first is None and last is None:
+        return None
+    if first is None:
+        first = last
+    if last is None:
+        last = first
+    if first > last:
+        first, last = last, first
+    return (first, last)
+
+
 def _same_storm(a, b, radius_km, max_gap_min):
-    """True se due eventi sono lo stesso sistema (type + spazio + tempo)."""
+    """True se due eventi sono lo stesso sistema (type + spazio + tempo).
+
+    Il gap temporale e' SIMMETRICO: distanza fra gli intervalli
+    [first_seen, last_seen] dei due eventi (0 se si sovrappongono), con un
+    evento a un solo estremo trattato come istante. Cosi' vale sempre
+    _same_storm(A, B) == _same_storm(B, A) (il vecchio calcolo usava solo
+    b.first - a.last, quindi l'ordine degli argomenti cambiava l'esito:
+    A=[00:00,10:00], B=[11:00,12:00] dava False in un verso e True
+    nell'altro)."""
     if str(a.get("type")) != str(b.get("type")):
         return False
-    af, al = iso_to_ms(a.get("first_seen")), iso_to_ms(a.get("last_seen"))
-    bf, bl = iso_to_ms(b.get("first_seen")), iso_to_ms(b.get("last_seen"))
-    gap = None
-    if al is not None and bf is not None:
-        gap = bf - al
-    elif bl is not None and af is not None:
-        gap = af - bl
-    if gap is None:
+    ia, ib = _time_interval(a), _time_interval(b)
+    if ia is None or ib is None:
         # nessun tempo confrontabile: solo lo stesso anchor prova l'identita'
         return (str((a.get("evidence") or {}).get("anchor"))
                 == str((b.get("evidence") or {}).get("anchor")))
+    gap = max(ia[0], ib[0]) - min(ia[1], ib[1])
     if gap > max_gap_min * 60000.0:
         return False
     pa, pb = _position_lonlat(a), _position_lonlat(b)
@@ -318,14 +340,54 @@ def _same_storm(a, b, radius_km, max_gap_min):
             == str((b.get("evidence") or {}).get("anchor")))
 
 
+# Chiavi di evidence che possono esporre l'IDENTITA' dei frame osservati
+# (timestamp/etichetta) e non solo il conteggio.
+_FRAME_IDENTITY_KEYS = ("frame_keys", "frame_timestamps", "frames")
+
+
+def _event_frame_keys(event):
+    """Insieme delle identita' frame dichiarate da evidence, oppure None.
+
+    Supporta frame_keys / frame_timestamps (scalari, oppure dict con
+    timestamp_ms/timestamp) e frames. None = il membro non espone identita'
+    dei frame, quindi l'UNIONE non e' calcolabile (serve il fallback)."""
+    ev = event.get("evidence") or {}
+    for key in _FRAME_IDENTITY_KEYS:
+        raw = ev.get(key)
+        if isinstance(raw, (list, tuple, set)) and raw:
+            keys = set()
+            for item in raw:
+                if isinstance(item, dict):
+                    ident = item.get("timestamp_ms")
+                    if ident is None:
+                        ident = item.get("timestamp")
+                    if ident is None:
+                        ident = json.dumps(item, sort_keys=True, default=str)
+                    keys.add(ident)
+                else:
+                    keys.add(item)
+            return keys
+    return None
+
+
 def _absorb_event(members):
     """Fonde un gruppo di eventi omogenei in UN evento aggregato.
 
-    id/first_seen del membro piu' vecchio (determinismo sulla finestra),
-    last_seen massimo, severita' e score massimi, posizione/evidenza del
-    membro piu' forte (a parita' di severita', il piu' recente). Aggiunge
-    solo dati dentro evidence (schema additivo): aggregated_events,
-    aggregated_ids, frame_count (somma), event_span_min."""
+    RAPPRESENTANTE UNICO (coerenza score/evidenze): lo stesso criterio del
+    vecchio `base` (rank di stato, poi last_seen piu' recente) fornisce
+    state + score + evidence. Non si prendono piu' score ed evidenze da
+    membri diversi. id/first_seen del membro piu' vecchio (determinismo
+    sulla finestra), last_seen massimo.
+
+    frame_count: UNIONE delle identita' frame esposte dai membri
+    (evidence.frame_keys/frame_timestamps/frames) quando disponibili per
+    TUTTI; altrimenti il proxy conservativo max dei conteggi. Il metodo e'
+    dichiarato in evidence["frame_count_method"] ("union" | "max_member"):
+    non si finge un numero esatto quando non lo e'.
+
+    Metadati aggregati (schema additivo dentro evidence): aggregated_events,
+    aggregated_ids, aggregated_max_score, event_span_min, frame_count,
+    frame_count_method."""
     def first_ms(ev):
         return iso_to_ms(ev.get("first_seen"))
 
@@ -335,9 +397,9 @@ def _absorb_event(members):
     oldest = min(members, key=lambda e: (first_ms(e) is None,
                                          first_ms(e) or 0.0,
                                          str(e.get("id"))))
-    base = max(members, key=lambda e: (_STATE_RANK.get(str(e.get("state")), -1),
-                                       last_ms(e) or 0.0))
-    merged = dict(base)
+    rep = max(members, key=lambda e: (_STATE_RANK.get(str(e.get("state")), -1),
+                                      last_ms(e) or 0.0))
+    merged = dict(rep)                    # state + score + evidence del reps
     merged["id"] = oldest.get("id")
     if oldest.get("first_seen") is not None:
         merged["first_seen"] = oldest.get("first_seen")
@@ -345,12 +407,19 @@ def _absorb_event(members):
     if ends:
         merged["last_seen"] = ms_to_iso(max(ends))
     scores = [s for s in (_num(e.get("score")) for e in members) if s is not None]
-    if scores:
-        merged["score"] = max(scores)
-    evidence = dict(merged.get("evidence") or {})
+    evidence = dict(rep.get("evidence") or {})
     evidence["aggregated_events"] = len(members)
     evidence["aggregated_ids"] = sorted(str(e.get("id")) for e in members)
-    evidence["frame_count"] = sum(_event_frames(e) for e in members)
+    if scores:
+        evidence["aggregated_max_score"] = max(scores)
+    member_keys = [_event_frame_keys(e) for e in members]
+    if member_keys and all(ks is not None for ks in member_keys):
+        evidence["frame_count"] = len(set().union(*member_keys))
+        evidence["frame_count_method"] = "union"
+    else:
+        evidence["frame_count"] = max(
+            (_event_frames(e) for e in members), default=0)
+        evidence["frame_count_method"] = "max_member"
     span_first = min([first_ms(e) for e in members
                       if first_ms(e) is not None], default=None)
     span_last = max(ends) if ends else None

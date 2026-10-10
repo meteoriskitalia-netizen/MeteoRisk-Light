@@ -52,9 +52,11 @@ VORTEX_ORG_SUSPECT = 76         # organization_score per SUSPECT
 VORTEX_ORG_CORROBORATED = 80    # organization_score per CORROBORATED
 VORTEX_MIN_POINTS = 2           # punti recenti di persistenza
 VORTEX_MIN_DURATION_MIN = 10.0  # persistenza per target senza punti
-# Evidenza OSSERVATA SOSTENUTA: almeno VORTEX_MIN_FRAMES frame distinti
-# (frame morfologici, punti recenti o n_frames del track). Un track visto su
-# 1-2 frame e' uno scan isolato: non giustifica un badge.
+# Evidenza OSSERVATA SOSTENUTA: almeno VORTEX_MIN_FRAMES frame RECENTI
+# distinti (unione fra frame morfologici e punti recenti; il lifetime
+# n_frames del track NON conta: un track lungo puo' avere pochi frame
+# recenti). Un track visto su 1-2 frame recenti e' uno scan isolato: non
+# giustifica un badge.
 VORTEX_MIN_FRAMES = 3
 # Guardia di riflettivita': un proxy di vortice richiede un core convettivo
 # reale (stessa soglia del gate supercella intensity_core_dbz = 45). Esclude
@@ -154,23 +156,53 @@ def is_hookish(obs):
     return hook_frame_count(obs) >= MORPH_HOOK_MIN_FRAMES
 
 
-def observed_frame_count(obs):
-    """Frame distinti osservati per la cella (evidenza sostenuta).
+def _point_frame_keys(obs):
+    """Chiavi dei frame distinti ricavabili dai recent_points.
 
-    Massimo fra: frame morfologici distinti (morph_frames), punti recenti del
-    track e n_frames dichiarato dal track. Nessun dato -> 0: la sostenibilita'
-    non e' verificabile, quindi il solo organization_score non giustifica il
-    badge (fail-closed)."""
+    Un punto per frame (timestamp_ms, poi timestamp, altrimenti indice se il
+    punto non ha tempo). Osservazione/punti assenti -> insieme vuoto."""
+    pts = obs.get("recent_points") if isinstance(obs, dict) else None
+    if not isinstance(pts, list):
+        return set()
+    keys = set()
+    for idx, point in enumerate(pts):
+        if not isinstance(point, dict):
+            continue
+        key = point.get("timestamp_ms")
+        if key is None:
+            key = point.get("timestamp")
+        if key is None:
+            key = ("no-timestamp", idx)
+        keys.add(key)
+    return keys
+
+
+def observed_frame_count(obs):
+    """Frame RECENTI distinti osservati per la cella (evidenza sostenuta).
+
+    Unione fra le chiavi dei frame morfologici distinti (_frame_groups) e le
+    chiavi dei recent_points (timestamp distinti): una stessa frame contata
+    da entrambe le fonti vale UNA volta. Il lifetime n_frames del track e'
+    ESCLUSO (esposto a parte da track_frame_count): non e' evidenza RECENTE,
+    quindi un track lungo con pochi frame recenti non supera il gate.
+    Nessun dato -> 0: la sostenibilita' non e' verificabile, quindi il solo
+    organization_score non giustifica il badge (fail-closed)."""
     if not isinstance(obs, dict):
         return 0
-    counts = [len(_frame_groups(obs))]
-    pts = obs.get("recent_points")
-    if isinstance(pts, list):
-        counts.append(len(pts))
+    keys = set(_frame_groups(obs).keys())
+    keys.update(_point_frame_keys(obs))
+    return len(keys)
+
+
+def track_frame_count(obs):
+    """Frame LIFETIME dichiarati dal track (n_frames); 0 se assente.
+
+    Esposto separatamente perche' NON entra in observed_frame_count ne' nel
+    gate "sustained": un track lungo non e' prova di osservazione recente."""
+    if not isinstance(obs, dict):
+        return 0
     n = _num(obs.get("n_frames"))
-    if n is not None and n > 0:
-        counts.append(int(n))
-    return max(counts) if counts else 0
+    return int(n) if n is not None and n > 0 else 0
 
 
 def vortex_score(state, organization_score, lightning):

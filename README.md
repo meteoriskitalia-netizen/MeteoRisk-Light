@@ -6,11 +6,18 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.3.0
+## Versione attiva: 1.2.3.1
 
-- File applicativo: `mri-light-1.2.3.0.html` (`APP_VERSION = '1.2.3.0'`, changelog
-  entry `{ version: '1.2.3.0', date: '2026-10-10' }`).
-- Contenuto della 1.2.3.0 (release sopra la 1.2.2.0):
+- File applicativo: `mri-light-1.2.3.1.html` (`APP_VERSION = '1.2.3.1'`, changelog
+  entry `{ version: '1.2.3.1', date: '2026-10-10' }`).
+- Contenuto della 1.2.3.1 (release sopra la 1.2.3.0):
+  - **Formato numerico**: i valori meteo della UI passano dall'helper `fmtNum(v,d)`
+    (blocco `//#pure# BEGIN numFormat`) con precisione fisica: temperatura/vento/pioggia
+    1 decimale, umidita/pressione/probabilita interi; i float lunghi della pipeline IDW
+    non vengono piu' stampati raw (in `updateUI`, `renderModelDaily`, tooltip chart e
+    pannelli MNW); null/non-finiti -> `--`.
+  - **Etichette zona**: le province mostrano "Provincia di <nome>" (pannello zona,
+    tooltip rischio, riepilogo rischio, status); citta/comune restano con il nome nudo.
   - **Supercelle (LIVE)**: attivazione spostata nel pannello LIVE (rimosso il toggle
     dalla main); sub-toggle Traccia/Forecast/Fenomeni/Grandine nel LIVE, visibili a
     supercelle attive.
@@ -95,7 +102,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.3.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.3.1.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify}.yml` — i 4 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

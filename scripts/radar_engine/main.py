@@ -177,14 +177,81 @@ def _fetch_structure_products(config, scfg, ref_shape, warnings):
     return out
 
 
-def _fetch_ir108(config, ocfg, ref_shape, warnings):
+def _ir108_grid_mismatch(ref, cand):
+    """True solo se un metadata e' confrontabile su ENTRAMBI i lati e differisce.
+
+    Confronti: crs_wkt/crs, transform affine entro tolleranza numerica,
+    geo_transform (affine o to_wkt), pixel_area_km2 entro tolleranza relativa
+    1e-6. Un campo assente/None su almeno un lato -> saltato (mai un mismatch
+    inventato). Nessun campo confrontabile -> None (nessuna decisione)."""
+    def _str_eq(a, b):
+        if a is None or b is None:
+            return None
+        return str(a) == str(b)
+
+    def _affine_eq(a, b, tol=1e-9):
+        if a is None or b is None:
+            return None
+        try:
+            xa = (a.a, a.b, a.c, a.d, a.e, a.f)
+            xb = (b.a, b.b, b.c, b.d, b.e, b.f)
+        except AttributeError:
+            wa = a.to_wkt() if hasattr(a, "to_wkt") else None
+            wb = b.to_wkt() if hasattr(b, "to_wkt") else None
+            if wa is None or wb is None:
+                return None
+            return wa == wb
+        eq = True
+        for x, y in zip(xa, xb):
+            try:
+                x, y = float(x), float(y)
+            except (TypeError, ValueError):
+                return None
+            if not (math.isfinite(x) and math.isfinite(y)):
+                return None
+            if abs(x - y) > tol * max(1.0, abs(x), abs(y)):
+                eq = False
+        return eq
+
+    def _f64_eq(a, b, rel_tol=1e-6):
+        if a is None or b is None:
+            return None
+        try:
+            a, b = float(a), float(b)
+        except (TypeError, ValueError):
+            return None
+        if not (math.isfinite(a) and math.isfinite(b)):
+            return None
+        return a == b or abs(a - b) <= rel_tol * max(abs(a), abs(b))
+
+    checks = (
+        _str_eq(getattr(ref, "crs_wkt", None), getattr(cand, "crs_wkt", None)),
+        _str_eq(getattr(ref, "crs", None), getattr(cand, "crs", None)),
+        _affine_eq(getattr(ref, "transform", None),
+                   getattr(cand, "transform", None)),
+        _affine_eq(getattr(ref, "geo_transform", None),
+                   getattr(cand, "geo_transform", None)),
+        _f64_eq(getattr(ref, "pixel_area_km2", None),
+                getattr(cand, "pixel_area_km2", None)),
+    )
+    if all(c is None for c in checks):
+        return None
+    return any(c is False for c in checks)
+
+
+def _fetch_ir108(config, ocfg, ref_rd, warnings):
     """Scarica il frame DPC IR_108 (OVERSHOOTING TOP), griglia di riferimento.
 
-    Ritorna RasterData | None: prodotto non configurato, non scaricabile, senza
-    frame o con shape diverso dalla VMI -> None con warning (nessun dato
-    inventato). Il frame IR_108 usa la STESSA griglia TM della VMI (evidenza
-    file reale: 1200x1400, res 1000 m): uno shape diverso -> pagina
-    probabilmente cambiata -> layer assente (fail-closed)."""
+    ref_rd: RasterData VMI di riferimento (frames[-1]). Ritorna RasterData |
+    None: prodotto non configurato, non scaricabile, senza frame o con griglia
+    NON allineata alla VMI -> None con warning (nessun dato inventato). Il
+    frame IR_108 usa la STESSA griglia TM della VMI (evidenza file reale:
+    1200x1400, res 1000 m): shape diverso -> pagina probabilmente cambiata ->
+    layer assente (fail-closed); shape uguale ma CRS/transform/geo_transform/
+    pixel_area diversi -> stesso shape ma footprint geografico diverso:
+    correrebbe in silenzio male il crop della finestra OT calcolata sulla VMI,
+    quindi il frame viene rifiutato (B5). Un metadata assente su almeno un lato
+    non viene confrontato (nessun mismatch inventato)."""
     product = ocfg.get("product_ir108")
     if not product:
         warnings.append("ot_unavailable:ir108_non_configurato")
@@ -200,8 +267,11 @@ def _fetch_ir108(config, ocfg, ref_shape, warnings):
         warnings.append("phase2 ot ir108: no frames")
         return None
     rd = gframes[-1]
-    if tuple(rd.data.shape) != tuple(ref_shape):
+    if tuple(rd.data.shape) != tuple(ref_rd.data.shape):
         warnings.append("phase2 ot ir108: shape mismatch")
+        return None
+    if _ir108_grid_mismatch(ref_rd, rd):
+        warnings.append("phase2 ot ir108: grid mismatch")
         return None
     return rd
 
@@ -338,7 +408,7 @@ def _phase2_evaluate(bundle, config):
         if not any(rd is not None for rd in products.values()):
             warnings.append("phase2 structure: no products available")
         # OVERSHOOTING TOP: frame IR_108 (stessa griglia TM della VMI).
-        ir_rd = _fetch_ir108(config, otcfg, frames[-1].data.shape, warnings)
+        ir_rd = _fetch_ir108(config, otcfg, frames[-1], warnings)
     else:
         warnings.append("phase2 structure: no frames")
         ir_rd = None

@@ -834,7 +834,9 @@ def test_hail_score_is_bounded():
 def test_vortex_suspect_from_organization_score():
     # Soglia alzata a 76 (banda "Highly Organized"): 60 era la soglia del
     # candidato supercella (56) e faceva emettere ogni cella organizzata.
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    # AGGIORNATO (B2): il gate "sustained" conta i frame RECENTI distinti
+    # (>= 3), non piu' il lifetime n_frames: servono 3 punti recenti.
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=76), LTG_OFF)
     assert event is not None
     assert event["type"] == "VORTEX"
@@ -954,7 +956,8 @@ def test_vortex_without_gate_is_not_an_event():
 
 
 def test_vortex_corroborated_needs_org_and_lightning():
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    # AGGIORNATO (B2): 3 frame recenti per superare il gate "sustained".
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=80), LTG_UP)
     assert event is not None
     assert event["state"] == "CORROBORATED"
@@ -962,7 +965,7 @@ def test_vortex_corroborated_needs_org_and_lightning():
 
 
 def test_vortex_corroborated_blocked_without_lightning():
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=80), LTG_OFF)
     assert event is not None
     assert event["state"] == "SUSPECT"
@@ -989,7 +992,7 @@ def test_vortex_requires_persistence():
 
 
 def test_vortex_always_disclaims_doppler():
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=80), LTG_UP)
     labels = event["evidence"]["labels"]
     assert any(vortex.DOPPLER_DISCLAIMER in lab for lab in labels)
@@ -1025,10 +1028,41 @@ def test_vortex_single_look_is_not_sustained():
     assert vortex.evaluate_vortex(obs, LTG_OFF) is None
 
 
-def test_vortex_observed_frame_count_uses_best_source():
+def test_vortex_observed_frame_count_excludes_lifetime_and_lifetime_gate():
+    """B2: un solo frame RECENTE distinto con n_frames=10 -> observed == 1 e
+    il lifetime NON soddisfa il gate "sustained" (org alta ma nessun evento)."""
+    obs = _obs(_points([50.0]), organization_score=80, morph_frames=[],
+               n_frames=10)
+    assert vortex.observed_frame_count(obs) == 1
+    assert vortex.track_frame_count(obs) == 10      # lifetime esposto a parte
+    assert vortex.evaluate_vortex(obs, LTG_OFF) is None
+
+
+def test_vortex_observed_frame_count_union_of_recent_sources():
+    """B2: unione fra frame morfologici e punti recenti; i frame condivisi
+    (stesso timestamp) contano UNA volta, il lifetime e' escluso."""
     obs = _obs(_points([50.0, 50.0, 50.0]), organization_score=80,
-               morph_frames=_hook_frames(1), n_frames=5)
-    assert vortex.observed_frame_count(obs) == 5
+               morph_frames=_hook_frames(2), n_frames=9)
+    # points: RADAR_MS, -P, -2P ; morph: RADAR_MS, -P -> unione = 3
+    assert vortex.observed_frame_count(obs) == 3
+    assert vortex.track_frame_count(obs) == 9
+
+
+def test_vortex_observed_frame_count_recent_threshold_emits():
+    """B2 caso positivo: >= VORTEX_MIN_FRAMES frame recenti distinti ->
+    observed raggiunge la soglia e il gate org (>= 76) emette l'evento."""
+    obs = _obs(_points([50.0, 50.0, 50.0]), organization_score=80)
+    assert vortex.observed_frame_count(obs) == vortex.VORTEX_MIN_FRAMES
+    event = vortex.evaluate_vortex(obs, LTG_OFF)
+    assert event is not None
+    assert event["evidence"]["observed_frames"] == vortex.VORTEX_MIN_FRAMES
+    assert event["evidence"]["sustained"] is True
+
+
+def test_vortex_observed_frame_count_track_frame_count_absent_is_zero():
+    assert vortex.track_frame_count({}) == 0
+    assert vortex.track_frame_count(None) == 0
+    assert vortex.track_frame_count({"n_frames": "nope"}) == 0
 
 
 def test_vortex_corroborated_via_hook_and_strong_structure():
@@ -1171,12 +1205,14 @@ def test_aggregate_events_collapses_same_storm_across_ids():
     assert event["id"] == "VORTEX-cell-1"          # id/first del piu' vecchio
     assert event["first_seen"] == a["first_seen"]
     assert event["last_seen"] == b["last_seen"]    # last piu' recente
-    assert event["state"] == "CORROBORATED"        # severita' massima
-    assert event["score"] == 72.0
+    assert event["state"] == "CORROBORATED"        # rappresentante (b)
+    assert event["score"] == 72.0                  # score del rappresentante
     ev = event["evidence"]
     assert ev["aggregated_events"] == 2
     assert ev["aggregated_ids"] == ["VORTEX-cell-1", "VORTEX-cell-9"]
-    assert ev["frame_count"] == 5                  # somma dei frame
+    assert ev["frame_count"] == 3                  # max dei membri (no id frame)
+    assert ev["frame_count_method"] == "max_member"
+    assert ev["aggregated_max_score"] == 72.0
     assert ev["event_span_min"] == 20.0
 
 
@@ -1230,6 +1266,107 @@ def test_merge_then_aggregate_collapses_reidentified_storm_to_one_badge():
     assert len(aggregated) == 1
     badges = ev_store.build_badges(aggregated, RADAR_ISO, RADAR_ISO)
     assert [b["id"] for b in badges["badges"]] == ["VORTEX-cell-1"]
+
+
+def test_same_storm_gap_is_symmetric():
+    """B1: il gap temporale e' simmetrico; _same_storm(A,B) == _same_storm(B,A)
+    per ogni coppia, con il verdetto corretto."""
+    r, g = ev_store.EVENT_DEDUP_KM, ev_store.EVENT_MERGE_GAP_MIN
+    # (a)/(b) A prima di B entro il gap -> True in entrambi gli ordini
+    a = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                   last="2026-10-07T00:00:00Z")
+    b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:30:00Z",
+                   last="2026-10-07T00:30:00Z")
+    assert ev_store._same_storm(a, b, r, g) is True
+    assert ev_store._same_storm(b, a, r, g) is True
+    # (d) oltre il gap -> False in entrambi gli ordini. Il vecchio calcolo
+    # (b.first - a.last) dava True quando l'evento piu' recente era il primo
+    # argomento: qui il risultato non dipende piu' dall'ordine.
+    far_a = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                       last="2026-10-07T10:00:00Z")
+    far_b = _agg_event("VORTEX-cell-9", first="2026-10-07T11:00:00Z",
+                       last="2026-10-07T12:00:00Z")
+    assert ev_store._same_storm(far_a, far_b, r, g) is False
+    assert ev_store._same_storm(far_b, far_a, r, g) is False
+    # (c) intervalli sovrapposti -> gap 0 -> True in entrambi gli ordini
+    ov_a = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                      last="2026-10-07T01:00:00Z")
+    ov_b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:30:00Z",
+                      last="2026-10-07T01:30:00Z")
+    assert ev_store._same_storm(ov_a, ov_b, r, g) is True
+    assert ev_store._same_storm(ov_b, ov_a, r, g) is True
+    # (e) istanti con un solo estremo (first oppure last) entro il gap
+    inst_first = _agg_event("VORTEX-cell-1", first="2026-10-07T00:10:00Z",
+                            last=None)
+    inst_last = _agg_event("VORTEX-cell-9", first=None,
+                           last="2026-10-07T00:40:00Z")
+    assert ev_store._same_storm(inst_first, inst_last, r, g) is True
+    assert ev_store._same_storm(inst_last, inst_first, r, g) is True
+
+
+def test_aggregate_events_merge_is_order_independent():
+    """B1 end-to-end: due eventi entro il gap vengono fusi a prescindere
+    dall'ordine degli id in input."""
+    a = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                   last="2026-10-07T00:00:00Z")
+    b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:20:00Z",
+                   last="2026-10-07T00:20:00Z", lon=12.05, lat=41.02)
+    ab = ev_store.aggregate_events([a, b])
+    ba = ev_store.aggregate_events([b, a])
+    assert len(ab) == 1 and len(ba) == 1
+    assert ab[0]["id"] == ba[0]["id"] == "VORTEX-cell-1"
+    assert ab[0]["evidence"]["aggregated_ids"] == \
+        ba[0]["evidence"]["aggregated_ids"]
+
+
+def test_absorb_event_frame_count_is_union_when_ids_present():
+    """B3: con identita' frame esposte dai membri il conteggio e' l'UNIONE
+    (mai la somma) e il metodo e' dichiarato "union"."""
+    a = _agg_event("VORTEX-cell-1", frames=5)
+    a["evidence"]["frame_keys"] = ["f1", "f2", "f3", "f4", "f5"]
+    b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:20:00Z",
+                   last="2026-10-07T00:20:00Z", lon=12.05, lat=41.02, frames=3)
+    b["evidence"]["frame_keys"] = ["f3", "f4", "f5"]         # 3 condivisi
+    out = ev_store.aggregate_events([a, b])
+    assert len(out) == 1
+    ev = out[0]["evidence"]
+    assert ev["frame_count"] == 5                  # unione {f1..f5}
+    assert ev["frame_count"] < 5 + 3               # non la somma (8)
+    assert ev["frame_count_method"] == "union"
+
+
+def test_absorb_event_frame_count_falls_back_to_max_without_ids():
+    """B3: senza identita' frame il proxy conservativo e' max dei membri
+    (non la somma) e il metodo lo dichiara "max_member"."""
+    a = _agg_event("VORTEX-cell-1", frames=5)
+    b = _agg_event("VORTEX-cell-9", first="2026-10-07T00:20:00Z",
+                   last="2026-10-07T00:20:00Z", lon=12.05, lat=41.02, frames=3)
+    out = ev_store.aggregate_events([a, b])
+    ev = out[0]["evidence"]
+    assert ev["frame_count"] == 5                  # max, non 8 (somma)
+    assert ev["frame_count_method"] == "max_member"
+
+
+def test_absorb_event_score_and_evidence_share_the_representative():
+    """B4: state/score/evidence provengono dallo STESSO rappresentante (rank
+    di stato, poi il piu' recente); il max degli score resta solo come
+    metadato aggregated_max_score."""
+    rep = _agg_event("VORTEX-cell-9", first="2026-10-07T00:20:00Z",
+                     last="2026-10-07T00:20:00Z", lon=12.05, lat=41.02,
+                     state="CORROBORATED", score=70.0)
+    other = _agg_event("VORTEX-cell-1", first="2026-10-07T00:00:00Z",
+                       last="2026-10-07T00:00:00Z", state="SUSPECT",
+                       score=95.0)
+    out = ev_store.aggregate_events([other, rep])
+    assert len(out) == 1
+    event = out[0]
+    assert event["id"] == "VORTEX-cell-1"          # id del piu' vecchio
+    assert event["state"] == "CORROBORATED"        # del rappresentante (rep)
+    assert event["score"] == 70.0                  # score di rep, NON 95
+    ev = event["evidence"]
+    assert ev["anchor"] == "cell-9"                # evidenza di rep
+    assert ev["aggregated_max_score"] == 95.0      # max dei membri
+    assert ev["aggregated_ids"] == ["VORTEX-cell-1", "VORTEX-cell-9"]
 
 
 # ===========================================================================
@@ -1960,7 +2097,7 @@ def test_hail_stays_suspect_below_mli_strength_threshold():
 
 
 def test_vortex_corroborates_with_mli_gate_and_attribution():
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=80), MLI_OK)
     assert event is not None
     assert event["state"] == "CORROBORATED"
@@ -1972,7 +2109,7 @@ def test_vortex_corroborates_with_mli_gate_and_attribution():
 
 
 def test_vortex_blocked_when_mli_strength_below_gate():
-    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0]),
+    event = vortex.evaluate_vortex(_obs(_points([50.0, 50.0, 50.0]),
                                         organization_score=80), MLI_WEAK)
     assert event is not None
     assert event["state"] == "SUSPECT"
@@ -2172,7 +2309,7 @@ def test_hail_ot_absent_or_false_is_fail_closed():
 
 def test_vortex_ot_corroborates_high_organization():
     # organization alta (80) senza fulmini/struttura; OT -> CORROBORATED
-    obs = _obs(_points([50.0, 50.0]), organization_score=80,
+    obs = _obs(_points([50.0, 50.0, 50.0]), organization_score=80,
                satellite_ot={"score": 100.0, "ot_flag": True,
                              "ctt_min_c": -63.0, "n_flags": 9,
                              "cold_top": True})
@@ -2186,7 +2323,7 @@ def test_vortex_ot_corroborates_high_organization():
 
 
 def test_vortex_ot_absent_is_fail_closed():
-    obs = _obs(_points([50.0, 50.0]), organization_score=80)
+    obs = _obs(_points([50.0, 50.0, 50.0]), organization_score=80)
     event = vortex.evaluate_vortex(obs, LTG_OFF)
     assert event is not None
     assert event["state"] == "SUSPECT"

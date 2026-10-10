@@ -1,3 +1,14 @@
+MeteoRisk Light - 1.2.3.1 - FIX FORMATO NUMERICO + ETICHETTA "PROVINCIA DI ..." (bump da 1.2.3.0)
+MAJOR=1
+MINOR=2
+PATCH=3
+BUILD=1
+RELEASE_TYPE=release
+DATE=2026-10-10
+NOTE=hotfix 1.2.3.1 (bump da 1.2.3.0): formato numerico dei valori meteo arrotondato a precisione fisica con l'helper fmtNum(v,d) (temperatura/vento/pioggia 1 decimale; umidita/pressione/probabilita interi; null/non-finiti -> '--'), applicato in updateUI/renderModelDaily/tooltip chart/pannelli MNW; nuove etichette "Provincia di <nome>" per le province (pannello zone-title, tooltip rischio, riepilogo rischio, status) mentre citta/comune restano col nome nudo. Nuovo test test_number_format.mjs. Bump di versione e allineamento riferimenti/file a 1.2.3.1.
+APP_FILE=mri-light-1.2.3.1.html
+NUMFMT=BUMP 1.2.3.1 - FIX FORMATO NUMERICO + ETICHETTA "PROVINCIA DI ...": helper fmtNum(v,d) (blocco //#pure# BEGIN numFormat) che arrotonda i valori a d decimali con precisione fisica (temperatura/vento/pioggia 1, umidita/pressione/probabilita 0; null/non-finiti -> '--'), applicato in updateUI, renderModelDaily, tooltip chart e pannelli MNW; etichetta "Provincia di <nome>" per le province (zone-title, tooltip, riepilogo rischio, status), citta/comune invariate; nuovo test test_number_format.mjs. File e riferimenti rinominati a 1.2.3.1 (bump da 1.2.3.0).
+
 MeteoRisk Light - 1.2.3.0 - SUPERCELLE SOLO DA LIVE + MAPPA RISCHIO GRANDINE (bump da 1.2.2.0)
 MAJOR=1
 MINOR=2

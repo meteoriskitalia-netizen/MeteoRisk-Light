@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // TEST 1.0.0.8 — PARTE D (FIX3): gating Live Panel / Blitzortung.
-// 1.2.3.0: il pannello #live-panel ospita la funzione interna "Supercelle radar"
+// 1.2.3.1: il pannello #live-panel ospita la funzione interna "Supercelle radar"
 // (#live-toggle-supercells + #live-sc-summary/list/phenomena), quindi RESTA nel DOM
 // anche con PUBLIC_EDITION_FEATURES.lightningBlitzortung = false. Con flag OFF viene
 // neutralizzata SOLO la UI specifica dei fulmini (#live-legend/#live-hint), mentre i
@@ -20,7 +20,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.3.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.3.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// TEST 1.2.3.0 — Mappa Rischio Grandine (metrica 'hail').
+// TEST 1.2.3.1 — Mappa Rischio Grandine (metrica 'hail').
 // Due sottolivelli: 'prob' (probabilità POTENZIALE, euristica non calibrata) e
 // 'size' (dimensione stimata da size_mm). Sorgente: agg.hailMetrics.
 // Estrae il blocco puro //#pure# metricValueContract + colorForMetric e lo esegue
@@ -12,7 +12,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.3.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.3.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
