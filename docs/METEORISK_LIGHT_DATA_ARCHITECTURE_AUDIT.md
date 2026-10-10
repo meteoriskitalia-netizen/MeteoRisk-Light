@@ -134,6 +134,22 @@ Categorie: **A** — Precaricabile su GitHub · **B** — Aggiornabile periodica
 
 ---
 
+### 3.3 Fonti ATTIVE dalla 1.2.4.0 — sezione "Mappe previsionali" (Open-Meteo Weather Map Layer)
+
+Introdotte in 1.2.4.0 in sostituzione del modulo Meteociel (meteociel.fr, dismesso). Solo visualizzazione sinottica: **nessun impatto sui calcoli**. Feature flag `forecastMaps` (attivo di default).
+
+| Fonte | Endpoint | Metodo | Quando | N. richieste | Tipo dati | Cat. |
+|------|----------|--------|--------|-------------:|-----------|------|
+| Open-Meteo Weather Map Layer — metadata | `https://openmeteo.s3.amazonaws.com/data_spatial/<dominio>/latest.json` | GET | apertura pannello / cambio dominio | 1 per dominio | JSON (`reference_time`, `valid_times[]`, `variables[]`, `completed`) | **C** |
+| Open-Meteo Weather Map Layer — tile `.om` | `https://openmeteo.s3.amazonaws.com/data_spatial/<dominio>/<Y>/<M>/<D>/<HH>00Z/<Y-M-D>T<HH>00.om` | GET (Range) | cambio ora/variabile, pan/zoom | 1 per frame×variabile (tile 512 px) letto a `Range` | binario `.om` (`application/octet-stream`, file ~30 MB letto a range) | **C** |
+| Libreria `@openmeteo/weather-map-layer` | `https://unpkg.com/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs` (fallback `https://cdn.jsdelivr.net/npm/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs`) | GET | prima apertura sezione (import dinamico) | 1 (CDN primaria; fallback su errore) | ESM (adapter Leaflet, `omProtocol`, `getColorScale`) | — |
+
+- **Licenza dati:** **CC-BY 4.0** (Open-Meteo Weather Map Layer); attribuzione obbligatoria (v. §13 e `docs/LICENSES.md`).
+- **CORS / trasporto (verificato):** l'host S3 risponde `Access-Control-Allow-Origin: *` con `Origin` esplicito e preflight `OPTIONS` → `200`; le richieste `Range: bytes=0-1023` sui file `.om` rispondono `206 Partial Content`. La libreria è servita dalle CDN pubbliche (`HTTP 200`).
+- **Domini:** `dwd_icon_seamless` **non** è un dataset S3 (è un composito "seamless" risolto lato libreria) → `latest.json` assente (`HTTP 404`). Gli altri domini dell'elenco `FM_DOMAINS` hanno `latest.json` presente (`HTTP 200`).
+
+---
+
 ## 4. OPEN-METEO ANALYSIS (DEEP AUDIT)
 
 ### 4.1 Endpoint / trasporto

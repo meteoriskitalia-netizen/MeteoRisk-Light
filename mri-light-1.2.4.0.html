@@ -37,7 +37,7 @@
             provinceGeoJson: true,           // confini provinciali (dati di origine ISTAT)
             dpcAlerts: true,                 // bollettini DPC criticità (repo ufficiale pcm-dpc + GitHub API + TopoJSON)
             // E) Embed esterni
-            meteocielEmbed: false,           // carte modelli Meteociel — DISATTIVATO (il modulo Ensemble e' ora Open-Meteo, client-side)
+            forecastMaps: true,              // Mappe previsionali (Open-Meteo Weather Map Layer)
             pretempEmbed: false,             // PRETEMP (senza proxy CORS) — DISATTIVATO
             // F) Librerie e dipendenze
             leafletCdn: true,                // Leaflet 1.9.4 da unpkg/jsdelivr (CSS + JS)
@@ -125,6 +125,35 @@
 .panel-live { max-width: 1200px; margin: 0 auto 10px auto; background: #1e293b; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 14px; display: none; flex-direction: column; gap: 8px; }
 .panel-live.active { display: flex; }
 .panel-live.panel-sc { border-color: #a855f7; }
+        /* Mappe previsionali (Open-Meteo Weather Map Layer) */
+        .fm-panel { position: fixed; top: 64px; left: 12px; width: 322px; max-height: 72vh; overflow: auto; z-index: 1200; background: rgba(15,23,42,.95); color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: none; font-size: 13px; }
+        .fm-panel.active { display: block; }
+        .fm-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 600; border-bottom: 1px solid #334155; }
+        .fm-close { cursor: pointer; opacity: .7; }
+        .fm-close:hover { opacity: 1; }
+        .fm-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+        .fm-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #94a3b8; }
+        .fm-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 5px 6px; font-size: 12px; }
+        .fm-display { flex-direction: row; flex-wrap: wrap; gap: 8px; color: #cbd5e1; }
+        .fm-chk { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+        .fm-player { display: flex; align-items: center; gap: 6px; }
+        .fm-btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px; }
+        .fm-btn:hover { background: #334155; }
+        .fm-slider { flex: 1; min-width: 90px; }
+        .fm-speed { width: auto; }
+        .fm-time { font-size: 12px; color: #f1f5f9; }
+        .fm-legend-bar { height: 12px; border-radius: 3px; border: 1px solid #334155; }
+        .fm-legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        .fm-status { font-size: 11px; color: #94a3b8; }
+        .fm-attrib { font-size: 10px; color: #64748b; line-height: 1.35; }
+        .fm-loader { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8; }
+        .fm-btn-preload { border-color: #f59e0b; color: #f59e0b; font-size: 11px; padding: 3px 7px; }
+        .fm-preload-status { font-size: 9px; color: #64748b; min-width: 40px; }
+        .fm-map-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 800; opacity: 0; transition: opacity .25s; }
+        .fm-map-loader.active { opacity: 1; }
+        .fm-map-loader-box { background: rgba(15,23,42,.88); color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .fm-spinner { width: 14px; height: 14px; border: 2px solid rgba(226,232,240,.3); border-top-color: #38bdf8; border-radius: 50%; animation: fm-spin .8s linear infinite; display: inline-block; }
+        @keyframes fm-spin { to { transform: rotate(360deg); } }
 .sc-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 10px; border-bottom: 1px solid #334155; font-size: 11px; color: #e2e8f0; }
 .sc-item:last-child { border-bottom: none; }
 .sc-chip { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: bold; font-size: 10px; }
@@ -193,7 +222,7 @@
         @media (max-width: 950px) { #radar-embed-container { height: 60vh; min-height: 300px; } }
 
         @media (max-width: 600px) {
-            #mc-player { flex-direction: column !important; align-items: stretch !important; gap: 4px !important; padding: 4px 8px !important; }
+            .fm-panel { left: 6px; right: 6px; width: auto; top: 56px; max-height: 58vh; }
         }
 
         .details-card { background: #1e293b; border-radius: 12px; padding: 18px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 14px; }
@@ -1139,6 +1168,7 @@
         <button class="tool-btn" id="btn-radar" onclick="toggleRadar()" style="display:none;">📡 Radar Timeline (OFF)</button>
         <button class="tool-btn" id="btn-satellite" onclick="toggleSatellite()" style="display:none;">🛰️ SATELLITE (OFF)</button>
         <button class="tool-btn" id="btn-forecast" onclick="toggleForecast()">🌤️ Previsioni (OFF)</button>
+        <button class="tool-btn" id="btn-forecast-maps" onclick="toggleForecastMaps()" style="border-color:#38bdf8;">🗺️ Mappe previsionali (OFF)</button>
         <button class="tool-btn" id="btn-caletta" onclick="showCaletta()" style="display:none;">🍽️ La Caletta</button>
         <button class="tool-btn" id="btn-high-risk" onclick="toggleHighRiskFilter()">🚨 Evidenzia Zone a Rischio</button>
         <button class="tool-btn" id="btn-live" onclick="toggleLivePanel()" style="border-color:#fbbf24;">🔴 LIVE Panel (OFF)</button>
@@ -1402,8 +1432,6 @@
             <div class="bl-tip" id="badge-legend-tip"></div>
         </div>
 
-        <!-- Rimossi in 1.0.0.2 (UI cleanup non approvati): Embed Meteociel e container -->
-        <!-- (nota: oggetto meteociel-container e controlli mc-* rimossi dalla UI; i flag PUBLIC_EDITION_FEATURES restano invariati) -->
         <div style="display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
             <div id="status-msg" class="status-loading">Inizializzazione mappa...</div>
             <button class="tool-btn" onclick="requestWeatherData('manual')" style="font-size:11px; padding:4px 10px; flex-shrink:0;" title="Aggiorna i dati meteo (dataset derivato per i modelli coperti, Open-Meteo live per gli altri)">🔄 Aggiorna</button>
@@ -1483,6 +1511,48 @@
     </div>
 
     <!-- Pannello Fonti & Metodologie — fonti dati + metodologie dalla letteratura + disclaimer -->
+    <!-- Mappe previsionali (Open-Meteo Weather Map Layer) -->
+<div id="forecast-maps-panel" class="fm-panel">
+    <div class="fm-header">
+        <span>🗺️ Mappe previsionali</span>
+        <span class="fm-close" onclick="toggleForecastMaps()">✕</span>
+    </div>
+    <div class="fm-body">
+        <label class="fm-row"><span>Modello / Dominio</span>
+            <select id="fm-domain-select" class="fm-select" onchange="fmDomainChanged()"></select>
+        </label>
+        <label class="fm-row"><span>Variabile</span>
+            <select id="fm-variable-select" class="fm-select" onchange="fmVariableChanged()"></select>
+        </label>
+        <label class="fm-row"><span>Area geografica</span>
+            <select id="fm-region-select" class="fm-select" onchange="fmRegionChanged()"></select>
+        </label>
+        <div class="fm-row fm-display">
+            <label class="fm-chk"><input type="checkbox" id="fm-chk-contours" onchange="fmTogglesChanged()"> Isolinee</label>
+            <label class="fm-chk"><input type="checkbox" id="fm-chk-arrows" onchange="fmTogglesChanged()"> Frecce vento</label>
+            <label class="fm-chk"><input type="checkbox" id="fm-chk-grid" onchange="fmTogglesChanged()"> Griglia</label>
+            <label class="fm-chk"><input type="checkbox" id="fm-chk-dark" onchange="fmTogglesChanged()"> Palette scura</label>
+        </div>
+        <div class="fm-player">
+            <button id="fm-play-btn" class="fm-btn" onclick="fmTogglePlay()">▶</button>
+            <button class="fm-btn" onclick="fmPrevFrame()">⏮</button>
+            <button class="fm-btn" onclick="fmNextFrame()">⏭</button>
+            <button id="fm-preload-btn" class="fm-btn fm-btn-preload" onclick="fmStartPreload()" title="Precarica tutti i frame">⏬ Preload</button>
+            <span id="fm-preload-status" class="fm-preload-status"></span>
+            <input type="range" id="fm-slider" class="fm-slider" min="0" max="0" value="0" oninput="fmSliderChange(this.value)">
+            <select id="fm-speed" class="fm-select fm-speed" onchange="fmSetSpeed(this.value)">
+                <option value="1200">Lenta</option>
+                <option value="800" selected>Normale</option>
+                <option value="400">Veloce</option>
+            </select>
+        </div>
+        <div id="fm-time-display" class="fm-time">—</div>
+        <div id="fm-legend" class="fm-legend"></div>
+        <div id="fm-status" class="fm-status">Apri per caricare le mappe…</div>
+        <div id="fm-loader" class="fm-loader"><span class="fm-spinner"></span> Caricamento tile…</div>
+        <div class="fm-attrib">Dati mappe: © Open-Meteo (Weather Map Layer, CC BY 4.0). Modelli DWD / ECMWF / NOAA / Meteo-France / UKMO / JMA / CMA.</div>
+    </div>
+</div>
     <div id="sources-panel" class="forecast-legend-panel sources-panel">
         <div class="fl-title" onclick="toggleSourcesPanelCollapse()">
             <span class="fl-chevron">▼</span>
@@ -1757,9 +1827,14 @@
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.3.1';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-10';
+    const APP_VERSION = '1.2.4.0';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-11';
     const APP_CHANGELOG = [
+        { version: '1.2.4.0', date: '2026-10-11', changes: [
+            'MAPPE= Nuova sezione "Mappe previsionali" basata su Open-Meteo Weather Map Layer (maps.open-meteo.com / openmeteo.s3.amazonaws.com); sostituisce il modulo Meteociel (meteociel.fr, dismesso).',
+            'MAPPE= Selezione modello/dominio, variabile e ora di previsione; player con slider; isolinee/frecce/griglia; legenda colori. Solo visualizzazione, nessun impatto sui calcoli.',
+            'MAPPE= Nuovo flag forecastMaps (attivo di default).',
+        ]},
         { version: '1.2.3.1', date: '2026-10-10', changes: [
             'FIX= Formato numerico: i valori mostrati dalla UI passano da fmtNum(v,d) con precisione fisica (temperatura/vento/pioggia 1 decimale; umidità/pressione/probabilità interi); i float lunghi della pipeline IDW non vengono più stampati raw.',
             'FIX= Etichetta "Provincia di <nome>" per le province (pannello zona, tooltip, riepilogo rischio, status); città/comune restano con il nome nudo.',
@@ -5035,6 +5110,16 @@
         map.createPane('borderPane');
         map.getPane('borderPane').style.zIndex = 370;
         map.getPane('borderPane').style.pointerEvents = 'none';
+        // 1.2.4.0: pane per le mappe previsionali (Open-Meteo Weather Map Layer)
+        try {
+            map.createPane('forecastMapsPane');
+            map.getPane('forecastMapsPane').style.zIndex = 360;
+            map.getPane('forecastMapsPane').style.pointerEvents = 'none';
+            map.createPane('forecastMapsPaneVector');
+            map.getPane('forecastMapsPaneVector').style.zIndex = 362;
+            map.getPane('forecastMapsPaneVector').style.pointerEvents = 'none';
+            if (map && !map.getPane('forecastMapsPanePre')) { var _fmp = map.createPane('forecastMapsPanePre'); _fmp.style.zIndex = 1; _fmp.style.opacity = '0'; _fmp.style.pointerEvents = 'none'; }
+        } catch (e) { }
         // Satellite Infoplaza: L.imageOverlay usa pane: 'tilePane' (come EUMETSAT)
         // così zIndex 350 (sat) < 400 (radar) e il radar sta sopra
         // 1.1.0.0: il radar (player + LIVE) sta sul pane dedicato radarPane a opacity 1
@@ -11466,899 +11551,627 @@
         }
     }
 
+// ================= MAPPE PREVISIONALI (Open-Meteo Weather Map Layer) =================
+// Sostituisce il vecchio modulo Meteociel (meteociel.fr, dismesso).
+// Fonte dati: Open-Meteo Weather Map Layer (maps.open-meteo.com), licenza CC BY 4.0.
+// Scopo: SOLO visualizzazione sinottica; nessun impatto sui calcoli dell'app.
 
-    // ================= METEOCIEL MODELLI =================
-    let mcActive = false;
-    let mcIsPlaying = false;
-    let mcInterval = null;
-    let mcEcheances = [];
-    let mcEchIndex = 0;
-    // Double buffering player Meteociel: false = 'mc-img' è il frame visibile, true = 'mc-img-b'.
-    // Non tocca la mappa/altri player: usata SOLO da mcLoadFrame.
-    var mcFrontIsB = false;
-    let mcCurrentModel = 'gfs';
-    let mcCurrentDomain = 'italie';
+var FM_BASE = 'https://openmeteo.s3.amazonaws.com/data_spatial/';
+var FM_WML_URLS = [
+    'https://unpkg.com/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs',
+    'https://cdn.jsdelivr.net/npm/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs'
+];
+var FM_DOMAINS = [
+    { id: 'dwd_icon_eu', label: 'DWD ICON EU (0.0625)', group: 'Europa' },
+    { id: 'dwd_icon_d2', label: 'DWD ICON-D2 (2 km, 48 h)', group: 'Europa' },
+    { id: 'chmi_aladin_central_europe_2km', label: 'CHMI ALADIN (2 km)', group: 'Europa' },
+    { id: 'italia_meteo_arpae_icon_2i', label: 'ICON 2I ARPAE (Italia)', group: 'Italia' },
+    { id: 'ecmwf_ifs025', label: 'ECMWF IFS 0.25', group: 'Globale' },
+    { id: 'ncep_gfs025', label: 'NOAA GFS 0.25', group: 'Globale' },
+    { id: 'dwd_icon', label: 'DWD ICON Global', group: 'Globale' },
+    { id: 'meteofrance_arpege_world025', label: 'Meteo-France ARPEGE World', group: 'Globale' },
+    { id: 'ukmo_global_deterministic_10km', label: 'UKMO Global (10 km)', group: 'Globale' },
+    { id: 'jma_gsm', label: 'JMA GSM', group: 'Globale' },
+    { id: 'cma_grapes_global', label: 'CMA GRAPES Global', group: 'Globale' }
+];
+// Aree geografiche per i modelli globali (bbox in formato [S, W, N, E])
+var FM_REGIONS = [
+    { id: 'domain', label: 'Intero dominio', bbox: null },
+    { id: 'europe', label: 'Europa', bbox: [34, -15, 62, 40] },
+    { id: 'med', label: 'Mediterraneo', bbox: [30, -6, 47, 40] },
+    { id: 'italy', label: 'Italia', bbox: [35.5, 6.5, 47.5, 19] },
+    { id: 'natl', label: 'Nord Atlantico', bbox: [32, -45, 66, 0] },
+    { id: 'namerica', label: 'Nord America', bbox: [22, -130, 58, -60] },
+    { id: 'samerica', label: 'Sud America', bbox: [-55, -82, 13, -34] },
+    { id: 'africa', label: 'Africa', bbox: [-35, -20, 38, 52] },
+    { id: 'asia', label: 'Asia', bbox: [5, 60, 56, 145] },
+    { id: 'oceania', label: 'Oceania', bbox: [-48, 110, -9, 180] },
+    { id: 'arctic', label: 'Artico', bbox: [60, -180, 90, 180] }
+];
+var FM_CAT_ORDER = ['Temperatura', 'Umidita', 'Precipitazione e neve', 'Nuvolosita', 'Pressione', 'Vento', 'Instabilita', 'Radiazione', 'Quote termiche', 'Codice meteo', 'Livelli di pressione', 'Altro'];
+var FM_VAR_LABELS = {
+    temperature_2m: 'Temperatura 2 m',
+    apparent_temperature: 'Temperatura percepita',
+    dew_point_2m: 'Punto di rugiada 2 m',
+    relative_humidity_2m: 'Umidita relativa 2 m',
+    precipitation: 'Precipitazione totale',
+    rain: 'Pioggia',
+    showers: 'Rovesci',
+    snowfall: 'Neve',
+    snow_depth: 'Spessore neve',
+    cloud_cover: 'Nuvolosita totale',
+    cloud_cover_low: 'Nuvolosita bassa',
+    cloud_cover_mid: 'Nuvolosita media',
+    cloud_cover_high: 'Nuvolosita alta',
+    pressure_msl: 'Pressione al livello del mare',
+    surface_pressure: 'Pressione al suolo',
+    wind_speed_10m: 'Velocita vento 10 m',
+    wind_direction_10m: 'Direzione vento 10 m',
+    wind_gusts_10m: 'Raffiche 10 m',
+    wind_u_component_10m: 'Vento U 10 m',
+    wind_v_component_10m: 'Vento V 10 m',
+    cape: 'CAPE',
+    cin: 'CIN',
+    lifted_index: 'Lifted Index',
+    convective_inhibition: 'Inibizione convettiva',
+    freezing_level_height: 'Quota dello zero',
+    boundary_layer_height: 'Altezza strato limite',
+    wet_bulb_temperature_2m: 'Temperatura bulbo umido 2 m',
+    shortwave_radiation: 'Radiazione globale',
+    direct_radiation: 'Radiazione diretta',
+    diffuse_radiation: 'Radiazione diffusa',
+    direct_normal_irradiance: 'Irradianza normale diretta',
+    weather_code: 'Codice meteo',
+    visibility: 'Visibilita',
+    evapotranspiration: 'Evapotraspirazione'
+};
+var FM_LEVEL_KIND_LABELS = {
+    geopotential_height: 'Geopotenziale',
+    temperature: 'Temperatura',
+    relative_humidity: 'Umidita relativa',
+    cloud_cover: 'Nuvolosita',
+    vertical_velocity: 'Velocita verticale',
+    wind_speed: 'Velocita vento',
+    wind_direction: 'Direzione vento',
+    wind_u_component: 'Vento U',
+    wind_v_component: 'Vento V',
+    wind: 'Vento'
+};
+var fmActive = false;
+var fmIsPlaying = false;
+var fmInterval = null;
+var fmSpeed = 800;
+var fmMoveHooked = false;
+var fmModule = null;
+var fmAdapter = null;
+var fmWmlState = 'not-loaded';
+var fmWmlWaiters = [];
+var fmDomain = 'dwd_icon_eu';
+var fmVariable = 'temperature_2m';
+var fmIdx = 0;
+var fmMeta = null;
+var fmRasterLayer = null;
+var fmVectorLayer = null;
+var fmAbort = null;
+var fmOpts = { contours: false, arrows: false, arrowStyle: 'arrow', grid: false, dark: false };
+var fmRegion = 'domain';
+var fmClipBounds = null;
+var fmTilePending = 0;
+var fmLoaderTimer = null;
+    var fmPreloadActive = false;
+    var fmPreloadGen = 0;
+    var fmWarmLayer = null;
+    var fmWarmKey = null;
 
-    // Codici variabili per sistema country-zoom (modeles2.meteociel.fr)
-    var MC_VAR_CODES = {
-        'precipitations': 574, 'precipitations-hd': 779, 'accumulation-precipitations': 777,
-        'hauteur-neige': 780, 'vent-moyen': 602, 'vent-rafales': 289, 'nebulosite': 562,
-        'temperatures-2m': 580, 'temperatures-2m-hd': 778, 'humidite': 600, 'pression': 515,
-        '500-hpa': 21, '850-hpa': 7, 'isotherme-0': 526, 'cape-et-lifted-index': 505,
-        'mucape-et-best-lifted-index': 109, 'cin': 218, 'storm-motion': 110,
-        'storm-relative-helicity': 111, 'theta-e-850hpa': 100, 'windchill': 555,
-        'humidex': 103, 'vent-950hpa': 161, 'vent-925hpa': 104, 'vent-850hpa': 308,
-        'vent-700hpa': 314, 'vent-500hpa': 322, 'point-de-rosee': 101,
-        'temperatures-minimales': 583, 'temperatures-maximales': 582,
-        'vents-verticaux-700hpa': 107, 'tourbillon-absolu-500hpa': 189,
-        'tourbillon-absolu-900hpa': 173, 'geopotentiel-1.5-pvu': 454,
-        'precipitations-convectives': 590, 'temperature-du-sol': 543, 'resume': 102
-    };
-
-    // Codici variabili per sistema Europe/NH (modeles.meteociel.fr)
-    // Mappati dal parametro mode= delle pagine PHP
-    var MC_VAR_CODES_EU = {
-        'precipitations': 2, 'hauteur-neige': 3, 'vent-moyen': 14, 'vent-rafales': 14,
-        'nebulosite': 4, 'temperatures-2m': 1, 'humidite': 6, 'pression': 0,
-        '500-hpa': 0, '850-hpa': 1, 'isotherme-0': 7, 'cape-et-lifted-index': 8,
-        'point-de-rosee': 15, 'temperatures-minimales': 16, 'temperatures-maximales': 17,
-        'resume': 102, 'theta-e-850hpa': 12, 'humidex': 103, 'windchill': 555
-    };
-
-    // Codici variabili per ECMWF (modeles3.meteociel.fr/modeles/ecmwf2/run[s]/ecmwf<suffix>-<mode>-<ech>.png)
-    // Verificato da URL reali e feedback utente:
-    //   ecmwf-0-3.png = z500 (mode=0), ecmwfeu-2-3.png = precip (mode=2), ecmwfeuw-0-3.png = z500 NH
-    //   ecmwfnh-0-3.png = z500 NH (mode=0)
-    // Sistema mode ECMWF (verificato per Europa LCC):
-    //   0=500hpa(geop+pression), 1=850hpa(temp), 2=precip, 5=jetstream, 6=vent-850hpa,
-    //   7=theta-e-850hpa, 8=theta-w-850hpa, 9=temp-2m, 12=anomalie-geop-500hpa,
-    //   13=anomalie-500hpa, 14=vent-moyen-10m, 15=anomalie-temp-850hpa
-    var MC_VAR_CODES_ECMWF = {
-        '500-hpa': 0, '850-hpa': 1, 'precipitations': 2, 'vent-moyen': 14,
-        'temperatures-2m': 9, 'theta-e-850hpa': 7
-    };
-
-    // Codici variabili per UKMO (modeles14.meteociel.fr/modeles/ukmo/run/ukmo-<mode>-<ech>.png)
-    // Verificato da URL reale: ukmo-0-12.png = z500
-    // Sistema mode UKMO: 0=z500, 1=temp850, 2=precip, 3=vent, 4=temp2m, 5=resume, 6=pression, 7=humidite, 8=nebulosite
-    var MC_VAR_CODES_UKMO = {
-        '500-hpa': 0, '850-hpa': 1, 'precipitations': 2, 'vent-moyen': 3,
-        'temperatures-2m': 4, 'resume': 5, 'pression': 6,
-        'humidite': 7, 'nebulosite': 8
-    };
-
-    // Codici variabili per GEM GDPS (modeles16.meteociel.fr/modeles/gemgdps/run/gemgdps<suffix>-<mode>-<ech>.png?<run>)
-    // GEM GDPS usa gdpse_cartes.php → STESSI MODE CODES del sistema Europe (MC_VAR_CODES_EU)
-    // Verificato da URL reale: gemgdps-0-6.png = z500 (mode=0), gemgdps-0-174.png (forum)
-    var MC_VAR_CODES_GEM = {
-        '500-hpa': 0, '850-hpa': 1, 'precipitations': 2, 'vent-moyen': 14,
-        'temperatures-2m': 1, 'resume': 102, 'pression': 0,
-        'humidite': 6, 'nebulosite': 4, 'hauteur-neige': 3,
-        'isotherme-0': 7, 'cape-et-lifted-index': 8,
-        'point-de-rosee': 15, 'temperatures-minimales': 16,
-        'temperatures-maximales': 17, 'theta-e-850hpa': 12,
-        'vent-rafales': 14
-    };
-
-    // Codici variabili per ICON-EU (modeles12.meteociel.fr/modeles/icon/iconeu_<dom><zone>-<mode>-<ech>-0.png)
-    // Verificato da URL reale: iconeu_it1-1-1-0.png = run 6z, precipitazioni, dominio italia
-    // Formato: iconeu_<dom><zone>-<mode>-<ech>-0.png?<dd-mm>
-    // _it1 = Italia zona 1, _fr1 = Francia zona 1, etc.
-    // mode: 0=temperatures-2m, 1=precipitazioni (verificato), 2=nebulosite, 3=vent-moyen
-    var MC_VAR_CODES_ICON = {
-        'temperatures-2m': 0, 'precipitations': 1, 'nebulosite': 2,
-        'vent-moyen': 3, '500-hpa': 4, '850-hpa': 5, 'resume': 6
-    };
-
-    // Suffisso dominio country-zoom (solo GFS)
-    var MC_DOMAIN_SUFFIX = {
-        'france': '', 'italie': 'IT', 'espagne': 'SP',
-        'royaume-uni': 'UK', 'allemagne': 'DE', 'grece': 'GR'
-    };
-
-    var MC_COMMON_VARS = [
-        { slug: 'precipitations',           label: 'Precipitazioni (3h/6h)' },
-        { slug: 'hauteur-neige',           label: 'Altezza Neve' },
-        { slug: 'vent-moyen',              label: 'Vento Medio 10m' },
-        { slug: 'vent-rafales',            label: 'Raffiche Vento 10m' },
-        { slug: 'nebulosite',             label: 'Nuvolosità' },
-        { slug: 'temperatures-2m',        label: 'Temperature 2m' },
-        { slug: 'humidite',               label: 'Umidità' },
-        { slug: 'pression',               label: 'Pressione MSLP' },
-        { slug: '500-hpa',                label: '500 hPa (Geo+Temp)' },
-        { slug: '850-hpa',                label: '850 hPa (Geo+Temp)' },
-        { slug: 'isotherme-0',            label: 'Isotherme 0°C' },
-        { slug: 'cape-et-lifted-index',   label: 'CAPE + Lifted Index' },
-        { slug: 'point-de-rosee',         label: 'Punto di Rugiada' },
-        { slug: 'temperatures-minimales', label: 'Temperature Minime' },
-        { slug: 'temperatures-maximales', label: 'Temperature Massime' },
-        { slug: 'resume',                 label: 'Pioggia/Pressione/Nuvole' },
-        { slug: 'windchill',             label: 'Windchill' },
-        { slug: 'humidex',              label: 'Humidex' },
-        { slug: 'theta-e-850hpa',        label: 'Theta-E 850hPa' }
-    ];
-
-    var MC_GFS_EXTRA_VARS = [
-        { slug: 'precipitations-hd',         label: 'Precipitazioni HD' },
-        { slug: 'accumulation-precipitations', label: 'Cumul Precipitazioni' },
-        { slug: 'temperatures-2m-hd',        label: 'Temperature 2m HD' },
-        { slug: 'mucape-et-best-lifted-index', label: 'MUCAPE + Best LI' },
-        { slug: 'cin',                      label: 'CIN' },
-        { slug: 'storm-motion',             label: 'Storm Motion' },
-        { slug: 'storm-relative-helicity',  label: 'SRH 0-3km' },
-        { slug: 'vent-950hpa',             label: 'Vento 950hPa' },
-        { slug: 'vent-925hpa',             label: 'Vento 925hPa' },
-        { slug: 'vent-850hpa',             label: 'Vento 850hPa' },
-        { slug: 'vent-700hpa',             label: 'Vento 700hPa' },
-        { slug: 'vent-500hpa',             label: 'Vento 500hPa' },
-        { slug: 'vents-verticaux-700hpa',  label: 'Vento Verticale 700hPa' },
-        { slug: 'tourbillon-absolu-500hpa', label: 'TA 500hPa' },
-        { slug: 'tourbillon-absolu-900hpa', label: 'TA 900hPa' },
-        { slug: 'geopotentiel-1.5-pvu',   label: 'Alt. 1.5 PVU' },
-        { slug: 'precipitations-convectives', label: 'Precipitazioni Convettive' },
-        { slug: 'temperature-du-sol',     label: 'Temperatura Suolo' }
-    ];
-
-    // Variabili ECMWF: solo quelle disponibili sul sistema Meteociel
-    // Verificato per Europa LCC: mode 0,1,2,7,9,14 funzionano; altre non disponibili
-    var MC_ECMWF_VARS = [
-        { slug: '500-hpa', label: '500 hPa (Geop+Press)' },
-        { slug: '850-hpa', label: '850 hPa (Temp)' },
-        { slug: 'precipitations', label: 'Precipitazioni' },
-        { slug: 'vent-moyen', label: 'Vento Medio 10m' },
-        { slug: 'temperatures-2m', label: 'Temperature 2m' },
-        { slug: 'theta-e-850hpa', label: 'Theta-E 850hPa' }
-    ];
-
-    // Configurazione modelli
-    // imgType: 'country' usa modeles2 (GFS con suffisso dominio), 'europe' usa modeles (PHP con param)
-    var MC_MODELS = {
-        'gfs': {
-            label: 'GFS 0.25° (NOAA)',
-            imgType: 'country',
-            // I domini europe/nh usano il sistema Europe classico (modeles16.meteociel.fr)
-            euImgType: 'gfs-europe',
-            domains: {
-                'italie':      { label: 'Italia',      pathBase: '/modeles/gfs/italie/' },
-                'france':      { label: 'Francia',     pathBase: '/modeles/gfs/france/' },
-                'royaume-uni': { label: 'Regno Unito', pathBase: '/modeles/gfs/royaume-uni/' },
-                'allemagne':   { label: 'Germania',    pathBase: '/modeles/gfs/allemagne/' },
-                'espagne':     { label: 'Spagna',      pathBase: '/modeles/gfs/espagne/' },
-                'grece':       { label: 'Grecia',      pathBase: '/modeles/gfs/grece/' },
-                'europe':      { label: 'Europa',      pathBase: '/modeles/gfse_cartes.php?', euParam: 'carte', euVal: 0, imgSuffix: 'eu' },
-                'europe-lcc':  { label: 'Europa (LCC)', pathBase: '/modeles/gfse_cartes.php?', euParam: 'carte', euVal: 6, imgSuffix: 'eu' },
-                'nh':          { label: 'Emisfero Nord', pathBase: '/modeles/gfse_cartes.php?', euParam: 'carte', euVal: 3, imgSuffix: 'nh' }
-            },
-            runs: [0, 6, 12, 18], maxEch: 384,
-            runDelay: 4,
-            variables: MC_COMMON_VARS.concat(MC_GFS_EXTRA_VARS)
-        },
-        'ecmwf': {
-            label: 'ECMWF CEP 9km/0.25°',
-            imgType: 'model-run',
-            imgHost: 'modeles3.meteociel.fr',
-            imgPath: '/modeles/ecmwf2/runs/',
-            imgSuffix: '',         // Suffisso dominio nel nome file (es. 'it' per Italia)
-            euScript: 'ecmwf_ctrl.php',
-            runDelay: 7, // ore tra inizio run e disponibilità immagini
-            domains: {
-                'europe':  { label: 'Europa',        pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 0, imgSuffix: '' },
-                'europe-lcc': { label: 'Europa (LCC)', pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 1, imgSuffix: 'eu' },
-                'europe-ouest': { label: 'Europa Ovest', pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 2, imgSuffix: 'euw' },
-                'nh':      { label: 'Emisfero Nord',  pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 3, imgSuffix: 'nh' },
-                'n-am':    { label: 'Nord America',   pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 4, imgSuffix: 'nam' },
-                'france':  { label: 'Francia',        pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 5, imgSuffix: 'fr' },
-                'royaume-uni': { label: 'Regno Unito', pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 6, imgSuffix: 'uk' },
-                'espagne': { label: 'Spagna',         pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 7, imgSuffix: 'es' },
-                'italie':  { label: 'Italia',         pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 8, imgSuffix: 'it' },
-                'allemagne': { label: 'Germania',     pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 9, imgSuffix: 'de' },
-                'grece':   { label: 'Grecia',         pathBase: '/modeles/ecmwf_ctrl.php?', euParam: 'carte', euVal: 10, imgSuffix: 'gr' }
-            },
-            runs: [0, 6, 12, 18], maxEch: 360,
-            variables: MC_ECMWF_VARS
-        },
-        'ukmo': {
-            label: 'UKMO HD 0.1° (Met Office)',
-            imgType: 'model-run',
-            imgHost: 'modeles14.meteociel.fr',
-            imgPath: '/modeles/ukmo/run/',
-            imgPrefix: 'ukmo',
-            euScript: 'ukmoeu.php',
-            runDelay: 5,
-            domains: {
-                'europe': { label: 'Europa',         pathBase: '/modeles/ukmoeu.php?', euParam: 'nh', euVal: 0, imgSuffix: 'eu' },
-                'nh':     { label: 'Emisfero Nord',   pathBase: '/modeles/ukmoeu.php?', euParam: 'nh', euVal: 1, imgSuffix: 'nh' },
-                'europe-lcc': { label: 'Europa (LCC)', pathBase: '/modeles/ukmoeu.php?', euParam: 'nh', euVal: 2, imgSuffix: 'eu' }
-            },
-            runs: [0, 6, 12, 18], maxEch: 168,
-            variables: [
-                { slug: 'precipitations', label: 'Precipitazioni' },
-                { slug: 'vent-moyen', label: 'Vento Medio 10m' },
-                { slug: 'nebulosite', label: 'Nuvolosità' },
-                { slug: 'temperatures-2m', label: 'Temperature 2m' },
-                { slug: 'pression', label: 'Pressione MSLP' },
-                { slug: '500-hpa', label: '500 hPa' },
-                { slug: '850-hpa', label: '850 hPa' },
-                { slug: 'resume', label: 'Pioggia/Pressione/Nuvole' }
-            ]
-        },
-        'gem': {
-            label: 'GEM GDPS 0.15° (Canada)',
-            imgType: 'model-run',
-            imgHost: 'modeles16.meteociel.fr',
-            imgPath: '/modeles/gemgdps/run/',
-            imgPrefix: 'gemgdps',
-            euScript: 'gdpse_cartes.php',
-            runDelay: 5,
-            domains: {
-                'europe':    { label: 'Europa',         pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 0, imgSuffix: '' },
-                'europe-lcc': { label: 'Europa (LCC)',   pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 1, imgSuffix: 'eu' },
-                'europe-ouest': { label: 'Europa Ovest', pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 2, imgSuffix: 'euw' },
-                'nh':        { label: 'Emisfero Nord',   pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 3, imgSuffix: 'nh' },
-                'n-am':      { label: 'Nord America',    pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 4, imgSuffix: 'nam' },
-                'france':    { label: 'Francia',         pathBase: '/modeles/gdpse_cartes.php?', euParam: 'carte', euVal: 5, imgSuffix: 'fr' }
-            },
-            runs: [0, 12], maxEch: 240,
-            variables: [
-                { slug: 'precipitations', label: 'Precipitazioni' },
-                { slug: 'vent-moyen', label: 'Vento Medio 10m' },
-                { slug: 'nebulosite', label: 'Nuvolosità' },
-                { slug: 'temperatures-2m', label: 'Temperature 2m' },
-                { slug: 'pression', label: 'Pressione MSLP' },
-                { slug: '500-hpa', label: '500 hPa' },
-                { slug: '850-hpa', label: '850 hPa' },
-                { slug: 'resume', label: 'Pioggia/Pressione/Nuvole' }
-            ]
-        },
-        'icon-eu': {
-            label: 'ICON-EU 7km (DWD)',
-            imgType: 'icon-eu',
-            imgHost: 'modeles12.meteociel.fr',
-            imgPath: '/modeles/icon/',
-            euScript: 'icon-eu.php',
-            runDelay: 3,
-            domains: {
-                'france':    { label: 'Francia',         pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 500, imgDom: '',   imgZone: 0 },
-                'royaume-uni': { label: 'Regno Unito',   pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 510, imgDom: 'uk',  imgZone: 1 },
-                'espagne':   { label: 'Spagna',         pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 520, imgDom: 'es',  imgZone: 1 },
-                'italie':    { label: 'Italia',         pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 530, imgDom: 'it',  imgZone: 1 },
-                'allemagne': { label: 'Germania',        pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 540, imgDom: 'de',  imgZone: 1 },
-                'belgique':  { label: 'Belgio',         pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 550, imgDom: '',   imgZone: 0 },
-                'suisse':    { label: 'Svizzera',       pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 560, imgDom: '',   imgZone: 0 },
-                'europe-ouest': { label: 'Europa Ovest', pathBase: '/modeles/icon-eu.php?', euParam: 'map', euVal: 570, imgDom: '',   imgZone: 0 }
-            },
-            runs: [0, 3, 6, 9, 12, 15, 18, 21], maxEch: 120,
-            variables: [
-                { slug: 'precipitations', label: 'Precipitazioni' },
-                { slug: 'temperatures-2m', label: 'Temperature 2m' },
-                { slug: 'vent-moyen', label: 'Vento Medio 10m' },
-                { slug: 'nebulosite', label: 'Nuvolosità' },
-                { slug: '500-hpa', label: '500 hPa' },
-                { slug: '850-hpa', label: '850 hPa' },
-                { slug: 'resume', label: 'Pioggia/Pressione/Nuvole' }
-            ]
-        },
-
-    };
-
-    // Variabili "extended-only": iniziano a 240h (Range B di Meteociel)
-    var MC_EXTENDED_VARS = {
-        'cape-et-lifted-index': true, 'mucape-et-best-lifted-index': true,
-        'cin': true, 'humidex': true, 'windchill': true,
-        'theta-e-850hpa': true, 'vent-rafales': true,
-        'precipitations-convectives': true, 'storm-motion': true,
-        'storm-relative-helicity': true,
-        'vent-950hpa': true, 'vent-925hpa': true,
-        'vents-verticaux-700hpa': true,
-        'tourbillon-absolu-500hpa': true, 'tourbillon-absolu-900hpa': true,
-        'geopotentiel-1.5-pvu': true
-    };
-
-    function mcBuildEcheances() {
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return [];
-        var max = cfg.maxEch;
-        var slug = mcGetVarSlug();
-        var imgType = mcGetImgType();
-        var arr = [];
-        if (mcCurrentModel === 'gfs1h') {
-            for (var i = 1; i <= max; i++) arr.push(i);
-        } else if (imgType === 'country') {
-            // GFS country-zoom: 3h a 84h, poi 6h (gap a 87h, 93h, 99h...)
-            if (MC_EXTENDED_VARS[slug]) {
-                for (var i = 240; i <= Math.min(max, 384); i += 6) arr.push(i);
+function fmEl(id) { return document.getElementById(id); }
+function fmSetStatus(text) { var el = fmEl('fm-status'); if (el) el.textContent = text; }
+function fmPad2(n) { return (n < 10 ? '0' : '') + n; }
+function fmGetChk(id) { var el = fmEl(id); return !!(el && el.checked); }
+function fmUtcParts(iso) { var d = new Date(iso); return { Y: d.getUTCFullYear(), M: d.getUTCMonth() + 1, D: d.getUTCDate(), H: d.getUTCHours() }; }
+function fmRunDir(refIso) { var p = fmUtcParts(refIso); return p.Y + '/' + fmPad2(p.M) + '/' + fmPad2(p.D) + '/' + fmPad2(p.H) + '00Z'; }
+function fmValidFile(validIso) { var p = fmUtcParts(validIso); return p.Y + '-' + fmPad2(p.M) + '-' + fmPad2(p.D) + 'T' + fmPad2(p.H) + '00.om'; }
+function fmFmtTime(iso) {
+    try {
+        return new Date(iso).toLocaleString('it-IT', { timeZone: 'Europe/Rome', weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return iso; }
+}
+function fmFmtNum(v) { if (v === '' || v === null || v === undefined) return ''; var n = Number(v); return isFinite(n) ? (Math.round(n * 100) / 100) : String(v); }
+function fmVarLabel(v) {
+    if (FM_VAR_LABELS[v]) return FM_VAR_LABELS[v];
+    var m = v.match(/^(.+)_(\d{2,4})hPa$/);
+    if (m) { var k = FM_LEVEL_KIND_LABELS[m[1]] || m[1]; return k + ' ' + m[2] + ' hPa'; }
+    return v.replace(/_/g, ' ');
+}
+function fmCategory(v) {
+    if (/_(\d{2,4})hPa$/.test(v)) return 'Livelli di pressione';
+    if (/^temperature/.test(v) || /dew_point/.test(v) || /apparent_temperature/.test(v) || /wet_bulb/.test(v) || /surface_temperature/.test(v) || /soil_temperature/.test(v)) return 'Temperatura';
+    if (/relative_humidity/.test(v)) return 'Umidita';
+    if (/precipitation|^rain$|^showers$|snowfall|snow_depth/.test(v)) return 'Precipitazione e neve';
+    if (/cloud_cover/.test(v)) return 'Nuvolosita';
+    if (/pressure_msl|surface_pressure/.test(v)) return 'Pressione';
+    if (/wind/.test(v)) return 'Vento';
+    if (/^cape$|^cin$|lifted_index|convect|thunderstorm/.test(v)) return 'Instabilita';
+    if (/radiation|irradiance/.test(v)) return 'Radiazione';
+    if (/freezing_level|boundary_layer/.test(v)) return 'Quote termiche';
+    if (/weather_code/.test(v)) return 'Codice meteo';
+    return 'Altro';
+}
+function fmPickDefaultVar(vars) {
+    var prefs = ['temperature_2m', 'pressure_msl', 'precipitation', 'cloud_cover', 'geopotential_height_500hPa'];
+    for (var i = 0; i < prefs.length; i++) { if (vars.indexOf(prefs[i]) >= 0) return prefs[i]; }
+    return vars.length ? vars[0] : '';
+}
+function fmRegionDef(id) {
+    for (var i = 0; i < FM_REGIONS.length; i++) { if (FM_REGIONS[i].id === id) return FM_REGIONS[i]; }
+    return FM_REGIONS[0];
+}
+function fmDomainBounds() {
+    if (!fmModule || !fmModule.domainOptions || !fmModule.GridFactory) return null;
+    try {
+        var opts = fmModule.domainOptions;
+        for (var i = 0; i < opts.length; i++) {
+            if (opts[i] && opts[i].value === fmDomain) {
+                return fmModule.GridFactory.create(opts[i].grid, null).getBounds();
+            }
+        }
+    } catch (e) { }
+    return null;
+}
+function fmIsGlobalDomain() {
+    var b = fmDomainBounds();
+    if (!b) return false;
+    return (b[2] - b[0]) > 300 || (b[3] - b[1]) > 120;
+}
+function fmPopulateRegions() {
+    var sel = fmEl('fm-region-select');
+    if (!sel) return;
+    var html = '';
+    for (var i = 0; i < FM_REGIONS.length; i++) {
+        var r = FM_REGIONS[i];
+        html += '<option value="' + r.id + '"' + (r.id === fmRegion ? ' selected' : '') + '>' + r.label + '</option>';
+    }
+    sel.innerHTML = html;
+}
+function fmRegionChanged() {
+    var s = fmEl('fm-region-select');
+    if (s) fmRegion = s.value;
+    fmApplyRegion(true);
+}
+function fmApplyRegion(refit) {
+    var domB = fmDomainBounds();
+    var region = fmRegionDef(fmRegion);
+    var clip = null;
+    if (region && region.bbox) {
+        var rb = region.bbox;
+        clip = [rb[1], rb[0], rb[3], rb[2]];
+        if (domB) {
+            clip = [Math.max(clip[0], domB[0]), Math.max(clip[1], domB[1]), Math.min(clip[2], domB[2]), Math.min(clip[3], domB[3])];
+            if (clip[0] >= clip[2] || clip[1] >= clip[3]) clip = domB;
+        }
+    } else if (domB) {
+        clip = domB;
+    }
+    fmClipBounds = clip;
+    try {
+        if (fmModule && fmModule.defaultOmProtocolSettings) {
+            fmModule.defaultOmProtocolSettings.clippingOptions = clip ? { bounds: clip } : undefined;
+            if (fmModule.getCachedResolvedClipping) fmModule.getCachedResolvedClipping(fmModule.defaultOmProtocolSettings.clippingOptions);
+        }
+    } catch (e) { }
+    if (typeof map !== 'undefined' && map) {
+        try {
+            if (clip) {
+                map.setMaxBounds([[clip[1], clip[0]], [clip[3], clip[2]]]);
+                if (refit) map.fitBounds([[clip[1], clip[0]], [clip[3], clip[2]]], { padding: [8, 8] });
             } else {
-                for (var i = 3; i <= 84; i += 3) arr.push(i);
-                for (var i = 90; i <= Math.min(max, 240); i += 6) arr.push(i);
-                if (max > 240) {
-                    for (var i = 246; i <= max; i += 6) arr.push(i);
-                }
+                map.setMaxBounds(null);
             }
-        } else if (mcCurrentModel === 'icon-eu') {
-            // ICON-EU: step 1h da 1h a maxEch
-            for (var i = 1; i <= max; i++) arr.push(i);
-        } else if (mcCurrentModel === 'ecmwf') {
-            // ECMWF ctrl: 0h (analysis), poi 1h a 90h, 3h a 144h, 6h a 360h
-            arr.push(0);
-            for (var i = 1; i <= 90; i++) arr.push(i);
-            for (var i = 93; i <= 144; i += 3) arr.push(i);
-            for (var i = 150; i <= max; i += 6) arr.push(i);
-        } else {
-            // Sistema Europe/NH per TUTTI i modelli (incluso GFS, UKMO, GEM):
-            // step 6h da 0h a maxEch (0h = analysis frame)
-            if (MC_EXTENDED_VARS[slug] && mcCurrentModel === 'gfs') {
-                for (var i = 240; i <= Math.min(max, 384); i += 6) arr.push(i);
-            } else {
-                arr.push(0);
-                for (var i = 6; i <= max; i += 6) arr.push(i);
+        } catch (e) { }
+    }
+    fmUpdateBounds();
+    fmRebuild();
+}
+function fmLoaderShow() {
+    if (fmLoaderTimer !== null) return;
+    fmLoaderTimer = setTimeout(function () {
+        fmLoaderTimer = -1;
+        var e = fmEl('fm-map-loader');
+        if (e) e.classList.add('active');
+        setTimeout(fmLoaderHide, 25000);
+    }, 350);
+}
+function fmLoaderHide() {
+    if (fmLoaderTimer !== null && fmLoaderTimer !== -1) clearTimeout(fmLoaderTimer);
+    fmLoaderTimer = null;
+    var e = fmEl('fm-map-loader');
+    if (e) e.classList.remove('active');
+}
+function fmAttachTileEvents(layer) {
+    if (!layer || !layer.on) return;
+    layer.on('loading', fmLoaderShow);
+    layer.on('tileloadstart', function () { fmTilePending++; fmLoaderShow(); });
+    var dec = function () { fmTilePending = Math.max(0, fmTilePending - 1); if (fmTilePending === 0) fmLoaderHide(); };
+    layer.on('tileload', dec);
+    layer.on('tileerror', dec);
+    layer.on('tileabort', dec);
+    layer.on('load', function () { fmTilePending = 0; fmLoaderHide(); });
+}
+function fmEnsureMapLoader() {
+    if (typeof map === 'undefined' || !map) return;
+    try {
+        var c = map.getContainer();
+        if (!c || fmEl('fm-map-loader')) return;
+        try { if (window.getComputedStyle && window.getComputedStyle(c).position === 'static') c.style.position = 'relative'; } catch (e2) { }
+        var d = document.createElement('div');
+        d.id = 'fm-map-loader';
+        d.className = 'fm-map-loader';
+        d.innerHTML = '<div class="fm-map-loader-box"><span class="fm-spinner"></span> Caricamento mappe…</div>';
+        c.appendChild(d);
+    } catch (e) { }
+}
+function ensureWeatherMapLayer(cb) {
+    if (!isFeatureEnabled('forecastMaps') || typeof L === 'undefined') { cb(false); return; }
+    if (fmAdapter) { cb(true); return; }
+    if (fmWmlState === 'failed') { cb(false); return; }
+    if (fmWmlState === 'loading') { fmWmlWaiters.push(cb); return; }
+    fmWmlState = 'loading';
+    fmWmlWaiters.push(cb);
+    var idx = 0;
+    function tryNext() {
+        if (idx >= FM_WML_URLS.length) { fmWmlState = 'failed'; fmFlushWaiters(false); return; }
+        var url = FM_WML_URLS[idx++];
+        import(url).then(function (mod) {
+            try {
+                fmModule = mod;
+                fmAdapter = mod.addLeafletProtocolSupport(L);
+                fmAdapter.addProtocol('om', mod.omProtocol);
+                fmWmlState = 'loaded';
+                fmFlushWaiters(true);
+            } catch (e) {
+                fmWmlState = 'failed';
+                fmSetStatus('Errore inizializzazione libreria: ' + e.message);
+                fmFlushWaiters(false);
             }
+        })['catch'](function () { tryNext(); });
+    }
+    tryNext();
+}
+function fmFlushWaiters(ok) {
+    var w = fmWmlWaiters.slice();
+    fmWmlWaiters = [];
+    for (var i = 0; i < w.length; i++) { try { w[i](ok); } catch (e) { } }
+}
+function fmFetchMeta(domain, cb) {
+    var url = FM_BASE + domain + '/latest.json';
+    if (fmAbort) { try { fmAbort.abort(); } catch (e) { } }
+    fmAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var opts = { cache: 'no-store' };
+    if (fmAbort) opts.signal = fmAbort.signal;
+    fetch(url, opts).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    }).then(function (j) {
+        if (!j || !j.valid_times || !j.valid_times.length) throw new Error('nessun tempo valido');
+        fmMeta = j;
+        cb(null, j);
+    })['catch'](function (e) {
+        if (e && e.name === 'AbortError') return;
+        fmSetStatus('Errore caricamento run: ' + (e && e.message ? e.message : e));
+        cb(e);
+    });
+}
+function fmPopulateDomains() {
+    var sel = fmEl('fm-domain-select');
+    if (!sel) return;
+    var groups = {};
+    for (var i = 0; i < FM_DOMAINS.length; i++) {
+        var d = FM_DOMAINS[i];
+        if (!groups[d.group]) groups[d.group] = [];
+        groups[d.group].push(d);
+    }
+    var order = ['Italia', 'Europa', 'Globale'];
+    var html = '';
+    for (var g = 0; g < order.length; g++) {
+        var name = order[g];
+        if (!groups[name]) continue;
+        html += '<optgroup label="' + name + '">';
+        for (var j = 0; j < groups[name].length; j++) {
+            var dd = groups[name][j];
+            html += '<option value="' + dd.id + '"' + (dd.id === fmDomain ? ' selected' : '') + '>' + dd.label + '</option>';
         }
-        return arr;
+        html += '</optgroup>';
+    }
+    sel.innerHTML = html;
+}
+function fmPopulateVariables(vars) {
+    var sel = fmEl('fm-variable-select');
+    if (!sel) return;
+    var byCat = {};
+    for (var i = 0; i < vars.length; i++) {
+        var c = fmCategory(vars[i]);
+        if (!byCat[c]) byCat[c] = [];
+        byCat[c].push(vars[i]);
+    }
+    var catSeen = [];
+    for (var k = 0; k < FM_CAT_ORDER.length; k++) { if (byCat[FM_CAT_ORDER[k]]) catSeen.push(FM_CAT_ORDER[k]); }
+    for (var kk in byCat) { if (catSeen.indexOf(kk) < 0) catSeen.push(kk); }
+    var html = '';
+    for (var c2 = 0; c2 < catSeen.length; c2++) {
+        var cat = catSeen[c2];
+        html += '<optgroup label="' + cat + '">';
+        for (var v = 0; v < byCat[cat].length; v++) {
+            var vv = byCat[cat][v];
+            html += '<option value="' + vv + '"' + (vv === fmVariable ? ' selected' : '') + '>' + fmVarLabel(vv) + '</option>';
+        }
+        html += '</optgroup>';
+    }
+    sel.innerHTML = html;
+}
+function fmPopulateTimes(times) {
+    var s = fmEl('fm-slider');
+    if (s) { s.min = 0; s.max = Math.max(0, times.length - 1); s.value = fmIdx; }
+}
+function fmSyncSlider() { var s = fmEl('fm-slider'); if (s) s.value = fmIdx; }
+function fmUpdateTimeDisplay(validIso) {
+    var el = fmEl('fm-time-display');
+    if (!el || !fmMeta) return;
+    el.textContent = (fmIdx + 1) + '/' + fmMeta.valid_times.length + ' · ' + fmFmtTime(validIso);
+}
+function fmOmUrlForIndex(idx) {
+    if (!fmMeta || !fmMeta.valid_times.length) return null;
+    var valid = fmMeta.valid_times[idx];
+    if (valid === undefined) return null;
+    var base = FM_BASE + fmDomain + '/' + fmRunDir(fmMeta.reference_time) + '/' + fmValidFile(valid);
+    var q = 'variable=' + encodeURIComponent(fmVariable) + '&tile_size=512&interpolation=linear';
+    if (fmOpts.dark) q += '&dark=true';
+    return base + '?' + q;
+}
+function fmCurrentOmUrl() {
+    if (!fmMeta || !fmMeta.valid_times.length) return null;
+    var url = fmOmUrlForIndex(fmIdx);
+    if (!url) return null;
+    return { url: url, valid: fmMeta.valid_times[fmIdx] };
+}
+function fmVectorUrl(baseUrl) {
+    var q = [];
+    if (fmOpts.contours) q.push('contours=true');
+    if (fmOpts.arrows) { q.push('arrows=true'); q.push('arrow_style=' + fmOpts.arrowStyle); }
+    if (fmOpts.grid) q.push('grid=true');
+    return q.length ? baseUrl + '&' + q.join('&') : null;
+}
+function fmVectorStyle(props, layerName) {
+    if (layerName === 'contours') return { strokeStyle: 'rgba(15,23,42,0.9)', lineWidth: 1.2, lineCap: 'round', globalAlpha: 1 };
+    if (layerName === 'wind-arrows' || layerName === 'wind-barb-pennants') return { strokeStyle: 'rgba(15,23,42,0.75)', lineWidth: 1.4, lineCap: 'round' };
+    if (layerName === 'grid') return { strokeStyle: 'rgba(15,23,42,0.35)', lineWidth: 1, lineCap: 'round' };
+    return null;
+}
+function fmRemoveLayers() {
+    if (fmRasterLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmRasterLayer); } catch (e) { } }
+    if (fmVectorLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmVectorLayer); } catch (e) { } }
+    fmRasterLayer = null;
+    fmVectorLayer = null;
+}
+function fmRebuild() {
+    if (!fmModule || !fmAdapter || typeof map === 'undefined' || !map || !fmMeta || !fmActive) return;
+    var cur = fmCurrentOmUrl();
+    if (!cur) return;
+    fmRemoveLayers();
+    fmTilePending = 0;
+    var layerBounds = null;
+    if (fmClipBounds) {
+        try { layerBounds = L.latLngBounds([[fmClipBounds[1], fmClipBounds[0]], [fmClipBounds[3], fmClipBounds[2]]]); } catch (e) { layerBounds = null; }
+    }
+    try {
+        var rasterOpts = { opacity: 0.8, pane: 'forecastMapsPane' };
+        if (layerBounds) rasterOpts.bounds = layerBounds;
+        fmRasterLayer = fmAdapter.createTileLayer('om://' + cur.url, rasterOpts);
+        fmAttachTileEvents(fmRasterLayer);
+        fmRasterLayer.addTo(map);
+        var vurl = fmVectorUrl(cur.url);
+        if (vurl) {
+            var vecOpts = { pane: 'forecastMapsPaneVector', style: fmVectorStyle };
+            if (layerBounds) vecOpts.bounds = layerBounds;
+            fmVectorLayer = fmAdapter.createVectorTileLayer('om://' + vurl, vecOpts);
+            fmAttachTileEvents(fmVectorLayer);
+            fmVectorLayer.addTo(map);
+        }
+    } catch (e) {
+        fmSetStatus('Errore rendering: ' + (e && e.message ? e.message : e));
+    }
+    fmUpdateTimeDisplay(cur.valid);
+    fmUpdateLegend();
+        fmWarmNext();
+}
+function fmUpdateBounds() {
+    if (!fmModule || typeof map === 'undefined' || !map) return;
+    try {
+        var b = map.getBounds();
+        fmModule.updateCurrentBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    } catch (e) { }
+}
+function fmUpdateLegend() {
+    var el = fmEl('fm-legend');
+    if (!el) return;
+    if (!fmModule || typeof fmModule.getColorScale !== 'function' || !fmVariable) { el.innerHTML = ''; return; }
+    var cs;
+    try { cs = fmModule.getColorScale(fmVariable, !!fmOpts.dark); } catch (e) { el.innerHTML = ''; return; }
+    if (!cs || !cs.colors || !cs.colors.length) { el.innerHTML = ''; return; }
+    var colors = cs.colors;
+    var n = colors.length;
+    var stops = [];
+    for (var i = 0; i < n; i++) {
+        var c = colors[i];
+        var p = n === 1 ? 0 : Math.round(i * 100 / (n - 1));
+        var a = (c[3] === null || c[3] === undefined) ? 1 : c[3];
+        stops.push('rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ') ' + p + '%');
+    }
+    var lo = '';
+    var hi = '';
+    if (cs.type === 'breakpoint' && cs.breakpoints && cs.breakpoints.length) { lo = cs.breakpoints[0]; hi = cs.breakpoints[cs.breakpoints.length - 1]; }
+    else { lo = (cs.min === null || cs.min === undefined ? '' : cs.min); hi = (cs.max === null || cs.max === undefined ? '' : cs.max); }
+    el.innerHTML = '<div class="fm-legend-bar" style="background:linear-gradient(90deg,' + stops.join(',') + ')"></div>'
+        + '<div class="fm-legend-labels"><span>' + fmFmtNum(lo) + '</span><span>' + (cs.unit || '') + '</span><span>' + fmFmtNum(hi) + '</span></div>';
+}
+function fmDomainChanged() {
+    var s = fmEl('fm-domain-select');
+    if (s) fmDomain = s.value;
+    fmStopPlay();
+    fmLoadDomain();
+}
+function fmVariableChanged() {
+    var s = fmEl('fm-variable-select');
+    if (s) fmVariable = s.value;
+    fmIdx = 0;
+    fmSyncSlider();
+    fmRebuild();
+}
+function fmTogglesChanged() {
+    fmOpts.contours = fmGetChk('fm-chk-contours');
+    fmOpts.arrows = fmGetChk('fm-chk-arrows');
+    fmOpts.grid = fmGetChk('fm-chk-grid');
+    fmOpts.dark = fmGetChk('fm-chk-dark');
+    fmRebuild();
+}
+function fmLoadDomain() {
+    fmStopPlay();
+        fmStopPreload();
+    fmSetStatus('Carico il run…');
+    fmFetchMeta(fmDomain, function (err, meta) {
+        if (err) return;
+        var vars = (meta.variables || []).slice();
+        if (vars.indexOf(fmVariable) < 0) fmVariable = fmPickDefaultVar(vars);
+        fmPopulateVariables(vars);
+        if (fmIdx >= meta.valid_times.length) fmIdx = 0;
+        fmPopulateTimes(meta.valid_times);
+        fmSyncSlider();
+        fmPopulateRegions();
+        if (fmIsGlobalDomain() && fmRegion === 'domain') { fmRegion = 'europe'; fmPopulateRegions(); }
+        fmSetStatus(meta.valid_times.length + ' ore · run ' + fmFmtTime(meta.reference_time));
+        fmApplyRegion(true);
+    });
+}
+function fmSliderChange(val) { fmIdx = parseInt(val, 10) || 0; fmRebuild(); }
+function fmPrevFrame() { if (!fmMeta) return; fmIdx = (fmIdx - 1 + fmMeta.valid_times.length) % fmMeta.valid_times.length; fmSyncSlider(); fmRebuild(); }
+function fmNextFrame() { if (!fmMeta) return; fmIdx = (fmIdx + 1) % fmMeta.valid_times.length; fmSyncSlider(); fmRebuild(); }
+function fmSetSpeed(val) { fmSpeed = parseInt(val, 10) || 800; if (fmIsPlaying) { fmStopPlay(); fmStartPlay(); } }
+function fmTogglePlay() { if (fmIsPlaying) fmStopPlay(); else fmStartPlay(); }
+function fmStartPlay() {
+    if (!fmMeta || fmIsPlaying) return;
+        fmStopPreload();
+    fmIsPlaying = true;
+    var b = fmEl('fm-play-btn');
+    if (b) b.textContent = '⏸';
+    fmInterval = setInterval(function () { fmNextFrame(); }, fmSpeed);
+}
+function fmStopPlay() {
+    fmIsPlaying = false;
+    if (fmInterval) { clearInterval(fmInterval); fmInterval = null; }
+    var b = fmEl('fm-play-btn');
+    if (b) b.textContent = '▶';
+}
+    function fmPreloadStatus(txt) { var s = fmEl('fm-preload-status'); if (s) s.textContent = txt; }
+
+    function fmStopPreload() {
+        fmPreloadGen++;
+        if (!fmPreloadActive) return;
+        fmPreloadActive = false;
+        var btn = fmEl('fm-preload-btn');
+        if (btn) { btn.textContent = '⏬ Preload'; btn.disabled = false; }
     }
 
-    function mcGetVarSlug() {
-        var sel = document.getElementById('mc-variable');
-        return sel ? sel.value : 'precipitations';
-    }
-    // Calcola l'ultima run disponibile per il modello corrente
-    function mcGetLatestRun() {
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg || !cfg.runs) return 0;
-        var delay = cfg.runDelay || 4;
-        var now = new Date();
-        var nowUtcH = now.getUTCHours();
-        // Trova la run più recente disponibile (runHour + delay <= nowUtcH)
-        var latest = cfg.runs[0];
-        for (var i = cfg.runs.length - 1; i >= 0; i--) {
-            if (cfg.runs[i] + delay <= nowUtcH) {
-                latest = cfg.runs[i];
-                break;
-            }
-        }
-        // Se nessuna run di oggi è disponibile, usa l'ultima del giorno prima
-        if (latest + delay > nowUtcH) {
-            latest = cfg.runs[cfg.runs.length - 1];
-        }
-        return latest;
-    }
-    function mcGetRun() {
-        return mcGetLatestRun();
-    }
-    function mcGetDomainConfig() {
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg || !cfg.domains[mcCurrentDomain]) return null;
-        return cfg.domains[mcCurrentDomain];
+    function fmStartPreload() {
+        if (!fmMeta || !fmMeta.valid_times.length || !fmAdapter || typeof map === 'undefined' || !map) return;
+        fmStopPlay();
+        fmStopWarm();
+        fmPreloadGen++;
+        var gen = fmPreloadGen;
+        fmPreloadActive = true;
+        var btn = fmEl('fm-preload-btn');
+        if (btn) { btn.textContent = '⏳ Preload...'; btn.disabled = true; }
+        var n = fmMeta.valid_times.length;
+        fmPreloadStatus('0/' + n);
+        fmPreloadFrame((fmIdx + 1) % n, gen, 0, n);
     }
 
-    function mcBuildUrl(ech) {
-        var slug = mcGetVarSlug();
-        var run = mcGetRun();
-        var dcfg = mcGetDomainConfig();
-        if (!dcfg) return '#';
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return '#';
-        var echStr = ech + 'h';
-        if (cfg.imgType === 'country') {
-            return 'https://www.meteociel.fr' + dcfg.pathBase + slug + '/' + echStr + '.htm?run=' + run;
-        } else if (cfg.imgType === 'gfs-europe') {
-            var varnum = MC_VAR_CODES_EU[slug] !== undefined ? MC_VAR_CODES_EU[slug] : 2;
-            return 'https://www.meteociel.fr' + dcfg.pathBase + 'mode=' + varnum + '&ech=' + ech + '&' + dcfg.euParam + '=' + dcfg.euVal;
-        } else if (cfg.imgType === 'icon-eu') {
-            var mode = mcGetMode();
-            return 'https://www.meteociel.fr' + dcfg.pathBase + 'mode=' + mode + '&ech=' + ech + '&' + dcfg.euParam + '=' + dcfg.euVal;
-        } else {
-            // ECMWF, UKMO, GEM: usa mode= e il parametro dominio
-            var mode = mcGetMode();
-            return 'https://www.meteociel.fr' + dcfg.pathBase + 'mode=' + mode + '&ech=' + ech + '&' + dcfg.euParam + '=' + dcfg.euVal;
+    function fmPreloadFrame(idx, gen, done, total) {
+        if (gen !== fmPreloadGen) return;
+        if (done >= total) {
+            fmPreloadActive = false;
+            var btn = fmEl('fm-preload-btn');
+            if (btn) { btn.textContent = '⏬ Preload'; btn.disabled = false; }
+            fmPreloadStatus(total + '/' + total + ' ✓');
+            fmWarmNext();
+            return;
         }
-    }
-
-    function mcGetImgType() {
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return 'europe';
-        // GFS: country per domini paese, gfs-europe per Europa/NH
-        if (cfg.imgType === 'country' && cfg.euImgType) {
-            var dcfg = cfg.domains[mcCurrentDomain];
-            if (dcfg && (dcfg.euParam !== undefined)) return cfg.euImgType;
-        }
-        return cfg.imgType;
-    }
-
-    // Ottiene il codice variabile (mode) per il modello corrente
-    function mcGetMode() {
-        var slug = mcGetVarSlug();
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return 0;
-        // Mappa slug → mode per ogni modello
-        var modeMaps = {
-            'ecmwf': MC_VAR_CODES_ECMWF,
-            'ukmo': MC_VAR_CODES_UKMO,
-            'gem': MC_VAR_CODES_GEM,
-            'icon-eu': MC_VAR_CODES_ICON
+        fmPreloadStatus(done + '/' + total);
+        var url = fmOmUrlForIndex(idx);
+        if (!url) { fmPreloadFrame((idx + 1) % total, gen, done + 1, total); return; }
+        var layer;
+        try {
+            layer = fmAdapter.createTileLayer('om://' + url, { pane: 'forecastMapsPanePre', opacity: 0 });
+        } catch (e) { fmPreloadFrame((idx + 1) % total, gen, done + 1, total); return; }
+        var advanced = false;
+        var finish = function () {
+            if (advanced) return;
+            advanced = true;
+            if (gen !== fmPreloadGen) return;
+            try { if (map) map.removeLayer(layer); } catch (e) { }
+            fmPreloadFrame((idx + 1) % total, gen, done + 1, total);
         };
-        var map = modeMaps[mcCurrentModel];
-        if (map && map[slug] !== undefined) return map[slug];
-        return 0;
+        layer.on('load', finish);
+        setTimeout(finish, 12000);
+        try { layer.addTo(map); } catch (e) { finish(); }
     }
 
-    function mcBuildImageUrl(ech) {
-        var slug = mcGetVarSlug();
-        var run = mcGetRun();
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return '';
-        var dcfg = mcGetDomainConfig();
-        if (!dcfg) return '';
-        var imgType = mcGetImgType();
-        if (imgType === 'country') {
-            // Country-zoom su modeles2 per GFS country domains
-            // GFS 1h usa path /modeles_gfs/ con suffisso -1H, GFS normale usa suffisso dominio (IT, SP, ecc.)
-            var varnum = MC_VAR_CODES[slug] !== undefined ? MC_VAR_CODES[slug] : 574;
-            var suffix = mcCurrentModel === 'gfs1h' ? '-1H' : (MC_DOMAIN_SUFFIX[mcCurrentDomain] || '');
-            return 'https://modeles2.meteociel.fr/modeles_gfs/run/' + ech + '-' + varnum + suffix + '.GIF?' + run;
-        } else if (imgType === 'gfs-europe') {
-            // GFS Europa/NH su modeles16.meteociel.fr (sistema Europe classico)
-            // URL verificato: gfseu-0-6.png?6 per Europa, gfsnh- per NH
-            var varnum = MC_VAR_CODES_EU[slug] !== undefined ? MC_VAR_CODES_EU[slug] : 2;
-            var prefix = mcCurrentDomain === 'nh' ? 'gfsnh' : 'gfs';
-            var domSuffix = dcfg.imgSuffix || 'eu';
-            if (mcCurrentDomain === 'nh') { domSuffix = ''; prefix = 'gfsnh'; }
-            return 'https://modeles16.meteociel.fr/modeles/gfs/run/' + prefix + domSuffix + '-' + varnum + '-' + ech + '.png?' + run;
-        } else if (imgType === 'icon-eu') {
-            // ICON-EU: modeles12.meteociel.fr/modeles/icon/iconeu[_<dom><zone>]-<runIdx>-<mode>-<ech>-0.png?<dd-mm>
-            // URL verificato: iconeu_it1-1-1-0.png?27-08 = run 3z, mode=1(precip), ech=1, Italia
-            // Francia/Belgio/Svizzera/Europa Ovest: iconeu- (nessun suffisso dominio)
-            // Italia: iconeu_it1-, UK: iconeu_uk1-, ecc.
-            // runIdx = indice della run nell'array runs (0=0z, 1=3z, 2=6z, ...)
-            var mode = mcGetMode();
-            var dom = dcfg.imgDom || '';
-            var zone = dcfg.imgZone || 0;
-            var domStr = dom ? ('_' + dom + zone) : '';
-            var runIdx = cfg.runs.indexOf(parseInt(run));
-            if (runIdx < 0) runIdx = 0;
-            var now = new Date();
-            var dd = String(now.getUTCDate()).padStart(2, '0');
-            var mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-            var url = 'https://' + cfg.imgHost + cfg.imgPath + 'iconeu' + domStr + '-' + runIdx + '-' + mode + '-' + ech + '-0.png?' + dd + '-' + mm;
-            console.log('[MC] URL: ' + url + ' (mode=' + mode + ' domain=' + mcCurrentDomain + ' domStr=' + domStr + ' runIdx=' + runIdx + ')');
-            return url;
-        } else {
-            // ECMWF, UKMO, GEM: <prefix><suffix>-<mode>-<ech>.png?<run>
-            var mode = mcGetMode();
-            var modelPrefix = cfg.imgPrefix || mcCurrentModel;
-            var runTs = mcGetRunTimestamp(parseInt(run));
-            var host = cfg.imgHost || 'modeles.meteociel.fr';
-            var path = cfg.imgPath || ('/modeles/' + modelPrefix + '/archives/');
-            var domSuffix = dcfg.imgSuffix || '';
-
-            if (mcCurrentModel === 'ecmwf') {
-                // ECMWF ha 3 casi:
-                // 1. Europa (imgSuffix=''): /runs/<ts>/ecmwf-<mode>-<ech>.png
-                // 2. NH (imgSuffix='nh') e Europa Ovest (imgSuffix='euw'): /run/ecmwfnh- o ecmwfeuw- (SENZA timestamp)
-                // 3. Country zoom (it, fr, uk, es, de, gr): /runs/<ts>/ecmwfit- o ecmwffr- ecc.
-                if (domSuffix === 'nh' || domSuffix === 'euw' || domSuffix === 'lcc' || domSuffix === 'nam') {
-                    // Path /run/ senza timestamp
-                    var url = 'https://' + host + '/modeles/ecmwf2/run/ecmwf' + domSuffix + '-' + mode + '-' + ech + '.png?0';
-                    console.log('[MC] URL: ' + url + ' (mode=' + mode + ' domain=' + mcCurrentDomain + ')');
-                    return url;
-                } else if (domSuffix === '') {
-                    // Europa: /runs/<ts>/ecmwf-<mode>-<ech>.png
-                    var url = 'https://' + host + '/modeles/ecmwf2/runs/' + runTs + '/ecmwf-' + mode + '-' + ech + '.png?0';
-                    console.log('[MC] URL: ' + url + ' (mode=' + mode + ' domain=' + mcCurrentDomain + ' runTs=' + runTs + ')');
-                    return url;
-                } else {
-                    // Country zoom: /runs/<ts>/ecmwf<suffix>-<mode>-<ech>.png
-                    var url = 'https://' + host + '/modeles/ecmwf2/runs/' + runTs + '/ecmwf' + domSuffix + '-' + mode + '-' + ech + '.png?0';
-                    console.log('[MC] URL: ' + url + ' (mode=' + mode + ' domain=' + mcCurrentDomain + ' runTs=' + runTs + ')');
-                    return url;
-                }
-            } else {
-                // UKMO, GEM: <prefix><suffix>-<mode>-<ech>.png?<run>
-                var url = 'https://' + host + path + modelPrefix + domSuffix + '-' + mode + '-' + ech + '.png?' + run;
-                console.log('[MC] URL: ' + url + ' (mode=' + mode + ' domain=' + mcCurrentDomain + ')');
-                return url;
-            }
-        }
+    function fmStopWarm() {
+        if (fmWarmLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmWarmLayer); } catch (e) { } }
+        fmWarmLayer = null;
+        fmWarmKey = null;
     }
 
-    // Calcola timestamp YYYYMMDDHH per il run corrente
-    function mcGetRunTimestamp(runHour) {
-        var cfg = MC_MODELS[mcCurrentModel];
-        var delay = (cfg && cfg.runDelay) ? cfg.runDelay : 4;
-        var now = new Date();
-        var nowUtcH = now.getUTCHours();
-        var runDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        // Se il run non è ancora disponibile (runHour + delay > ora UTC), usa il giorno prima
-        if (runHour + delay > nowUtcH) {
-            runDate = new Date(runDate.getTime() - 24 * 3600000);
-        }
-        var y = runDate.getUTCFullYear();
-        var m = String(runDate.getUTCMonth() + 1).padStart(2, '0');
-        var d = String(runDate.getUTCDate()).padStart(2, '0');
-        var h = String(runHour).padStart(2, '0');
-        var ts = '' + y + m + d + h;
-        console.log('[MC] mcGetRunTimestamp: runHour=' + runHour + ' delay=' + delay + ' nowUtcH=' + nowUtcH + ' → timestamp=' + ts);
-        return ts;
+    function fmWarmNext() {
+        fmStopWarm();
+        if (!fmActive || fmPreloadActive || !fmMeta || !fmMeta.valid_times.length) return;
+        if (!fmAdapter || typeof map === 'undefined' || !map) return;
+        var n = fmMeta.valid_times.length;
+        if (n < 2) return;
+        var url = fmOmUrlForIndex((fmIdx + 1) % n);
+        if (!url) return;
+        try {
+            fmWarmLayer = fmAdapter.createTileLayer('om://' + url, { pane: 'forecastMapsPanePre', opacity: 0 });
+            fmWarmKey = url;
+            fmWarmLayer.addTo(map);
+        } catch (e) { fmWarmLayer = null; fmWarmKey = null; }
     }
-
-    // Preload di tutte le immagini
-    var mcPreloadedImages = [];
-    var mcPreloadCount = 0;
-    var mcPreloadTotal = 0;
-    var mcPreloadGeneration = 0; // incrementato ad ogni cambio modello/dominio/variabile/run
-    var mcPlaySpeed = 1; // moltiplicatore velocità animazione
-    var mcFrameGeneration = 0; // incrementato ad ogni mcLoadFrame per invalidare callback precedenti
-
-    // Chiama questa funzione ad ogni cambio modello/dominio/variabile/run
-    function mcCancelPreload() {
-        mcPreloadGeneration++; // invalida tutte le callback in corso
-        mcPreloadCount = 0;
-        mcPreloadTotal = 0;
-        var status = document.getElementById('mc-preload-status');
-        if (status) status.innerText = '';
-        var btn = document.getElementById('mc-preload-btn');
-        if (btn) { btn.innerText = '⏬ Preload'; btn.disabled = false; }
+function toggleForecastMaps() {
+    if (!isFeatureEnabled('forecastMaps')) return;
+    var panel = fmEl('forecast-maps-panel');
+    var btn = fmEl('btn-forecast-maps');
+    if (!panel) return;
+    if (panel.classList.contains('active')) {
+        panel.classList.remove('active');
+        fmActive = false;
+        fmStopPlay();
+        fmRemoveLayers();
+        fmLoaderHide();
+        fmStopPreload();
+        fmStopWarm();
+        if (btn) btn.textContent = '🗺️ Mappe previsionali (OFF)';
+        return;
     }
-
-    function mcStartPreload() {
-        if (!mcEcheances.length) return;
-        mcPreloadGeneration++;
-        var gen = mcPreloadGeneration;
-        mcPreloadTotal = mcEcheances.length;
-        mcPreloadCount = 0;
-        mcPreloadedImages = [];
-        var status = document.getElementById('mc-preload-status');
-        if (status) status.innerText = '0/' + mcPreloadTotal;
-        var btn = document.getElementById('mc-preload-btn');
-        if (btn) { btn.innerText = '⏳ Preload...'; btn.disabled = true; }
-        // Preload parallelo: batch di 10 immagini alla volta
-        mcPreloadBatch(0, gen);
-    }
-
-    function mcPreloadBatch(startIdx, gen) {
-        if (gen !== mcPreloadGeneration) return;
-        if (startIdx >= mcPreloadTotal) {
-            // Filtra mcEcheances: mantieni solo quelle che hanno caricato con successo
-            var validEch = [];
-            var validImgs = [];
-            for (var i = 0; i < mcPreloadedImages.length; i++) {
-                if (mcPreloadedImages[i]) {
-                    validEch.push(mcEcheances[i]);
-                    validImgs.push(mcPreloadedImages[i]);
-                }
-            }
-            mcEcheances = validEch;
-            mcPreloadedImages = validImgs;
-            mcPreloadCount = validEch.length;
-            var slider = document.getElementById('mc-slider');
-            if (slider) { slider.max = Math.max(0, mcEcheances.length - 1); slider.value = 0; }
-            if (mcEchIndex >= mcEcheances.length) mcEchIndex = 0;
-            var status = document.getElementById('mc-preload-status');
-            if (status) status.innerText = mcPreloadCount + '/' + mcPreloadTotal + ' ✓';
-            var btn = document.getElementById('mc-preload-btn');
-            if (btn) { btn.innerText = '⏬ Preload'; btn.disabled = false; }
-            mcLoadFrame();
-            return;
-        }
-        var batchSize = 10;
-        var batchEnd = Math.min(startIdx + batchSize, mcPreloadTotal);
-        var completed = 0;
-        var expected = batchEnd - startIdx;
-        var status = document.getElementById('mc-preload-status');
-        if (status) status.innerText = startIdx + '/' + mcPreloadTotal;
-
-        for (var i = startIdx; i < batchEnd; i++) {
-            (function(idx) {
-                var url = mcBuildImageUrl(mcEcheances[idx]);
-                var img = new Image();
-                img.onload = function() {
-                    if (gen !== mcPreloadGeneration) return;
-                    var finish = function() {
-                        if (gen !== mcPreloadGeneration) return;
-                        mcPreloadedImages[idx] = img;
-                        mcPreloadCount++;
-                        completed++;
-                        if (status) status.innerText = (startIdx + completed) + '/' + mcPreloadTotal;
-                        if (completed >= expected) mcPreloadBatch(batchEnd, gen);
-                    };
-                    // decode() pre-decodifica il frame: quando verrà mostrato durante
-                    // l'animazione non ci sarà nessun costo di decodifica visibile.
-                    if (img.decode) { img.decode().then(finish).catch(finish); }
-                    else { finish(); }
-                };
-                img.onerror = function() {
-                    if (gen !== mcPreloadGeneration) return;
-                    console.warn('[MC] Preload FAILED idx=' + idx + ' ech=' + mcEcheances[idx] + ' url=' + url);
-                    completed++;
-                    if (status) status.innerText = (startIdx + completed) + '/' + mcPreloadTotal;
-                    if (completed >= expected) mcPreloadBatch(batchEnd, gen);
-                };
-                img.src = url;
-            })(i);
-        }
-    }
-
-    function mcShowPreloader() {
-        var el = document.getElementById('mc-preloader');
-        if (el) el.style.display = 'flex';
-    }
-    function mcHidePreloader() {
-        var el = document.getElementById('mc-preloader');
-        if (el) el.style.display = 'none';
-    }
-
-    function mcUpdateCaption() {
-        var cap = document.getElementById('mc-caption');
-        if (!cap) return;
-        var cfg = MC_MODELS[mcCurrentModel];
-        var dcfg = mcGetDomainConfig();
-        var modelLabel = cfg ? cfg.label.split(' (')[0] : mcCurrentModel;
-        var domLabel = dcfg ? dcfg.label : mcCurrentDomain;
-        var varSel = document.getElementById('mc-variable');
-        var varLabel = varSel ? varSel.options[varSel.selectedIndex].text : '';
-        cap.innerText = modelLabel + ' · ' + domLabel + ' · ' + varLabel;
-    }
-
-    function mcPopulateModels() {
-        var sel = document.getElementById('mc-model-select');
-        if (!sel) return;
-        sel.innerHTML = '';
-        for (var key in MC_MODELS) {
-            var opt = document.createElement('option');
-            opt.value = key;
-            opt.innerText = MC_MODELS[key].label;
-            sel.appendChild(opt);
-        }
-        sel.value = mcCurrentModel;
-    }
-
-    function mcPopulateDomains() {
-        var sel = document.getElementById('mc-domain-select');
-        if (!sel) return;
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return;
-        sel.innerHTML = '';
-        for (var key in cfg.domains) {
-            var opt = document.createElement('option');
-            opt.value = key;
-            opt.innerText = cfg.domains[key].label;
-            sel.appendChild(opt);
-        }
-        if (cfg.domains[mcCurrentDomain]) {
-            sel.value = mcCurrentDomain;
-        } else {
-            mcCurrentDomain = Object.keys(cfg.domains)[0];
-            sel.value = mcCurrentDomain;
-        }
-    }
-
-    function mcPopulateVariables() {
-        var sel = document.getElementById('mc-variable');
-        if (!sel) return;
-        var cfg = MC_MODELS[mcCurrentModel];
-        if (!cfg) return;
-        sel.innerHTML = '';
-        cfg.variables.forEach(function(v) {
-            var opt = document.createElement('option');
-            opt.value = v.slug;
-            opt.innerText = v.label;
-            sel.appendChild(opt);
-        });
-    }
-
-    function mcPopulateRuns() {
-        var badge = document.getElementById('mc-run-badge');
-        if (!badge) return;
-        var run = mcGetLatestRun();
-        var cfg = MC_MODELS[mcCurrentModel];
-        var delay = (cfg && cfg.runDelay) ? cfg.runDelay : 4;
-        var now = new Date();
-        var nowUtcH = now.getUTCHours();
-        var nowUtcDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        var runDate;
-        if (run + delay <= nowUtcH) {
-            runDate = nowUtcDate;
-        } else {
-            runDate = new Date(nowUtcDate.getTime() - 24 * 3600000);
-        }
-        var d = String(runDate.getUTCDate()).padStart(2, '0');
-        var m = String(runDate.getUTCMonth() + 1).padStart(2, '0');
-        var h = String(run).padStart(2, '0');
-        badge.innerText = h + 'Z ' + d + '/' + m;
-        badge.title = 'Ultima run disponibile (auto) — run ' + h + 'Z del ' + d + '/' + m + ' (delay=' + delay + 'h)';
-        console.log('[MC] mcPopulateRuns: latest available run=' + h + 'Z ' + d + '/' + m + ' (delay=' + delay + 'h)');
-    }
-
-    // FIX DEFINITIVO FLICKERING (v2): mcLoadFrame decodifica DIRETTAMENTE sull'elemento
-    // <img> del buffer nascosto — mai su un oggetto Image() separato poi riassegnato.
-    // Riassegnare .src da un Image() "scaldato" a un <img> del DOM diverso riavvia
-    // l'algoritmo di caricamento dell'elemento di destinazione e NON garantisce che i
-    // suoi pixel siano già pronti nell'istante in cui lo si rende visibile — è proprio
-    // questo hand-off tra due elementi diversi a poter ricreare il micro-flash.
-    // Ora si aspetta backEl.decode() sull'esatto elemento che verrà mostrato: solo a
-    // decodifica completata si scambia l'opacità con il frame corrente (mai nascosto
-    // prima che il nuovo sia pronto).
-    function mcLoadFrame() {
-        // Meteociel disabilitato in questa edizione: nessun caricamento immagini remote.
-        if (!isFeatureEnabled('meteocielEmbed')) return;
-        if (!mcEcheances.length) {
-            console.warn('[MC] No echeances available');
-            return;
-        }
-        var ech = mcEcheances[mcEchIndex];
-        var url = mcBuildImageUrl(ech);
-        var pageUrl = mcBuildUrl(ech);
-        var frameGen = ++mcFrameGeneration;
-        console.log('[MC] mcLoadFrame: model=' + mcCurrentModel + ' domain=' + mcCurrentDomain + ' ech=' + ech + ' url=' + url);
-
-        var frontEl = document.getElementById(mcFrontIsB ? 'mc-img-b' : 'mc-img');
-        var backEl  = document.getElementById(mcFrontIsB ? 'mc-img' : 'mc-img-b');
-
-        if (frontEl && backEl) {
-            var txt = document.getElementById('mc-preloader-text');
-            var settled = false;
-
-            var doSwap = function() {
-                if (settled) return;
-                settled = true;
-                if (frameGen !== mcFrameGeneration) return;
-                backEl.style.opacity = '1';
-                frontEl.style.opacity = '0';
-                mcFrontIsB = !mcFrontIsB;
-                mcHidePreloader();
-                // Segna il frame come noto/pronto per la prossima volta (skip preloader)
-                mcPreloadedImages[mcEchIndex] = true;
-            };
-            var doFail = function() {
-                if (settled) return;
-                settled = true;
-                if (frameGen !== mcFrameGeneration) return;
-                console.error('[MC] Image FAILED to load: ' + url);
-                if (txt) txt.innerText = 'Immagine non disponibile: ' + url;
-                setTimeout(function() { mcHidePreloader(); }, 5000);
-            };
-
-            // Se il frame risulta già noto (precaricato o già mostrato prima), il
-            // decode() sotto si risolverà quasi istantaneamente (bytes già in cache
-            // del browser): evitiamo comunque di far comparire il preloader per non
-            // avere un flash di UI inutile.
-            // DURANTE PLAY: NON mostrare mai il preloader (il frame corrente resta
-            // visibile grazie al double-buffering, il preloader causava lampeggio
-            // visibile tra un frame e l'altro).
-            var isKnownReady = !!mcPreloadedImages[mcEchIndex];
-            if (!isKnownReady && !mcIsPlaying) {
-                mcShowPreloader();
-                if (txt) txt.innerText = 'Caricamento mappa...';
-            }
-
-            // NON tocchiamo l'opacità del frame ATTUALE: resta visibile finché il
-            // prossimo non è pronto, quindi non c'è mai un frame vuoto sullo schermo.
-            backEl.src = url;
-            if (backEl.decode) {
-                backEl.decode().then(doSwap).catch(function() {
-                    // decode() può rifiutare (es. src riassegnato nel frattempo);
-                    // se comunque risulta completo e valido, mostralo lo stesso.
-                    if (frameGen !== mcFrameGeneration) return;
-                    if (backEl.complete && backEl.naturalWidth > 0) { doSwap(); }
-                    else { doFail(); }
-                });
-            } else {
-                backEl.onload = doSwap;
-                backEl.onerror = doFail;
-            }
-
-            setTimeout(function() {
-                if (frameGen !== mcFrameGeneration) return;
-                if (!settled) {
-                    if (txt) txt.innerText = 'Timeout — riprova';
-                    setTimeout(function() { mcHidePreloader(); }, 2000);
-                }
-            }, 15000);
-        }
-
-        var display = document.getElementById('mc-time-display');
-        if (display) display.innerText = '+' + ech + 'h';
-        var slider = document.getElementById('mc-slider');
-        if (slider) slider.value = mcEchIndex;
-        mcUpdateCaption();
-        var link = document.getElementById('mc-open-link');
-        if (link) link.href = pageUrl;
-    }
-
-    function mcModelChanged() {
-        mcStopPlay();
-        mcCancelPreload();
-        mcPreloadedImages = [];
-        mcPopulateDomains();
-        mcPopulateVariables();
-        mcPopulateRuns();
-        mcEcheances = mcBuildEcheances();
-        var slider = document.getElementById('mc-slider');
-        if (slider) { slider.max = mcEcheances.length - 1; }
-        mcEchIndex = 0;
-        mcLoadFrame();
-    }
-
-    function mcDomainChanged() {
-        mcStopPlay();
-        mcCancelPreload();
-        mcPreloadedImages = [];
-        var sel = document.getElementById('mc-domain-select');
-        if (sel) mcCurrentDomain = sel.value;
-        mcEcheances = mcBuildEcheances();
-        var slider = document.getElementById('mc-slider');
-        if (slider) { slider.max = Math.max(0, mcEcheances.length - 1); }
-        mcEchIndex = 0;
-        mcLoadFrame();
-    }
-
-    function mcVariableChanged() {
-        mcStopPlay();
-        mcCancelPreload();
-        mcPreloadedImages = [];
-        mcEcheances = mcBuildEcheances();
-        var slider = document.getElementById('mc-slider');
-        if (slider) { slider.max = Math.max(0, mcEcheances.length - 1); }
-        mcEchIndex = 0;
-        mcLoadFrame();
-    }
-    function mcSliderChange(val) {
-        mcStopPlay();
-        mcEchIndex = parseInt(val, 10);
-        mcLoadFrame();
-    }
-    function mcPrevFrame() {
-        mcStopPlay();
-        if (mcEchIndex > 0) { mcEchIndex--; mcLoadFrame(); }
-    }
-    function mcNextFrame() {
-        mcStopPlay();
-        if (mcEchIndex < mcEcheances.length - 1) { mcEchIndex++; mcLoadFrame(); }
-        else { mcEchIndex = 0; mcLoadFrame(); }
-    }
-    function mcSetSpeed(val) {
-        mcPlaySpeed = parseInt(val, 10) || 1;
-        // Se sta riproducendo, riavvia con la nuova velocità
-        if (mcIsPlaying) {
-            mcStopPlay();
-            mcStartPlay();
-        }
-    }
-    function mcTogglePlay() {
-        if (mcIsPlaying) mcStopPlay(); else mcStartPlay();
-    }
-    function mcStartPlay() {
-        mcIsPlaying = true;
-        var btn = document.getElementById('mc-play-btn');
-        if (btn) btn.innerText = '⏸ Pausa';
-        // FIX LAMPEGGIO: durante play, disabilita la CSS transition di opacità
-        // (150ms) che causava un blend visibile (crossfade) tra frame diversi.
-        // Il swap diventa istantaneo: il frame front resta visibile fino al
-        // completamento di decode() del back, poi swap immediato senza fade.
-        var imgA = document.getElementById('mc-img');
-        var imgB = document.getElementById('mc-img-b');
-        if (imgA) imgA.style.transition = 'none';
-        if (imgB) imgB.style.transition = 'none';
-        if (mcInterval) clearInterval(mcInterval);
-        // Intervallo base 2000ms / velocità
-        var interval = Math.max(100, Math.round(2000 / mcPlaySpeed));
-        mcInterval = setInterval(function() {
-            if (mcEchIndex >= mcEcheances.length - 1) mcEchIndex = 0;
-            else mcEchIndex++;
-            mcLoadFrame();
-        }, interval);
-    }
-    function mcStopPlay() {
-        mcIsPlaying = false;
-        var btn = document.getElementById('mc-play-btn');
-        if (btn) btn.innerText = '▶ Play';
-        if (mcInterval) { clearInterval(mcInterval); mcInterval = null; }
-        // Ripristina la CSS transition per la navigazione manuale (slider/prev/next):
-        // durante la navigazione manuale il fade di 150ms è gradito.
-        var imgA = document.getElementById('mc-img');
-        var imgB = document.getElementById('mc-img-b');
-        if (imgA) imgA.style.transition = 'opacity 150ms ease';
-        if (imgB) imgB.style.transition = 'opacity 150ms ease';
-    }
+    panel.classList.add('active');
+    fmActive = true;
+    if (btn) btn.textContent = '🗺️ Mappe previsionali (ON)';
+    fmPopulateDomains();
+    fmEnsureMapLoader();
+    fmSetStatus('Carico la libreria…');
+    ensureWeatherMapLayer(function (ok) {
+        if (!ok) { fmSetStatus('Libreria mappe non disponibile.'); return; }
+        if (!fmMoveHooked && typeof map !== 'undefined' && map) { fmMoveHooked = true; map.on('moveend', fmUpdateBounds); }
+        fmUpdateBounds();
+        fmLoadDomain();
+    });
+}
 
     // --- Toggle Sviluppo: mostra/nasconde funzionalità sperimentali ---
     // Il toggle ora è uno switch compatto nel footer, accanto al badge versione.
@@ -12374,9 +12187,7 @@
         }
         var display = isSviluppoActive ? '' : 'none';
         // Toggle visibilità dei pulsanti sperimentali
-        var mc = document.getElementById('btn-meteociel');
         var ni = document.getElementById('btn-newindices');
-        if (mc) mc.style.display = display;
         if (ni) ni.style.display = display;
         // Toggle visibilità controlli Fonte API
         var apiWrap = document.getElementById('api-source-wrapper');
@@ -12614,73 +12425,6 @@
             pane.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
         } else {
             pane.style.transform = '';
-        }
-    }
-
-
-    function toggleMeteociel() {
-        // Meteociel (carte modelli + spaghetti, immagini remote) disabilitato in
-        // questa edizione: nessun caricamento di immagini esterne.
-        if (!mcActive && !isFeatureEnabled('meteocielEmbed')) {
-            var statusNoMc = document.getElementById('status-msg');
-            if (statusNoMc) statusNoMc.innerText = '⛔ Meteociel disabilitato in questa edizione.';
-            var btnNoMc = document.getElementById('btn-meteociel');
-            if (btnNoMc) { btnNoMc.innerText = '🗺️ Meteociel (non disponibile)'; btnNoMc.style.borderColor = '#ef4444'; }
-            return;
-        }
-        var btn = document.getElementById('btn-meteociel');
-        var container = document.getElementById('meteociel-container');
-        var mapEl = document.getElementById('leaflet-map');
-        var legendEl = document.getElementById('legend-container');
-        var statusEl = document.getElementById('status-msg');
-        var attribEl = document.querySelector('.attribution-small');
-        var calettaEl = document.getElementById('caletta-popup');
-        var radarEmbed = document.getElementById('radar-embed-container');
-        var syncTimeline = document.getElementById('sync-timeline-panel');
-        var livePanel = document.getElementById('live-panel');
-
-        if (!mcActive) {
-            mcActive = true;
-            // Chiudi la modalità Previsioni se attiva
-            if (forecastActive) toggleForecast();
-            if (btn) { btn.innerHTML = '🗺️ Meteociel (ON)'; btn.style.borderColor = '#22c55e'; }
-            if (container) container.style.display = 'block';
-            if (mapEl) mapEl.style.display = 'none';
-            if (radarEmbed) radarEmbed.style.display = 'none';
-            if (syncTimeline) syncTimeline.style.display = 'none';
-            if (livePanel) livePanel.style.display = 'none';
-            if (legendEl) legendEl.style.display = 'none';
-            if (statusEl) statusEl.style.display = 'none';
-            if (attribEl) attribEl.style.display = 'none';
-            if (calettaEl) calettaEl.style.display = 'none';
-            if (calettaPopupVisible) closeCaletta();
-            mcPopulateModels();
-            mcPopulateDomains();
-            mcPopulateVariables();
-            mcPopulateRuns();
-            mcEcheances = mcBuildEcheances();
-            var slider = document.getElementById('mc-slider');
-            if (slider) { slider.max = mcEcheances.length - 1; slider.value = 0; }
-            mcEchIndex = 0;
-            mcLoadFrame();
-        } else {
-            mcActive = false;
-            mcStopPlay();
-            if (btn) { btn.innerHTML = '🗺️ Meteociel (OFF)'; btn.style.borderColor = '#3b82f6'; }
-            if (container) container.style.display = 'none';
-            if (mapEl) mapEl.style.display = 'block';
-            if (syncTimeline) syncTimeline.style.display = '';
-            if (livePanel) livePanel.style.display = '';
-            if (attribEl) attribEl.style.display = '';
-            if (statusEl) statusEl.style.display = '';
-            if (legendEl) legendEl.style.display = '';
-            mcHidePreloader();
-            // Reset di entrambi i buffer (double buffering) allo stato iniziale
-            var imgA = document.getElementById('mc-img');
-            var imgB = document.getElementById('mc-img-b');
-            if (imgA) { imgA.src = ''; imgA.style.opacity = '1'; }
-            if (imgB) { imgB.src = ''; imgB.style.opacity = '0'; }
-            mcFrontIsB = false;
         }
     }
 
@@ -20683,7 +20427,7 @@ function renderContinuousOverlay() {
         // --- Elementi UI delle feature disabilitate: nascosti ---
         var dpcASel = document.getElementById('dpc-alert-select');
         if (dpcASel && !isFeatureEnabled('dpcAlerts')) dpcASel.style.display = 'none';
-        if (!isFeatureEnabled('meteocielEmbed')) { var bMc = document.getElementById('btn-meteociel'); if (bMc) bMc.style.display = 'none'; }
+        if (!isFeatureEnabled('forecastMaps')) { var bFm = document.getElementById('btn-forecast-maps'); if (bFm) bFm.style.display = 'none'; }
         if (!isFeatureEnabled('pretempEmbed')) { var bPt = document.getElementById('btn-pretemp'); if (bPt) bPt.style.display = 'none'; }
         if (!isFeatureEnabled('openMeteo')) {
             var asSel = document.getElementById('api-source-select');
@@ -21040,7 +20784,7 @@ function renderContinuousOverlay() {
 <script type="module">
 // staleness — indicatore "dati non aggiornati" (integrazione di staleness.mjs.draft).
 // SCOELTA: modulo INLINE (non file staleness.mjs separato): l'app e' single-file e il
-// workflow copia SOLO mri-light-1.2.3.1.html come _site/index.html — un modulo esterno
+// workflow copia SOLO mri-light-1.2.4.0.html come _site/index.html — un modulo esterno
 // risulterebbe 404 su Pages. Nessuna dipendenza esterna, nessun build step, nessun
 // cambio ai formati dati (STALENESS.md).
 // Soglie: radar 20 min (scan DPC atteso ~5 min; GHA best-effort con trigger esterno
