@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // TEST 1.0.0.8 — PARTE D (FIX3): gating Live Panel / Blitzortung.
-// 1.2.2.0: il pannello #live-panel ospita la funzione interna "Supercelle radar"
+// 1.2.3.0: il pannello #live-panel ospita la funzione interna "Supercelle radar"
 // (#live-toggle-supercells + #live-sc-summary/list/phenomena), quindi RESTA nel DOM
 // anche con PUBLIC_EDITION_FEATURES.lightningBlitzortung = false. Con flag OFF viene
 // neutralizzata SOLO la UI specifica dei fulmini (#live-legend/#live-hint), mentre i
@@ -20,7 +20,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.2.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.3.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -88,6 +88,11 @@ function makeDoc() {
     // toggle interno "Supercelle radar" + id dedicati della vista LIVE (nessun
     // id duplicato del pannello #sc-radar-panel).
     'live-toggle-supercells': { classList: { add() {}, remove() {} }, style: {}, innerHTML: '' },
+    // sub-toggle del pannello LIVE (spostati dal pannello SC): gating di visibilita'
+    'live-toggle-trails': { style: {} },
+    'live-toggle-forecast': { style: {} },
+    'live-toggle-phenomena': { style: {} },
+    'live-toggle-hail': { style: {} },
     'live-sc-summary': { style: {}, innerHTML: '' },
     'live-sc-list': { innerHTML: '', appendChild() {}, getAttribute() { return null; }, setAttribute() {}, addEventListener() {} },
     'live-sc-phenomena': { style: {}, innerHTML: '', getAttribute() { return null; }, addEventListener() {} },
@@ -265,6 +270,31 @@ ok('LAYER: flashLightningStrike non crea layer con flag OFF', layerCalls === 0 &
   ok('LIVE-SC: id del pannello SC restano unici (sc-summary/sc-list/sc-phenomena)',
     ['sc-summary', 'sc-list', 'sc-phenomena'].every(id => (src.match(new RegExp('id="' + id + '"', 'g')) || []).length === 1));
 
+  // 7a-bis) Sub-toggle spostati nel pannello LIVE: id dedicati, handler condivisi,
+  // dentro #live-panel (prima del pannello SC), nessun id duplicato.
+  {
+    const subIds = ['live-toggle-trails', 'live-toggle-forecast', 'live-toggle-phenomena', 'live-toggle-hail'];
+    ok('LIVE-SC: sub-toggle live presenti una sola volta ciascuno',
+      subIds.every(id => (src.match(new RegExp('id="' + id + '"', 'g')) || []).length === 1));
+    ok('LIVE-SC: sub-toggle live agganciati agli handler esistenti',
+      /id="live-toggle-trails"[^>]*onclick="toggleScTrails\(\)"/.test(src) &&
+      /id="live-toggle-forecast"[^>]*onclick="toggleScForecast\(\)"/.test(src) &&
+      /id="live-toggle-phenomena"[^>]*onclick="toggleScPhenomena\(\)"/.test(src) &&
+      /id="live-toggle-hail"[^>]*onclick="toggleScHail\(\)"/.test(src));
+    const iPanel = src.indexOf('id="live-panel"');
+    const iMaster = src.indexOf('id="live-toggle-supercells"');
+    const iScPanel = src.indexOf('id="sc-radar-panel"');
+    ok('LIVE-SC: i sub-toggle stanno dentro #live-panel (prima di #sc-radar-panel)',
+      iPanel >= 0 && iMaster > iPanel && iMaster < iScPanel &&
+      subIds.every(id => { const i = src.indexOf('id="' + id + '"'); return i > iMaster && i < iScPanel; }));
+    const allIds = ['live-toggle-supercells', ...subIds,
+      'sc-toggle-trails', 'sc-toggle-forecast', 'sc-toggle-phenomena', 'sc-toggle-hail'];
+    ok('LIVE-SC: nessun id toggle supercelle duplicato (live+sc)',
+      allIds.every(id => (src.match(new RegExp('id="' + id + '"', 'g')) || []).length === 1));
+    ok('LIVE-SC: scSetToggleBtn sincronizza sc-toggle-*/live-toggle-* (null-safe)',
+      /function scSetToggleBtn\(id, on\)[\s\S]{0,400}sc-toggle-[\s\S]{0,160}live-toggle-/.test(src));
+  }
+
   // 7b) guardia condivisa scDataActive() = isScRadarActive || liveShowSupercells
   ok('LIVE-SC: scDataActive() = isScRadarActive || liveShowSupercells',
     /function scDataActive\(\) \{\s*\n\s*return isScRadarActive \|\| liveShowSupercells;\s*\n\s*\}/.test(src));
@@ -286,8 +316,14 @@ ok('LAYER: flashLightningStrike non crea layer con flag OFF', layerCalls === 0 &
   ctx.liveShowSupercells = false;
   ctx.toggleLiveSupercells();
   ok('LIVE-SC: toggle ON invoca refreshLiveSupercells -> refreshScAll (fetch unico)', refreshAllCalls === 1 && liveClearCalls === 0);
+  ok('LIVE-SC: toggle ON mostra i sub-toggle del pannello LIVE',
+    ['live-toggle-trails', 'live-toggle-forecast', 'live-toggle-phenomena', 'live-toggle-hail']
+      .every(id => doc.els[id].style.display === ''));
   ctx.toggleLiveSupercells();
   ok('LIVE-SC: toggle OFF invoca liveClearSupercells e NON fetcha', liveClearCalls === 1 && refreshAllCalls === 1);
+  ok('LIVE-SC: toggle OFF nasconde i sub-toggle del pannello LIVE',
+    ['live-toggle-trails', 'live-toggle-forecast', 'live-toggle-phenomena', 'live-toggle-hail']
+      .every(id => doc.els[id].style.display === 'none'));
 
   // 7d) con #sc-radar-panel attivo: nessun doppio fetch, solo riallineo view LIVE
   ctx.liveShowSupercells = true; ctx.isScRadarActive = true;

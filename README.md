@@ -6,11 +6,17 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.2.0
+## Versione attiva: 1.2.3.0
 
-- File applicativo: `mri-light-1.2.2.0.html` (`APP_VERSION = '1.2.2.0'`, changelog
-  entry `{ version: '1.2.2.0', date: '2026-10-10' }`).
-- Contenuto della 1.2.2.0 (release sopra la 1.2.1.0):
+- File applicativo: `mri-light-1.2.3.0.html` (`APP_VERSION = '1.2.3.0'`, changelog
+  entry `{ version: '1.2.3.0', date: '2026-10-10' }`).
+- Contenuto della 1.2.3.0 (release sopra la 1.2.2.0):
+  - **Supercelle (LIVE)**: attivazione spostata nel pannello LIVE (rimosso il toggle
+    dalla main); sub-toggle Traccia/Forecast/Fenomeni/Grandine nel LIVE, visibili a
+    supercelle attive.
+  - **Grandine**: nuova metrica sotto Sviluppo con due sottolivelli (Probabilita
+    potenziale 0-5 e Dimensione stimata in mm) che colora province/celle (dati
+    client-side da `hailMetrics`; soglie stima non calibrate).
   - **Player**: rimosso il "kick" di velocita' (il pacing al 1x resta 1000 ms/frame).
   - **Bordi/confini**: i confini regionali/provinciali sono ora visibili sopra il
     satellite (nuovo pane dedicato, stroke-only).
@@ -26,8 +32,8 @@ Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
   - **Nuovo**: logica overshooting top da IR_108 (DPC) sulla griglia radar; entra in
     SSI v2 e come corroboratore satellite di hail/vortex.
   - **Multifonte**: prototipo isolato adapter OPERA CIRRUS (`radar_engine/fusion/`), non attivo.
-  - **Pannello LIVE**: funzione interna "Supercelle radar" con toggle, raggiungibile
-    anche senza fulmini.
+  - **Pannello LIVE**: ospita la funzione "Supercelle radar" (sub-toggle nel LIVE),
+    raggiungibile anche senza fulmini.
 - **Limiti noti**: l'overshooting top e' un proxy IR-only (senza WV/BTD); l'adapter
   OPERA CIRRUS e' un prototipo isolato e non attivo; le soglie hail/vortex sono
   sperimentali.
@@ -89,7 +95,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.2.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.3.0.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify}.yml` — i 4 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

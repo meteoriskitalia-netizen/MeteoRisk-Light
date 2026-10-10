@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Meteorisk Radar Engine — fusion (PROTOTIPO ISOLATO, release 1.2.2.0)
+Meteorisk Radar Engine — fusion (PROTOTIPO ISOLATO, release 1.2.3.0)
 
 Pacchetto sperimentale di fusione multi-sorgente. NON fa parte della pipeline di
 produzione: nessun modulo di `radar_engine` (main.py, config.py, ...) importa

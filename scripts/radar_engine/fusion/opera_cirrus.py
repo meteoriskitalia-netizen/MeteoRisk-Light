@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Meteorisk Radar Engine — fusion/opera_cirrus.py  (PROTOTIPO ISOLATO, 1.2.2.0)
+Meteorisk Radar Engine — fusion/opera_cirrus.py  (PROTOTIPO ISOLATO, 1.2.3.0)
 
 Adapter multi-sorgente per il composito OPERA CIRRUS (EUMETNET, Open Radar Data /
 MeteoGate) da usare come SECONDA FONTE a supporto dei candidati supercella
@@ -62,7 +62,7 @@ S3_BASE = "https://s3.waw3-1.cloudferro.com/openradar-24h/"
 ORD_API_BASE = "https://api.meteogate.eu/eu-eumetnet-weather-radar"
 PRODUCT_DBZH = "DBZH"
 DEFAULT_NODATA = -9999000.0
-USER_AGENT = "MeteoRisk-Light-fusion-prototype/1.2.2.0"
+USER_AGENT = "MeteoRisk-Light-fusion-prototype/1.2.3.0"
 
 ATTRIBUTION_OPERA = ("OPERA CIRRUS composite - (c) EUMETNET OPERA, "
                      "CC BY 4.0 (via Open Radar Data / MeteoGate)")

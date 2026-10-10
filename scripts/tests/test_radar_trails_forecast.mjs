@@ -20,7 +20,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.2.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.3.0.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -374,6 +374,10 @@ vm.runInNewContext(pure, ctx);
     !/motion\.direction_toward_deg/.test(extractFn('scPennantIcon')) &&
     /scCompass\(scCandidateDirectionDeg\(c\)\)/.test(src) &&
     !/scCompass\(c\.motion\.direction_toward_deg\)/.test(src));
+  ok('F19: bottone supercelle rimosso dalla toolbar principale (attivazione solo dal pannello LIVE)',
+    !/id="btn-sc-radar"/.test(src));
+  ok('F20: funzioni supercelle storiche mantenute (toggleScRadar/setScButton/scBtn)',
+    /function toggleScRadar\(\)/.test(src) && /function setScButton\(on\)/.test(src) && /function scBtn\(\)/.test(src));
 }
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
