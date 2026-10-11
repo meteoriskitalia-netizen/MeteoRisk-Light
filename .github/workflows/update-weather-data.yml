@@ -216,11 +216,13 @@ jobs:
 
       # L'ARTEFATTO di deploy contiene SOLO: app, dataset derivati, geografie
       # richieste, derivati radar, gli eventi phenomena (data/phenomena: prodotti
-      # da phenomena-verify, qui SOLO copiati in _site) e la finestra rolling satellite/ (branch
-      # satellite-cache, ripristinata qui perché viva solo su quel branch: senza i
-      # frame il deploy seguirebbe quello di satellite-engine e li cancellerebbe
-      # da Pages). Mai _raw / _staging / _workdir / payload Open-Meteo.
-      - name: Build sito statico (html + data/latest + data/geography + data/phenomena + satellite)
+      # da phenomena-verify, qui SOLO copiati in _site), la cache mappe previsionali
+      # V2 (data/fm2: prodotta da forecast-maps-v2, qui SOLO copiata in _site) e la
+      # finestra rolling satellite/ (branch satellite-cache, ripristinata qui perché
+      # viva solo su quel branch: senza i frame il deploy seguirebbe quello di
+      # satellite-engine e li cancellerebbe da Pages). Mai _raw / _staging /
+      # _workdir / payload Open-Meteo.
+      - name: Build sito statico (html + data/latest + data/geography + data/phenomena + data/fm2 + satellite)
         if: steps.publish.outputs.new_dataset == 'true' || inputs.force_deploy == 'true'
         run: |
           mkdir -p _site/data
@@ -235,6 +237,7 @@ jobs:
           fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
           if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
+          if [ -d data/fm2 ]; then cp -R data/fm2 _site/data/fm2; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi

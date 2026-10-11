@@ -1,0 +1,128 @@
+name: Forecast Maps V2 (mappe .om su cache GitHub)
+
+# MeteoRisk forecast-maps-v2 — MOTORE server-side delle "Mappe previsionali V2".
+#   - Fonti: file spaziali Open-Meteo su S3 anonimo
+#     (data_spatial/<dominio>/.../<valid_time>.om + latest.json come indice).
+#   - Motore: scripts/forecast_v2/forecast_v2_engine.py -> data/fm2/*.om +
+#     data/fm2/latest.json (crop Italia multi-variabile, NO-OP GUARD, prune a
+#     V2_MAX_FRAMES). Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
+#   - EGRESS: i frame full-size S3 sono tenuti in cache GitHub
+#     (.cache_fm2_frames, actions/cache) e riusati tra run via --frames-cache:
+#     si scaricano solo i frame nuovi, non l'intera finestra ogni volta.
+#   - Commit SOLO se data/fm2 cambia (nessun churn a manifest invariato).
+#   - Il deploy Pages NON e' toccato qui: data/fm2 arriva su Pages tramite la
+#     build _site di deploy-pages / update-weather-data / radar-engine
+#     (cp -R data/fm2), come per data/phenomena.
+#   - group di concorrenza PROPRIO "forecast-maps-v2" (cancel-in-progress:false):
+#     le run si serializzano tra loro senza bloccare/degradare i deploy Pages.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: "Ignora il NO-OP guard e riscrive i frame anche se il manifest e' invariato"
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [ci-run]
+
+permissions:
+  contents: write
+
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: forecast-maps-v2
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/forecast_v2/requirements.txt
+
+      # Cache PERSISTENTE dei frame Open-Meteo full-size scaricati dall'S3
+      # (.cache_fm2_frames/<dominio>/<VALID>.om). Chiave nuova ad ogni run
+      # (github.run_number) + restore-keys col prefisso "fm2-frames-": il job
+      # ripristina l'ultima cache disponibile (politica LRU di GitHub, 10 GB per
+      # repo) e la risalva aggiornata a fine run. Il motore riusa i frame gia'
+      # presenti (verifica Content-Length via HEAD) e scarica SOLO i nuovi,
+      # riducendo l'egress S3 da ~800 MB/run a ~40 MB/ciclo.
+      - name: Cache frame Open-Meteo (.om)
+        uses: actions/cache@v4
+        with:
+          path: .cache_fm2_frames
+          key: fm2-frames-${{ github.run_number }}
+          restore-keys: |
+            fm2-frames-
+
+      - name: Build cache mappe previsionali V2
+        id: engine
+        run: |
+          FORCE=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_update }}" = "true" ]; then
+            FORCE="--force"
+          fi
+          python scripts/forecast_v2/forecast_v2_engine.py \
+            --domains dwd_icon_eu ecmwf_ifs025 \
+            --valid-frames 25 \
+            --out data/fm2 \
+            --frames-cache .cache_fm2_frames \
+            $FORCE
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## MeteoRisk — Forecast Maps V2"
+            echo ""
+            if [ -f data/fm2/latest.json ]; then
+              python -c "import json; d=json.load(open('data/fm2/latest.json')); f=d.get('frames',[]); print('reference_time:', d.get('reference_time')); print('frame:', len(f), '— valid_times:', len(d.get('valid_times', []))); print('byte totali:', sum(x.get('bytes',0) for x in f)); print('domini:', d.get('domains')); print('warning:', len(d.get('warnings', []))); print('pruned:', d.get('pruned'))"
+            else
+              echo "latest.json non disponibile (run fallita prima del motore?)."
+            fi
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit cache aggiornata (only if changed)
+        if: success()
+        run: |
+          git config user.name "meteorisk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ ! -d data/fm2 ]; then
+            echo "[INFO] Nessun output forecast_v2: niente da committare."
+            exit 0
+          fi
+          git add data/fm2
+          if git diff --cached --quiet; then
+            echo "[INFO] Nessuna modifica a data/fm2 (NO-OP)."
+            exit 0
+          fi
+          git commit -m "chore(fm2): aggiornamento cache mappe previsionali V2 (.om crop Italia)"
+          # Retry: altri workflow pushano su main -> race possibile.
+          push_ok=0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then
+              push_ok=1
+              break
+            fi
+            echo "[WARN] Push rifiutato (race su main) - tentativo $i/5"
+            if [ "$i" -lt 5 ]; then sleep 5; fi
+          done
+          if [ "$push_ok" -ne 1 ]; then
+            echo "[ERROR] Push non riuscito dopo 5 tentativi."
+            exit 1
+          fi

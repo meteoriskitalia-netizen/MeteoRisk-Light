@@ -176,7 +176,9 @@ jobs:
       # L'ARTEFATTO di deploy contiene: app, dataset derivati, geografie richieste,
       # derivati radar (data/radar: latest.json/storms.geojson/tracks.json/supercells.json),
       # gli eventi phenomena (data/phenomena: events.json/badges.json, prodotti dal
-      # workflow phenomena-verify e qui SOLO copiati in _site) e la finestra rolling satellite/ (branch satellite-cache, ripristinata qui
+      # workflow phenomena-verify e qui SOLO copiati in _site), la cache mappe
+      # previsionali V2 (data/fm2: prodotta da forecast-maps-v2, qui SOLO copiata
+      # in _site) e la finestra rolling satellite/ (branch satellite-cache, ripristinata qui
       # perché viva solo su quel branch: senza i frame il deploy seguirebbe quello
       # di satellite-engine e li cancellerebbe da Pages) — MAI _raw / _staging /
       # _workdir / payload esterni. Senza questa build il toggle "Supercelle Radar"
@@ -186,7 +188,7 @@ jobs:
       # false). Questo job (dati/motore) ha concurrency SOLO sul group PROPRIO
       # "radar-history" (le 2 cron del motore si serializzano tra loro per
       # l'archivio rolling): non entra in coda dietro i run lunghi del meteo.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + satellite)
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + satellite)
         if: success()
         run: |
           mkdir -p _site/data
@@ -195,6 +197,7 @@ jobs:
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
           if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
+          if [ -d data/fm2 ]; then cp -R data/fm2 _site/data/fm2; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi

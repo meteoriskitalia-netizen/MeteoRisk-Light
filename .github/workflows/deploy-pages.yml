@@ -7,8 +7,8 @@ name: Deploy Pages (manuale / consolidamento)
 # update-weather-data.yml (stesso ordine, stesse guardie e stessi path):
 #   - cp mri-light-1.2.4.2.html _site/index.html
 #   - data/latest, data/geography, data/radar (con restore dell'archivio
-#     rolling radar-history), data/phenomena e satellite (con restore della
-#     finestra satellite-cache).
+#     rolling radar-history), data/phenomena, data/fm2 (cache mappe
+#     previsionali V2) e satellite (con restore della finestra satellite-cache).
 # Senza questi restore un deploy manuale DROPPEREBBE da Pages i dati che
 # vivono solo sui branch dedicati (radar-history / satellite-cache).
 # Trigger: solo workflow_dispatch (manuale) + repository_dispatch (esterno,
@@ -43,7 +43,7 @@ jobs:
 
       # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
       # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + satellite)
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + satellite)
         run: |
           mkdir -p _site/data
           cp mri-light-1.2.4.2.html _site/index.html
@@ -54,6 +54,7 @@ jobs:
           fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
           if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
+          if [ -d data/fm2 ]; then cp -R data/fm2 _site/data/fm2; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi
