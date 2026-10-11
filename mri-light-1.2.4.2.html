@@ -124,9 +124,9 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
 .panel-live.active { display: flex; }
 .panel-live.panel-sc { border-color: #a855f7; }
         /* Mappe previsionali (Open-Meteo Weather Map Layer) */
-        .fm-panel { position: fixed; top: 64px; left: 12px; width: 322px; max-height: 72vh; overflow: auto; z-index: 1200; background: rgba(15,23,42,.95); color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: none; font-size: 13px; }
+        .fm-panel { position: absolute; top: 44px; right: 10px; left: auto; width: 322px; max-width: calc(100% - 20px); max-height: calc(100% - 20px); overflow: auto; z-index: 1050; background: rgba(15,23,42,.95); color: #e2e8f0; border: 1px solid #334155; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: none; font-size: 13px; }
         .fm-panel.active { display: block; }
-        .fm-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 600; border-bottom: 1px solid #334155; }
+        .fm-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 600; border-bottom: 1px solid #334155; position: sticky; top: 0; background: rgba(15,23,42,.98); }
         .fm-close { cursor: pointer; opacity: .7; }
         .fm-close:hover { opacity: 1; }
         .fm-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -219,7 +219,7 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
         @media (max-width: 950px) { #radar-embed-container { height: 60vh; min-height: 300px; } }
 
         @media (max-width: 600px) {
-            .fm-panel { left: 6px; right: 6px; width: auto; top: 56px; max-height: 58vh; }
+            .fm-panel { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; max-width: none; max-height: 55%; }
         }
 
         .details-card { background: #1e293b; border-radius: 12px; padding: 18px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 14px; }
@@ -1363,6 +1363,47 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
             <iframe id="radar-embed-iframe" style="width:100%; height:100%; border:0; display:block; margin:0; padding:0;" src="" allowfullscreen></iframe>
         </div>
         <div id="leaflet-map"></div>
+        <!-- Mappe previsionali (Open-Meteo Weather Map Layer) -->
+        <div id="forecast-maps-panel" class="fm-panel">
+            <div class="fm-header">
+                <span>🗺️ Mappe previsionali</span>
+                <span class="fm-close" onclick="toggleForecastMaps()">✕</span>
+            </div>
+            <div class="fm-body">
+                <label class="fm-row"><span>Modello / Dominio</span>
+                    <select id="fm-domain-select" class="fm-select" onchange="fmDomainChanged()"></select>
+                </label>
+                <label class="fm-row"><span>Variabile</span>
+                    <select id="fm-variable-select" class="fm-select" onchange="fmVariableChanged()"></select>
+                </label>
+                <label class="fm-row"><span>Area geografica</span>
+                    <select id="fm-region-select" class="fm-select" onchange="fmRegionChanged()"></select>
+                </label>
+                <div class="fm-row fm-display">
+                    <label class="fm-chk"><input type="checkbox" id="fm-chk-contours" onchange="fmTogglesChanged()"> Isolinee</label>
+                    <label class="fm-chk"><input type="checkbox" id="fm-chk-arrows" onchange="fmTogglesChanged()"> Frecce vento</label>
+                    <label class="fm-chk"><input type="checkbox" id="fm-chk-grid" onchange="fmTogglesChanged()"> Griglia</label>
+                    <label class="fm-chk"><input type="checkbox" id="fm-chk-dark" onchange="fmTogglesChanged()"> Palette scura</label>
+                </div>
+                <div class="fm-player">
+                    <button id="fm-play-btn" class="fm-btn" onclick="fmTogglePlay()">▶</button>
+                    <button class="fm-btn" onclick="fmPrevFrame()">⏮</button>
+                    <button class="fm-btn" onclick="fmNextFrame()">⏭</button>
+                    <button id="fm-preload-btn" class="fm-btn fm-btn-preload" onclick="fmStartPreload()" title="Precarica tutti i frame">⏬ Preload</button>
+                    <span id="fm-preload-status" class="fm-preload-status"></span>
+                    <input type="range" id="fm-slider" class="fm-slider" min="0" max="0" value="0" oninput="fmSliderChange(this.value)">
+                    <select id="fm-speed" class="fm-select fm-speed" onchange="fmSetSpeed(this.value)">
+                        <option value="1200">Lenta</option>
+                        <option value="800" selected>Normale</option>
+                        <option value="400">Veloce</option>
+                    </select>
+                </div>
+                <div id="fm-time-display" class="fm-time">—</div>
+                <div id="fm-legend" class="fm-legend"></div>
+                <div id="fm-status" class="fm-status">Apri per caricare le mappe…</div>
+                <div class="fm-attrib">Dati mappe: © Open-Meteo (Weather Map Layer, CC BY 4.0). Modelli DWD / ECMWF / NOAA / Meteo-France / UKMO / JMA / CMA.</div>
+            </div>
+        </div>
         <!-- Switch a coriandolo nell'angolo della mappa -->
         <div class="map-corner-switches">
             <label class="mp-switch" title="Badge di rischio dentro le province (zoom dipendente)">
@@ -1498,47 +1539,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     </div>
 
     <!-- Pannello Fonti & Metodologie — fonti dati + metodologie dalla letteratura + disclaimer -->
-    <!-- Mappe previsionali (Open-Meteo Weather Map Layer) -->
-<div id="forecast-maps-panel" class="fm-panel">
-    <div class="fm-header">
-        <span>🗺️ Mappe previsionali</span>
-        <span class="fm-close" onclick="toggleForecastMaps()">✕</span>
-    </div>
-    <div class="fm-body">
-        <label class="fm-row"><span>Modello / Dominio</span>
-            <select id="fm-domain-select" class="fm-select" onchange="fmDomainChanged()"></select>
-        </label>
-        <label class="fm-row"><span>Variabile</span>
-            <select id="fm-variable-select" class="fm-select" onchange="fmVariableChanged()"></select>
-        </label>
-        <label class="fm-row"><span>Area geografica</span>
-            <select id="fm-region-select" class="fm-select" onchange="fmRegionChanged()"></select>
-        </label>
-        <div class="fm-row fm-display">
-            <label class="fm-chk"><input type="checkbox" id="fm-chk-contours" onchange="fmTogglesChanged()"> Isolinee</label>
-            <label class="fm-chk"><input type="checkbox" id="fm-chk-arrows" onchange="fmTogglesChanged()"> Frecce vento</label>
-            <label class="fm-chk"><input type="checkbox" id="fm-chk-grid" onchange="fmTogglesChanged()"> Griglia</label>
-            <label class="fm-chk"><input type="checkbox" id="fm-chk-dark" onchange="fmTogglesChanged()"> Palette scura</label>
-        </div>
-        <div class="fm-player">
-            <button id="fm-play-btn" class="fm-btn" onclick="fmTogglePlay()">▶</button>
-            <button class="fm-btn" onclick="fmPrevFrame()">⏮</button>
-            <button class="fm-btn" onclick="fmNextFrame()">⏭</button>
-            <button id="fm-preload-btn" class="fm-btn fm-btn-preload" onclick="fmStartPreload()" title="Precarica tutti i frame">⏬ Preload</button>
-            <span id="fm-preload-status" class="fm-preload-status"></span>
-            <input type="range" id="fm-slider" class="fm-slider" min="0" max="0" value="0" oninput="fmSliderChange(this.value)">
-            <select id="fm-speed" class="fm-select fm-speed" onchange="fmSetSpeed(this.value)">
-                <option value="1200">Lenta</option>
-                <option value="800" selected>Normale</option>
-                <option value="400">Veloce</option>
-            </select>
-        </div>
-        <div id="fm-time-display" class="fm-time">—</div>
-        <div id="fm-legend" class="fm-legend"></div>
-        <div id="fm-status" class="fm-status">Apri per caricare le mappe…</div>
-        <div class="fm-attrib">Dati mappe: © Open-Meteo (Weather Map Layer, CC BY 4.0). Modelli DWD / ECMWF / NOAA / Meteo-France / UKMO / JMA / CMA.</div>
-    </div>
-</div>
     <div id="sources-panel" class="forecast-legend-panel sources-panel">
         <div class="fl-title" onclick="toggleSourcesPanelCollapse()">
             <span class="fl-chevron">▼</span>
@@ -1813,9 +1813,13 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.1';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_VERSION = '1.2.4.2';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
     const APP_RELEASE_DATE = '2026-10-11';
     const APP_CHANGELOG = [
+        { version: '1.2.4.2', date: '2026-10-11', changes: [
+            'FIX= Popup Mappe previsionali in-frame (mobile non copre più la pagina).',
+            'TILE= Download tile più veloce (block cache 512 KB: 9→3 richieste/tile).',
+        ]},
         { version: '1.2.4.0', date: '2026-10-11', changes: [
             'MAPPE= Nuova sezione "Mappe previsionali" basata su Open-Meteo Weather Map Layer (maps.open-meteo.com / openmeteo.s3.amazonaws.com); sostituisce il modulo Meteociel (meteociel.fr, dismesso).',
             'MAPPE= Selezione modello/dominio, variabile e ora di previsione; player con slider; isolinee/frecce/griglia; legenda colori. Solo visualizzazione, nessun impatto sui calcoli.',
@@ -11456,6 +11460,12 @@ function ensureWeatherMapLayer(cb) {
         import(url).then(function (mod) {
             try {
                 fmModule = mod;
+                try {
+                    var frc = fmModule.defaultOmProtocolSettings ? fmModule.defaultOmProtocolSettings.fileReaderConfig : null;
+                    if (frc && fmModule.LruBlockCache) {
+                        fmModule.defaultOmProtocolSettings.fileReaderConfig = Object.assign({}, frc, { cache: new fmModule.LruBlockCache(512 * 1024, 32) });
+                    }
+                } catch (e) {}
                 fmAdapter = mod.addLeafletProtocolSupport(L);
                 fmAdapter.addProtocol('om', mod.omProtocol);
                 fmWmlState = 'loaded';
@@ -11756,7 +11766,11 @@ function fmStopPlay() {
         if (!url) { fmPreloadFrame((idx + 1) % total, gen, done + 1, total); return; }
         var layer;
         try {
-            layer = fmAdapter.createTileLayer('om://' + url, { pane: 'forecastMapsPanePre', opacity: 0 });
+            var preOpts = { pane: 'forecastMapsPanePre', opacity: 0 };
+            if (fmClipBounds) {
+                try { preOpts.bounds = L.latLngBounds([[fmClipBounds[1], fmClipBounds[0]], [fmClipBounds[3], fmClipBounds[2]]]); } catch (e) { }
+            }
+            layer = fmAdapter.createTileLayer('om://' + url, preOpts);
         } catch (e) { fmPreloadFrame((idx + 1) % total, gen, done + 1, total); return; }
         var advanced = false;
         var finish = function () {
@@ -11792,7 +11806,11 @@ function fmStopPlay() {
         if (fmWarmKey === url && fmLayerOnMap(fmWarmLayer)) return; // mitigazione churn: warm già pronto per lo stesso frame
         fmStopWarm();
         try {
-            fmWarmLayer = fmAdapter.createTileLayer('om://' + url, { pane: 'forecastMapsPanePre', opacity: 0 });
+            var warmOpts = { pane: 'forecastMapsPanePre', opacity: 0 };
+            if (fmClipBounds) {
+                try { warmOpts.bounds = L.latLngBounds([[fmClipBounds[1], fmClipBounds[0]], [fmClipBounds[3], fmClipBounds[2]]]); } catch (e) { }
+            }
+            fmWarmLayer = fmAdapter.createTileLayer('om://' + url, warmOpts);
             fmWarmKey = url;
             fmWarmLayer.addTo(map);
         } catch (e) { fmWarmLayer = null; fmWarmKey = null; }

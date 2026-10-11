@@ -6,11 +6,15 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.1
+## Versione attiva: 1.2.4.2
 
-- File applicativo: `mri-light-1.2.4.1.html` (`APP_VERSION = '1.2.4.1'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.0', date: '2026-10-11' }`).
-- Contenuto della 1.2.4.1 (release sopra la 1.2.4.0):
+- File applicativo: `mri-light-1.2.4.2.html` (`APP_VERSION = '1.2.4.2'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.2', date: '2026-10-11' }`).
+- Contenuto della 1.2.4.2 (release sopra la 1.2.4.1):
+  - **Popup mappe previsionali in-frame**: su mobile il popup delle mappe previsionali
+    non copre piu' l'intera pagina (in-frame nel viewport).
+  - **Download tile piu' veloce**: block cache da 512 KB nelle richieste tile
+    (da 9 a 3 richieste/tile).
   - **Formato numerico**: i valori meteo della UI passano dall'helper `fmtNum(v,d)`
     (blocco `//#pure# BEGIN numFormat`) con precisione fisica: temperatura/vento/pioggia
     1 decimale, umidita/pressione/probabilita interi; i float lunghi della pipeline IDW
@@ -112,7 +116,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.1.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.2.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages}.yml` — i 5 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
