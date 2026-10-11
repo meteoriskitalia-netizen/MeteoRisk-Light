@@ -19,7 +19,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.4.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.4.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -71,7 +71,7 @@ ok('A5d: markup id="fm-variable-select"', has(/id="fm-variable-select"/));
 ok('A5e: markup id="fm-slider"', has(/id="fm-slider"/));
 ok('A5f: markup id="fm-play-btn"', has(/id="fm-play-btn"/));
 ok('A5g: markup id="fm-region-select"', has(/id="fm-region-select"/));
-ok('A5h: markup id="fm-loader"', has(/id="fm-loader"/));
+ok('A5h: loader mappa id="fm-map-loader" (creato dinamicamente)', has(/d\.id\s*=\s*'fm-map-loader'/));
 
 ok("A6: pane Leaflet createPane('forecastMapsPane')", has(/createPane\('forecastMapsPane'\)/));
 ok('A7a: host dati Open-Meteo Weather Map Layer', has(/https:\/\/openmeteo\.s3\.amazonaws\.com\/data_spatial\//));
@@ -209,6 +209,7 @@ ctx.fmAdapter = {
       on(ev, fn) { this._handlers[ev] = fn; return this; },
       addTo(m) {
         createdLayers.push(this);
+        if (m && m._layers) m._layers.add(this);
         const self = this;
         setTimeout(function () { if (self._handlers && self._handlers.load) self._handlers.load(); }, 0);
         return this;
@@ -218,7 +219,10 @@ ctx.fmAdapter = {
   },
 };
 ctx.map = {
-  removeLayer() {},
+  _layers: new Set(),
+  removed: [],
+  removeLayer(l) { this._layers.delete(l); this.removed.push(l); },
+  hasLayer(l) { return this._layers.has(l); },
   getPane() { return {}; },
   createPane() { return {}; },
 };
@@ -243,6 +247,12 @@ function resetFmState() {
   ctx.fmWarmKey = null;
   ctx.fmIsPlaying = false;
   ctx.fmInterval = null;
+  ctx.fmPendingPreloadLayer = null;
+  ctx.fmLayerKey = null;
+  ctx.fmRasterLayer = null;
+  ctx.fmVectorLayer = null;
+  if (ctx.map && ctx.map.removed) ctx.map.removed.length = 0;
+  if (ctx.map && ctx.map._layers) ctx.map._layers.clear();
 }
 const tick = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -300,6 +310,41 @@ await tick(60);
 ok('C3a: al momento dello stop era in volo 1 layer', inflight === 1, `${inflight}`);
 ok('C3b: dopo fmStopPreload nessun altro layer creato', createdLayers.length === 1, `${createdLayers.length}`);
 ok('C3c: fmStopPreload riabilita il bottone', btnMock.disabled === false);
+
+// C4 (P0-C2): annullo del preload mentre un frame e' ANCORA IN VOLO.
+// Regressione: la vecchia fmPreloadFrame tornava su gen!==fmPreloadGen PRIMA di
+// rimuovere il layer gia' aggiunto alla mappa -> layer orfano (opacity 0) residuo.
+resetFmState();
+ctx.fmStartPreload();
+const inFlightLayer = ctx.fmPendingPreloadLayer;
+ok('C4a: dopo fmStartPreload esiste un layer preload in volo sulla mappa',
+  !!inFlightLayer && ctx.map._layers.has(inFlightLayer));
+ctx.fmStopPreload(); // invalida la generazione mentre il layer non e' ancora caricato
+ok('C4b: fmStopPreload azzera fmPendingPreloadLayer', ctx.fmPendingPreloadLayer === null);
+ok('C4c: il layer in volo e\' stato RIMOSSO dalla mappa (nessun orfano)',
+  ctx.map.removed.indexOf(inFlightLayer) >= 0 && !ctx.map._layers.has(inFlightLayer));
+await tick(50); // il load tardivo del layer annullato non deve duplicare la rimozione
+ok('C4d: il load tardivo non rimuove due volte lo stesso layer',
+  ctx.map.removed.filter((l) => l === inFlightLayer).length === 1);
+
+// C5 (P0-C1): fmRebuild non ricrea i layer per lo STESSO frame (cache-by-url).
+resetFmState();
+ctx.document.getElementById = function () { return null; };
+ctx.fmModule = { updateCurrentBounds() {}, getColorScale() { return null; } };
+ctx.fmRebuild();
+const firstRaster = ctx.fmRasterLayer;
+const firstKey = ctx.fmLayerKey;
+ok('C5a: primo fmRebuild crea il raster e popola fmLayerKey', !!firstRaster && !!firstKey);
+ctx.map.removed.length = 0;
+ctx.fmRebuild(); // stesso frame/dominio/variabile -> skip
+ok('C5b: secondo fmRebuild riusa lo stesso raster (layer NON ricreato)',
+  ctx.fmRasterLayer === firstRaster);
+ok('C5c: il raster non e\' stato rimosso dal path di skip',
+  ctx.map.removed.indexOf(firstRaster) === -1);
+ctx.fmIdx = 1; // cambio frame -> la chiave cambia -> rebuild reale
+ctx.fmRebuild();
+ok('C5d: cambio frame ricrea il raster (fmLayerKey aggiornata)',
+  ctx.fmRasterLayer !== firstRaster && ctx.fmLayerKey !== firstKey);
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
 process.exit(failures === 0 ? 0 : 1);

@@ -9,7 +9,7 @@ con la configurazione di produzione; per la SENSITIVITY applica varianti di
 parametro SOLO in esecuzione, mai salvate come default.
 
 Casi: cases/cases_extended.json (25 casi reali, finestre VMI inclusive).
-Input raw: RADAR_SAMPLES_DIR (esterno al repo). Output derivato (mai raw):
+Input raw: SAMPLES_ROOT = cases.samples_root() (esterno al repo, v. L1). Output derivato (mai raw):
     data/validation/extended_summary.json
 
 Sezioni metriche (Part F) per caso — QUIET cases (false activity),

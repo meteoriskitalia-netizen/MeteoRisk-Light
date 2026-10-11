@@ -15,6 +15,7 @@ The constants below mirror the application mri-light (APP_VERSION 1.0.0.3):
   - getHourOrDailyData day-collapse + scorePointForProvince (faithful port)
 """
 
+import atexit
 import datetime as _dt
 import hashlib
 import json
@@ -174,6 +175,13 @@ OROGRAPHY_SPACING_KM = {"H": 18, "M2": 20, "M": 26, "L": 34}
 _ORO_H = "AO BZ TN SO BL CN VC VB UD PN BG BS PC PR GE IM SV AQ MC AP FM PG RI IS PZ CS CZ VV KR EN NU SS OT OR OG".split()
 _ORO_M2 = "CO LC MB TO AT AL NO BI VA FC RN RA TR PG AR SI GR LI PI PT PO FI LU MS RM VT FR LT BN AV SA CB FG BA BT TA BR LE RC ME CT SR RG CL AG TP PA CA CI VS LE NU".split()
 _ORO_L = "MI MB LO PV CR MN VE PD TV VR RO FE BO MO RE RA FC RN PU AN TE PE CH LE LT NA CE RM".split()
+# La costruzione è INTENZIONALE nell'ordine H -> M2 -> L con last-wins:
+# basta riportare un codice in più elenchi per la classe "più pianeggiante".
+# Esistono duplicati VOLUTI (port fedele dell'app buildProvinceSamplesV2):
+#   NU in _ORO_H e _ORO_M2 -> NU == "M2"  (Sardegna, prevale M2)
+#   LE in _ORO_M2 e _ORO_L -> LE == "L"   (Lecce, prevale L)
+# e altri (e.g. RA, FC, RN, RM, LE, LT). N.B. MI/MB/LO compaiono sia in
+# _ORO_M2 che in _ORO_L. NON riordinare: il risultato è test-pinnato.
 OROGRAPHY_CLASS = {}
 for _s in _ORO_H:
     OROGRAPHY_CLASS[_s] = "H"
@@ -200,6 +208,14 @@ def rings_of(feature):
             out.extend(list(poly))
         return out
     return []
+
+
+# L3: fattore fisso di conversione deg^2 -> km^2 usato dai sample builder
+# (build_province_samples / _v2) che chiamano ring_area (che ritorna deg^2).
+# Approssimazione NON latitudine-dipendente ereditata dall'app; la correzione
+# lat-dipendente e' delegata a un futuro tuning. NON cambiare il valore: pinned
+# dai test (scripts/tests/test_province_scoring_docs.py).
+_RING_AREA_KM2_PER_DEG2 = 9250.0
 
 
 def ring_area(ring):
@@ -244,7 +260,14 @@ def point_in_ring(p, ring):
 
 
 def km_between(a, b):
-    """faithful port of app kmBetween() (equirectangular approx)."""
+    """Distanza equirettangolare approssimata (faithful port of app kmBetween()).
+
+    Convenzione DISTANZA di griglia/sampling (111.32 km/grado, cos(lat) sui
+    gradi di longitudine). NON è la stessa formula di
+    `radar_engine.tracking.haversine_km` (geodetica, R=6371.0088 km) usata dal
+    radar engine: a ~41°N la deviazione relativa tra le due è <0.5% nel range
+    10–200 km (v. tests/radar_engine/test_distance_consistency).
+    """
     d_lat = (b["lat"] - a["lat"]) * 111.32
     d_lon = (b["lon"] - a["lon"]) * 111.32 * math.cos((a["lat"] + b["lat"]) * math.pi / 360.0)
     return math.sqrt(d_lat * d_lat + d_lon * d_lon)
@@ -283,7 +306,7 @@ def build_province_samples_v1(geojson, regions, sigla_map):
                 if ar > max_area:
                     max_area = ar
                     max_ring = r
-        km2 = max_area * 9250.0 if max_ring else 0.0
+        km2 = max_area * _RING_AREA_KM2_PER_DEG2 if max_ring else 0.0
         if sup_sampling() > 0:
             target = sup_sampling()
         elif not max_ring:
@@ -352,7 +375,7 @@ def build_province_samples_v2(geojson, regions, sigla_map, budget):
                 if ar > max_area:
                     max_area = ar
                     max_ring = r
-        km2 = max_area * 9250.0
+        km2 = max_area * _RING_AREA_KM2_PER_DEG2
         if sup_sampling() > 0:
             base = sup_sampling()
         elif not max_ring:
@@ -523,6 +546,14 @@ def collapse_day(hourly, day_index):
 # ---------------------------------------------------------------------------
 # scorePointForProvince (faithful port) — worst (most convective) point
 # ---------------------------------------------------------------------------
+# L3: bonus euristici di ponderazione dell'app (NON basati su teoria fisica):
+# +150 per ora con weathercode temporalesco (>=95), +300 per ora con grandine
+# (96/99). Da rivedere con la validazione. NON cambiare i valori: pinned dai
+# test (scripts/tests/test_province_scoring_docs.py).
+_SCORE_STORM_HOUR_BONUS = 150
+_SCORE_HAIL_HOUR_BONUS = 300
+
+
 def score_point_for_province(rec):
     """Port of app scorePointForProvince(): CAPE max + storm/hail hour bonuses."""
     max_cape = 0.0
@@ -541,7 +572,7 @@ def score_point_for_province(rec):
             storm_hours += 1
         if wc in (96, 99):
             hail_hours += 1
-    return max_cape + storm_hours * 150 + hail_hours * 300
+    return max_cape + storm_hours * _SCORE_STORM_HOUR_BONUS + hail_hours * _SCORE_HAIL_HOUR_BONUS
 
 
 # ---------------------------------------------------------------------------
@@ -715,6 +746,48 @@ def save_usage_state(st):
         fh.write("\n")
 
 
+_API_USAGE_FIELDS = ("requests", "successful", "failed", "checks",
+                     "canary_requests", "forecast_requests", "retries",
+                     "batches", "locations", "bytes")
+# L6 (1.2.4.1): telemetria BUFFERIZZATA in memoria. I contatori si accumulano
+# in _API_USAGE_PENDING (per giorno) e vengono flushati su: (a) apertura di una
+# lettura (usage_today -> available_today/guard_planned_requests/budget_ok_for),
+# (b) soglia di accumulo, (c) atexit. Prima: 1 write JSON per record; ora:
+# ~1 write per ciclo batch. Tradeoff dichiarato: un crash tra un record e il
+# flush successivo può perdere SOLO i contatori più recenti non ancora flushati.
+# Nessun contatore è usato per bloccare (solo osservabilità + hard ceiling, che
+# legge DOPO il flush via usage_today).
+_API_USAGE_PENDING = {}
+_API_USAGE_PENDING_N = 0
+_API_USAGE_PENDING_FLUSH_THRESHOLD = 32
+
+
+def _flush_api_usage_pending(day=None):
+    """Scrive su stato i contatori bufferizzati in memoria. day = chiave
+    giornaliera specifica; None = TUTTI i giorni pendenti (soglia e atexit).
+    MAI chiamata da load_usage_state/guardrails (restano read-only)."""
+    global _API_USAGE_PENDING_N
+    if not _API_USAGE_PENDING:
+        return
+    st = load_usage_state()
+    hist = st.setdefault("days", {})
+    keys = [day] if day is not None else list(_API_USAGE_PENDING.keys())
+    for key in keys:
+        pend = _API_USAGE_PENDING.pop(key, None)
+        if not pend:
+            continue
+        d = hist.setdefault(key, dict.fromkeys(_API_USAGE_FIELDS, 0))
+        for field in _API_USAGE_FIELDS:
+            add = pend.get(field, 0)
+            if add:
+                d[field] = d.get(field, 0) + add
+    save_usage_state(st)
+    _API_USAGE_PENDING_N = 0
+
+
+atexit.register(_flush_api_usage_pending)
+
+
 def guardrails():
     """Config guardrails attiva (dallo stato; default da API_GUARDRAILS_DEFAULT)."""
     return load_usage_state().get("api_usage_guardrails", dict(API_GUARDRAILS_DEFAULT))
@@ -726,6 +799,7 @@ def effective_budget():
 
 
 def usage_today(day=None):
+    _flush_api_usage_pending(day)
     key = day or usage_day_key()
     d = load_usage_state().get("days", {}).get(key, {})
     return {
@@ -766,24 +840,24 @@ def record_api_usage(requests=0, failed=0, successful=0, batches=0, locations=0,
     """OSSERVABILITA' guardrails: contatori telemetrici giornalieri separati per
     tipo (checks leggeri Metadata, canary Best Match, fetch full forecast, retry,
     failed, successful). Registra e basta — NON blocca (il blocco è del solo
-    hard ceiling in guard_planned_requests)."""
-    st = load_usage_state()
+    hard ceiling in guard_planned_requests).
+
+    L6 (1.2.4.1): bufferizzato in memoria — api_usage.json viene scritto su
+    lettura (usage_today), su soglia di accumulo e all'uscita, non a ogni
+    record."""
+    global _API_USAGE_PENDING_N
     key = day or usage_day_key()
-    d = st.setdefault("days", {}).setdefault(
-        key, {"requests": 0, "successful": 0, "failed": 0, "checks": 0,
-              "canary_requests": 0, "forecast_requests": 0, "retries": 0,
-              "batches": 0, "locations": 0, "bytes": 0})
-    d["requests"] += requests
-    d["successful"] += successful
-    d["failed"] += failed
-    d["checks"] += checks
-    d["canary_requests"] += canary
-    d["forecast_requests"] += forecast
-    d["retries"] += retries
-    d["batches"] += batches
-    d["locations"] += locations
-    d["bytes"] += bytes_
-    save_usage_state(st)
+    delta = {"requests": requests, "successful": successful, "failed": failed,
+             "checks": checks, "canary_requests": canary,
+             "forecast_requests": forecast, "retries": retries,
+             "batches": batches, "locations": locations, "bytes": bytes_}
+    pend = _API_USAGE_PENDING.setdefault(key, {})
+    for field, value in delta.items():
+        if value:
+            pend[field] = pend.get(field, 0) + value
+    _API_USAGE_PENDING_N += 1
+    if _API_USAGE_PENDING_N >= _API_USAGE_PENDING_FLUSH_THRESHOLD:
+        _flush_api_usage_pending()
 
 
 def guard_planned_requests(planned_requests):

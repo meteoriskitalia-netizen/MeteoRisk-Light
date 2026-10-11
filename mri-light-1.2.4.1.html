@@ -28,8 +28,7 @@
             radarWindyEmbed: false,          // iframe embed.windy.com — DISATTIVATO
             lightningBlitzortung: false,     // WebSocket live + tile raster + mappa embed — DISATTIVATO (no proxy weserv)
             lightningLimaps: false,          // archivio storico LightningMaps (sorgente blitzortung_new) — DISATTIVATO
-            satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int) — IR 10.5 um, Airmass RGB, Geo Colour RGB — ATTIVATO
-            satelliteSat24: false,           // tile nowcast Infoplaza (nuvole + fulmini) — DISATTIVATO
+satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int) — IR 10.5 um, Airmass RGB, Geo Colour RGB — ATTIVATO
             metarIem: true,                  // METAR reali Iowa State Mesonet (reti IT__ASOS)
             // C) Mappe e territorio
             osmBasemap: true,                // tile OpenStreetMap (basemap della versione Light)
@@ -38,7 +37,6 @@
             dpcAlerts: true,                 // bollettini DPC criticità (repo ufficiale pcm-dpc + GitHub API + TopoJSON)
             // E) Embed esterni
             forecastMaps: true,              // Mappe previsionali (Open-Meteo Weather Map Layer)
-            pretempEmbed: false,             // PRETEMP (senza proxy CORS) — DISATTIVATO
             // F) Librerie e dipendenze
             leafletCdn: true,                // Leaflet 1.9.4 da unpkg/jsdelivr (CSS + JS)
             chartJsCdn: true                 // Chart.js lazy-loaded da jsdelivr/unpkg/cdnjs
@@ -146,7 +144,6 @@
         .fm-legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 2px; }
         .fm-status { font-size: 11px; color: #94a3b8; }
         .fm-attrib { font-size: 10px; color: #64748b; line-height: 1.35; }
-        .fm-loader { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8; }
         .fm-btn-preload { border-color: #f59e0b; color: #f59e0b; font-size: 11px; padding: 3px 7px; }
         .fm-preload-status { font-size: 9px; color: #64748b; min-width: 40px; }
         .fm-map-loader { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 800; opacity: 0; transition: opacity .25s; }
@@ -550,16 +547,6 @@
             border-color: #fbbf24;
             font-weight: 600;
         }
-        #pretemp-container { width: 100%; height: 560px; border-radius: 8px; overflow: hidden; position: relative; background: #0f172a; border: 1px solid #a855f7; }
-        @media (max-width: 950px) { #pretemp-container { height: 60vh; min-height: 300px; } }
-        #pretemp-container .pretemp-toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #1e293b; border-bottom: 1px solid #334155; }
-        #pretemp-container .pretemp-toolbar h3 { color: #a855f7; font-size: 14px; margin: 0; flex-shrink: 0; }
-        #pretemp-container .pretemp-toolbar .pretemp-back-btn { background: #334155; border: 1px solid #a855f7; color: #e2e8f0; border-radius: 4px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
-        #pretemp-container .pretemp-toolbar .pretemp-back-btn:disabled { opacity: 0.35; cursor: default; }
-        #pretemp-container .pretemp-content-wrapper { width: 100%; height: calc(100% - 42px); overflow: hidden; background: #0f172a; }
-        #pretemp-container .pretemp-content-wrapper iframe { width: 100%; height: 100%; border: 0; display: block; background: #0f172a; }
-        #pretemp-container .pretemp-content-wrapper .pretemp-loading, #pretemp-container .pretemp-content-wrapper .pretemp-error { color: #94a3b8; font-size: 12px; text-align: center; padding: 20px; }
-        #pretemp-container .pretemp-content-wrapper .pretemp-error { color: #f87171; }
         .caletta-popup .close-caletta {
             position: absolute;
             top: -10px;
@@ -1009,7 +996,7 @@
             .app-title h1 { font-size: 18px; }
         }
         @media (min-width: 768px) and (max-width: 1024px) {
-            #leaflet-map, #radar-embed-container, #pretemp-container { height: clamp(380px, 60vh, 640px); }
+            #leaflet-map, #radar-embed-container { height: clamp(380px, 60vh, 640px); }
         }
 
         /* ---- Smartphone (<= 767px) ---- */
@@ -1061,7 +1048,7 @@
             /* Mappa DOMINANTE: 45-65dvh sul viewport, con minimo utilizzabile.
                I valori in dvh tengono la mappa dentro il range anche su schermi
                molto bassi (min-height 300px = max ~62% su 480px di altezza). */
-            #leaflet-map, #radar-embed-container, #pretemp-container { height: clamp(45dvh, 56dvh, 66dvh); min-height: 300px; border-radius: 8px; }
+            #leaflet-map, #radar-embed-container { height: clamp(45dvh, 56dvh, 66dvh); min-height: 300px; border-radius: 8px; }
 
             /* Selettore fascia previsioni: dentro il viewport, non a straripare */
             #forecast-slot-container { left: 8px; right: 8px; top: 8px; transform: none; max-width: calc(100% - 16px); justify-content: flex-start; }
@@ -1108,7 +1095,7 @@
         @media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
             body { padding: calc(8px + var(--safe-top)) calc(8px + var(--safe-right)) calc(8px + var(--safe-bottom)) calc(8px + var(--safe-left)); }
             .map-card { padding: 8px; }
-            #leaflet-map, #radar-embed-container, #pretemp-container { height: 48dvh; min-height: 240px; }
+            #leaflet-map, #radar-embed-container { height: 48dvh; min-height: 240px; }
             .metric-tabs { margin-bottom: 8px; }
             .app-title p { display: none; }
             .app-header { margin-bottom: 6px; }
@@ -1549,7 +1536,6 @@
         <div id="fm-time-display" class="fm-time">—</div>
         <div id="fm-legend" class="fm-legend"></div>
         <div id="fm-status" class="fm-status">Apri per caricare le mappe…</div>
-        <div id="fm-loader" class="fm-loader"><span class="fm-spinner"></span> Caricamento tile…</div>
         <div class="fm-attrib">Dati mappe: © Open-Meteo (Weather Map Layer, CC BY 4.0). Modelli DWD / ECMWF / NOAA / Meteo-France / UKMO / JMA / CMA.</div>
     </div>
 </div>
@@ -1827,7 +1813,7 @@
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.0';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_VERSION = '1.2.4.1';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
     const APP_RELEASE_DATE = '2026-10-11';
     const APP_CHANGELOG = [
         { version: '1.2.4.0', date: '2026-10-11', changes: [
@@ -3603,29 +3589,27 @@
         if (isFeatureEnabled('radarWindyEmbed')) out.push('windy');
         return out;
     }
-    function enabledMapStyleIds() {
+function enabledMapStyleIds() {
         var out = [];
         if (isFeatureEnabled('osmBasemap')) out.push('osm');
-        if (isFeatureEnabled('esriBasemap')) { out.push('dark'); out.push('sat'); }
+        // ESRI Dark/Satellite rimosso (1.2.4.1): flag esriBasemap costantemente
+        // false, nessun ramo 'dark'/'sat' nei tile layer (basemap morto).
         return out;
     }
     function enabledSatSourceIds() {
         var out = [];
         // Le tre sorgenti EUMETSAT WMS (IR, Airmass, Geo Colour) seguono il flag satelliteEumetsat.
         // 1.1.0.6: prime le 3 sorgenti ITALIA (bbox Italia), poi le 3 Europa.
-        if (isFeatureEnabled('satelliteEumetsat')) {
+if (isFeatureEnabled('satelliteEumetsat')) {
             out.push('eumetsat_italy'); out.push('eumetsat_airmass_italy'); out.push('eumetsat_geocolour_italy');
             out.push('eumetsat'); out.push('eumetsat_airmass'); out.push('eumetsat_geocolour');
         }
-        if (isFeatureEnabled('satelliteSat24')) {
-            out.push('infoplaza_mtg'); out.push('infoplaza_ir');
-            out.push('infoplaza_eu_mtg'); out.push('infoplaza_eu_ir');
-        }
+        // 1.2.4.1: rimosse le sorgenti Infoplaza (flag satelliteSat24 eliminato)
         return out;
     }
-    function enabledLightningSourceIds() {
+function enabledLightningSourceIds() {
         var out = [];
-        if (isFeatureEnabled('satelliteSat24')) { out.push('sat24_ita'); out.push('sat24_eu'); }
+        // 1.2.4.1: rimossi i fulmini Infoplaza (sat24_ita/sat24_eu, flag satelliteSat24)
         if (isFeatureEnabled('lightningBlitzortung')) out.push('blitzortung');
         if (isFeatureEnabled('lightningLimaps')) out.push('blitzortung_new');
         return out;
@@ -4579,19 +4563,15 @@
     // Il WebSocket fornisce scariche live con timestamp; le accumuliamo in un buffer
     // di 120 min. Il player mostra le scariche della finestra del frame selezionato
     // (slot da 5 min), colorate per età (giallo recenti → rosso vecchie).
-    let isLightningActive = false;
-    let lightningSource = 'sat24_ita';  // 'blitzortung', 'sat24_ita', 'sat24_eu' — default primo fulmini
+let isLightningActive = false;
+    let lightningSource = 'blitzortung';  // 'blitzortung', 'blitzortung_new' — default primo fulmini
     // FIX FULMINI FANTASMA: generation counter anti-stale per TUTTI i callback
-    // async dei layer fulmini (load/error/timeout/retry di Infoplaza e Limaps).
+    // async dei layer fulmini (load/error/timeout/retry di Blitzortung e Limaps).
     // Ogni showLightningForFrame cattura il valore corrente; quando il toggle
     // fulmini viene spento o il player chiuso, lightningFrameGen++ rende stale
     // ogni callback pending, che diventa no-op e non ripristina/ricrea mai più
     // i layer sulla mappa (il "bus" che restava a vista a player chiuso).
     var lightningFrameGen = 0;
-    var sat24LightningLayer = null;  // L.imageOverlay per fulmini Infoplaza
-    var sat24LightningCacheKey = null;
-    // Cache immagini Infoplaza precaricate: URL -> Image() object
-    var infoplazaImgCache = {};
 
     // WebSocket Blitzortung (condiviso tra player timeline e LIVE panel)
     let blitzWs = null;
@@ -4610,9 +4590,7 @@
     // Satellite
     let satelliteLayer = null;
     let isSatelliteActive = false;
-    let satSource = 'eumetsat_italy';  // 'eumetsat_italy', 'eumetsat_airmass_italy', 'eumetsat_geocolour_italy', 'eumetsat', 'eumetsat_airmass', 'eumetsat_geocolour', 'infoplaza_*'
-    var infoplazaTileLayer = null;
-    var infoplazaOverlayLayer = null;  // L.imageOverlay per sorgente Infoplaza legacy
+let satSource = 'eumetsat_italy';  // 'eumetsat_italy', 'eumetsat_airmass_italy', 'eumetsat_geocolour_italy', 'eumetsat', 'eumetsat_airmass', 'eumetsat_geocolour'
     let satCacheKey = null;     // evita ricaricamento se il frame è lo stesso
     // FIX: generation counter per identificare callback stale.
     // Ogni showSatFrameAt/showRadarFrameAt incrementa il contatore; i callback
@@ -4687,50 +4665,7 @@
         'eumetsat_geocolour_italy': { layer: 'mtg_fd:rgb_geocolour', label: 'Geo Colour RGB Italia', attribution: 'EUMETSAT MTG Geo Colour RGB — Italia', bounds: SATELLITE_ITALY_BOUNDS, frameWidth: ITALY_FRAME_WIDTH }
     };
 
-    // Sorgenti Infoplaza (immagine singola per frame, URL con path fisso)
-    // Il path a 5 numeri è z/y_north/x_west/y_south/x_east (tile Web Mercator 256px)
-    // Il server compone i tile nell'intervallo in una singola immagine
-    // Bounds calcolati direttamente dalle coordinate tile (non dalla static map)
-    //
-    // ITA: 7/44/65/51/72 → z7, y[44-51), x[65-72) → 7×7=49 tile, 1792×1792px
-    // EU:   4/3/6/8/11   → z4, y[3-8),  x[6-11)  → 5×5=25 tile, 1280×1280px
-    const infoplazaLayerMap = {
-        'infoplaza_mtg':    { tileLayer: 'satellite-europe-mtg', path: '7/44/65/51/72', bounds: [[48.9225, 2.8125], [34.3071, 22.5000]], label: 'Infoplaza MTG Italia', attribution: '© Infoplaza MTG', interval: 10 },
-        'infoplaza_ir':     { tileLayer: 'satellite-europe',    path: '7/44/65/51/72', bounds: [[48.9225, 2.8125], [34.3071, 22.5000]], label: 'Infoplaza Old Italia',  attribution: '© Infoplaza Old', interval: 15 },
-        'infoplaza_eu_mtg': { tileLayer: 'satellite-europe-mtg', path: '4/3/6/8/11',   bounds: [[74.0195, -45.0000], [0.0000, 67.5000]], label: 'Infoplaza MTG Europa', attribution: '© Infoplaza MTG EU', interval: 10 },
-        'infoplaza_eu_ir':  { tileLayer: 'satellite-europe',    path: '4/3/6/8/11',   bounds: [[74.0195, -45.0000], [0.0000, 67.5000]], label: 'Infoplaza Old Europa',  attribution: '© Infoplaza Old EU', interval: 15 }
-    };
-
-    // Converte timestamp ISO (es. 2026-08-27T20:30:00.000Z) in YYYYMMDDHHmm per Infoplaza
-    // Arrotonda al nearest frame disponibile in base all'intervallo della sorgente:
-    //   MTG (satellite-europe-mtg): ogni 10 min
-    //   Old SEVIRI (satellite-europe): ogni 15 min
-    // Questo evita il disync con il radar RainViewer (anch'esso a 10 min)
-    function isoToInfoplazaTimestamp(iso, intervalMin) {
-        var d = new Date(iso);
-        var interval = intervalMin || 10; // default 10 min (MTG)
-        // Arrotonda i minuti al frame inferiore (floor) per allineamento con la timeline a 5 min
-        var totalMin = d.getUTCMinutes();
-        var roundedMin = Math.floor(totalMin / interval) * interval;
-        // Gestione overflow (es. 58 → 60)
-        if (roundedMin >= 60) {
-            d.setUTCHours(d.getUTCHours() + 1);
-            roundedMin -= 60;
-        }
-        var y = d.getUTCFullYear();
-        var m = String(d.getUTCMonth() + 1).padStart(2, '0');
-        var day = String(d.getUTCDate()).padStart(2, '0');
-        var h = String(d.getUTCHours()).padStart(2, '0');
-        var min = String(roundedMin).padStart(2, '0');
-        return String(y) + m + day + h + min;
-    }
-
-    // Verifica se una sorgente usa Infoplaza invece di EUMETSAT WMS
-    function isInfoplazaSource(source) {
-        return infoplazaLayerMap.hasOwnProperty(source);
-    }
-
-    // Bounds Italia/Europa per imageOverlay Infoplaza (ora in infoplazaLayerMap)
+// 1.2.4.1: rimosse le sorgenti Infoplaza (satellite + fulmini) — restano le 6 sorgenti EUMETSAT WMS.
 
     function changeSatSource(source) {
         // Sorgente satellite non abilitata in questa edizione: riallinea al primo
@@ -4755,11 +4690,7 @@
         satelliteLayer = null;
         satCacheKey = null;
         satFrameGen++;  // invalida tutti i callback async pendenti
-        satLoadedFrames.clear();
-        if (infoplazaOverlayLayer && map.hasLayer(infoplazaOverlayLayer)) { map.removeLayer(infoplazaOverlayLayer); infoplazaOverlayLayer = null; }
-        if (infoplazaTileLayer && map.hasLayer(infoplazaTileLayer)) { map.removeLayer(infoplazaTileLayer); infoplazaTileLayer = null; }
-        // Svuota cache immagini Infoplaza per forzare precaricamento nuovo
-        infoplazaImgCache = {};
+satLoadedFrames.clear();
         // Riattiva preload
         syncPreloadActive = false;
         var pBtn = document.getElementById('sync-preload-btn');
@@ -4785,7 +4716,7 @@
         ensureSyncTimeline();
         showSatFrameAt(syncTimeline[syncIndex].iso);
         showSyncPanelIfNeeded();
-        var info = eumetsatLayerMap[source] || infoplazaLayerMap[source] || eumetsatLayerMap['eumetsat'];
+        var info = eumetsatLayerMap[source] || eumetsatLayerMap['eumetsat'];
         var label = info.label || 'Satellite';
         document.getElementById('status-msg').innerText = 'Satellite ' + label + ' attivo (timeline sincronizzata)';
         updateSyncCaption();
@@ -5022,13 +4953,11 @@
     }
 
         const HOURLY_PARAMS = "temperature_2m,relativehumidity_2m,dew_point_2m,pressure_msl,cape,precipitation_probability,windspeed_10m,winddirection_10m,windspeed_100m,winddirection_100m,windgusts_10m,weathercode,precipitation,showers,freezing_level_height,wind_speed_1000hPa,wind_direction_1000hPa,wind_speed_975hPa,wind_direction_975hPa,wind_speed_950hPa,wind_direction_950hPa,wind_speed_925hPa,wind_direction_925hPa,wind_speed_900hPa,wind_direction_900hPa,wind_speed_850hPa,wind_direction_850hPa,wind_speed_800hPa,wind_direction_800hPa,wind_speed_700hPa,wind_direction_700hPa,wind_speed_600hPa,wind_direction_600hPa,wind_speed_500hPa,wind_direction_500hPa,temperature_850hPa,temperature_700hPa,temperature_500hPa,relative_humidity_850hPa,relative_humidity_700hPa,dew_point_850hPa,dew_point_700hPa,geopotential_height_850hPa,geopotential_height_700hPa,geopotential_height_500hPa,convective_inhibition,lifted_index,k_index";
-    const DAILY_PARAMS = "weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,precipitation_probability_max";
+const DAILY_PARAMS = "weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,precipitation_probability_max";
 
-    // Fonti tile gratuite senza API key (CARTO ora richiede key, sostituito con OSM + ESRI)
+    // Fonti tile: in questa edizione attiva SOLO OSM (ESRI Dark/Satellite rimosso da 1.2.4.1)
     const tileSources = {
-        osm: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        osm: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
     };
 
     // ================= MAPPA =================
@@ -5125,17 +5054,12 @@
         // 1.1.0.0: il radar (player + LIVE) sta sul pane dedicato radarPane a opacity 1
         // (opaco sopra i colori della mappa); il satellite resta su tilePane a
         // SATELLITE_OPACITY (semitrasparente, la mappa resta visibile sotto).
-        // Basemap iniziale: primo stile abilitato in questa edizione (preferenza dark
-        // se ESRI attivo, altrimenti OSM). Se nessun basemap e' abilitato, nessun
-        // tileLayer di sfondo (mappa Leaflet senza tiles, nessuna rete verso
-        // openstreetmap/arcgisonline).
+// Basemap iniziale: unico stile abilitato in questa edizione (OSM).
+        // Se nessun basemap e' abilitato, nessun tileLayer di sfondo (mappa
+        // Leaflet senza tiles, nessuna rete verso openstreetmap/arcgisonline).
         var _mStyles = enabledMapStyleIds();
-        if (_mStyles.indexOf('dark') !== -1) {
-            baseTileLayer = L.tileLayer(tileSources.dark, { attribution: '© Esri, HERE, Garmin, © OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
-        } else if (_mStyles.indexOf('osm') !== -1) {
+        if (_mStyles.indexOf('osm') !== -1) {
             baseTileLayer = L.tileLayer(tileSources.osm, { attribution: '© OpenStreetMap contributors', maxZoom: 18 }).addTo(map);
-        } else if (_mStyles.indexOf('sat') !== -1) {
-            baseTileLayer = L.tileLayer(tileSources.sat, { attribution: '© Esri, DigitalGlobe, GeoEye, i-cubed, USDA FSA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community', maxZoom: 18 }).addTo(map);
         } else {
             baseTileLayer = null;
         }
@@ -5309,14 +5233,10 @@
         satCacheKey = null;
         radarCacheKey = null;
         // Pulisci vecchi layer rimasti da timeframe precedente
-        cleanupAllSatLayers();
+cleanupAllSatLayers();
         satelliteLayer = null;
-        if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
         cleanupAllRadarLayers();
         currentRadarTile = null;
-        sat24LightningCacheKey = null;
-        // Svuota cache immagini Infoplaza vecchie
-        infoplazaImgCache = {};
         // Clampa la fine della timeline al dato piu recente disponibile:
         // se il radar e attivo e ha frame, non andare oltre l'ultimo frame radar + 1 slot.
         // Questo evita che il LIVE slot sia 10-15 min avanti al dato radar reale,
@@ -5375,13 +5295,12 @@
             parts.push(_rp && _rp.id === 'dpc' ? ('Radar DPC · ' + dpcProductType) : 'Radar');
         }
         if (isSatelliteActive) {
-            var info = eumetsatLayerMap[satSource] || infoplazaLayerMap[satSource] || eumetsatLayerMap['eumetsat'];
+var info = eumetsatLayerMap[satSource] || eumetsatLayerMap['eumetsat'];
             parts.push(info.label || 'Satellite');
         }
         if (isLightningActive) {
-            var liLabel;
-            if (isSat24Lightning(lightningSource)) liLabel = infoplazaLightningMap[lightningSource].label;
-            else if (lightningSource === 'blitzortung_new') liLabel = 'Blitzortung (New) · Limaps';
+var liLabel;
+            if (lightningSource === 'blitzortung_new') liLabel = 'Blitzortung (New) · Limaps';
             else if (lightningSource === 'blitzortung') liLabel = 'Blitzortung (Old)';
             else liLabel = 'Fulmini';
             parts.push(liLabel);
@@ -5424,11 +5343,10 @@
 
     function nearestRadarIndex(unix) {
         if (!radarFrames.length) return -1;
-        // STANDARDIZZAZIONE DEL TIMEFRAME: seleziona il frame radar AT-OR-BEFORE
+// STANDARDIZZAZIONE DEL TIMEFRAME: seleziona il frame radar AT-OR-BEFORE
         // (floor) il timestamp di riferimento — mai dati futuri rispetto allo slot.
-        // Questa è la stessa regola già usata per il satellite Infoplaza (floor
-        // alla griglia della sorgente), quindi radar e satellite mostrano sempre
-        // lo stesso momento meteorologico. DPC a 5 min combacia 1:1 con gli slot;
+        // Radar e satellite mostrano quindi sempre lo stesso momento meteorologico;
+        // DPC a 5 min combacia 1:1 con gli slot;
         // RainViewer/LibreWXR a 10 min e i prodotti DPC orari si agganciano al
         // frame più recente non successivo allo slot.
         var best = -1;
@@ -5440,26 +5358,13 @@
         return best;
     }
 
-    // Calcola il timestamp effettivo (unix secondi) del frame satellitare
+// Calcola il timestamp effettivo (unix secondi) del frame satellitare
     // che verra' effettivamente mostrato per il dato slot della timeline.
-    // Per le sorgenti fulmini Infoplaza il frame viene arrotondato (floor) alla
-    // griglia della sorgente (10 min MTG / 15 min Old SEVIRI), quindi il
-    // timestamp effettivo puo' essere indietro fino a (interval-1) min rispetto
-    // allo slot. Per EUMETSAT WMS il server risolve il parametro time al frame
-    // piu vicino, quindi il timestamp effettivo coincide con quello dello slot.
-    // Usare questo timestamp come riferimento per la selezione del frame radar
-    // garantisce che satellite e radar mostrino lo stesso momento meteorologico.
+    // Per EUMETSAT WMS il server risolve il parametro time al frame piu vicino,
+    // quindi il timestamp effettivo coincide con quello dello slot. Usare questo
+    // timestamp come riferimento per la selezione del frame radar garantisce che
+    // satellite e radar mostrino lo stesso momento meteorologico.
     function effectiveSatUnixForSlot(slot) {
-        if (isSatelliteActive && isInfoplazaSource(satSource)) {
-            var ipInfo = infoplazaLayerMap[satSource];
-            var interval = ipInfo.interval || 10;
-            var d = new Date(slot.iso);
-            var totalMin = d.getUTCMinutes();
-            var roundedMin = Math.floor(totalMin / interval) * interval;
-            // Ricrea il timestamp floored (secondi + millisecondi azzerati)
-            d.setUTCMinutes(roundedMin, 0, 0);
-            return Math.floor(d.getTime() / 1000);
-        }
         // EUMETSAT WMS o satellite non attivo: usa il timestamp grezzo dello slot
         return slot.unix;
     }
@@ -5472,8 +5377,8 @@
         document.getElementById('sync-slider').value = index;
         document.getElementById('sync-time-display').innerText = slot.label + (index === syncTimeline.length - 1 ? ' LIVE' : '');
 
-        // Timestamp di riferimento: allinea il radar al frame satellitare
-        // effettivo (floor per Infoplaza), non al timestamp grezzo dello slot.
+// Timestamp di riferimento: allinea il radar al frame satellitare
+        // effettivo, non al timestamp grezzo dello slot.
         // Questo elimina il desync quando lo slot cade tra frame di periodi
         // diversi (es. sat a 15 min floor, radar a 10 min closest).
         var refUnix = effectiveSatUnixForSlot(slot);
@@ -5850,8 +5755,8 @@
     }
     // 1.0.1.3: rimossa eumetsatTileIntersectsEurope() — nessun tile da filtrare: ogni
     // frame EUMETSAT e' UNA immagine GetMap gia' ritagliata a SATELLITE_EUROPE_BOUNDS.
-    function warmAheadEumetsatTiles() {
-        if (!isSyncPlaying || !isSatelliteActive || isInfoplazaSource(satSource)) return;
+function warmAheadEumetsatTiles() {
+        if (!isSyncPlaying || !isSatelliteActive) return;
         if (typeof map === 'undefined' || !map || !syncTimeline.length) return;
         if (warmPreloadPool.length >= WARM_CONCURRENCY_CAP * 2) return;  // tetto condiviso
         // 1.0.1.3 — FRAME SINGOLI GETMAP: il warm precarica fino a EUMETSAT_WARM_AHEAD
@@ -6065,8 +5970,7 @@
         radarPreloadPool = [];  // 1.1.0.8: svuota il pool DEDICATO radar pre-decode
         radarPrepFrames = [];
         radarDrawPending = false;
-        liveStrikeCache = [];
-        infoplazaImgCache = {};
+liveStrikeCache = [];
         limapsImgCache = {};
         limapsGoodFrames = {};
         lightningTileCacheKey = null;
@@ -6097,7 +6001,7 @@
         //    - customMarker (marker rischio)
         //    - windArrowLayer (frecce vento)
         //    - Qualsiasi altro layer non tracciato (es. layer utente) non viene toccato
-        [satelliteLayer, currentRadarTile, sat24LightningLayer, limapsLightningLayer,
+[satelliteLayer, currentRadarTile, limapsLightningLayer,
          lightningFilterLayer, liveSatLayer, liveRadarLayer, liveBlitzTileLayer,
          liveLightningMarkerLayer, liveFlashLayer].forEach(function(layer) {
             if (layer && map.hasLayer(layer)) {
@@ -6190,9 +6094,9 @@
             }
         });
         allSatLayers = [];
-        // FIX: incrementa satFrameGen per invalidare eventuali callback async
-        // pendenti (resolveEumetsatLoad, resolveInfoplazaLoad) che potrebbero
-        // riaggiungere un layer satellite dopo la pulizia.
+// FIX: incrementa satFrameGen per invalidare eventuali callback async
+        // pendenti (resolveEumetsatLoad) che potrebbero riaggiungere un layer
+        // satellite dopo la pulizia.
         satFrameGen++;
         // Pulisci anche eventuali layer non tracciati: sweep TUTTI i layer della
         // mappa e rimuovi quelli con zIndex 350 (satellite). Prima il check
@@ -6221,125 +6125,7 @@
         // Swap diretto: il vecchio layer resta visibile finché il nuovo non è pronto
         var oldSatLayer = (satelliteLayer && map.hasLayer(satelliteLayer) && satelliteLayer.options.opacity > 0) ? satelliteLayer : null;
 
-        // --- Sorgenti Infoplaza (imageOverlay con URL fisso per frame) ---
-        if (isInfoplazaSource(satSource)) {
-            var ipInfo = infoplazaLayerMap[satSource];
-            var ipTs = isoToInfoplazaTimestamp(isoTime, ipInfo.interval);
-            var ipUrl = 'https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/' + ipInfo.tileLayer + '/' + ipTs + '/' + ipInfo.path + '?outputtype=jpeg';
-            // Precarica i frame adiacenti (successivo e precedente) in background
-            if (syncIndex + 1 < syncTimeline.length) {
-                var nextIso = syncTimeline[syncIndex + 1].iso;
-                var nextTs = isoToInfoplazaTimestamp(nextIso, ipInfo.interval);
-                var nextUrl = 'https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/' + ipInfo.tileLayer + '/' + nextTs + '/' + ipInfo.path + '?outputtype=jpeg';
-                if (!infoplazaImgCache[nextUrl]) {
-                    infoplazaImgCache[nextUrl] = new Image();
-                    infoplazaImgCache[nextUrl].src = nextUrl;
-                }
-            }
-            if (syncIndex - 1 >= 0) {
-                var prevIso = syncTimeline[syncIndex - 1].iso;
-                var prevTs = isoToInfoplazaTimestamp(prevIso, ipInfo.interval);
-                var prevUrl = 'https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/' + ipInfo.tileLayer + '/' + prevTs + '/' + ipInfo.path + '?outputtype=jpeg';
-                if (!infoplazaImgCache[prevUrl]) {
-                    infoplazaImgCache[prevUrl] = new Image();
-                    infoplazaImgCache[prevUrl].src = prevUrl;
-                }
-            }
-            // Crea nuovo layer ma non rimuovere il vecchio finché non è caricato
-            var newLayer = L.imageOverlay(ipUrl, ipInfo.bounds, {
-                attribution: ipInfo.attribution,
-                opacity: 0,
-                zIndex: 350,
-                interactive: false,
-                pane: 'tilePane'
-            }).addTo(map);
-            allSatLayers.push(newLayer);
-            // Stats per coerenza con il resto del sistema
-            satTileStats = { loaded: 0, total: 1 };
-            updateTileLoadBox();
-            // FIX LAMPEGGIO SATELLITE: rimosso il crossfade parallelo (vecchio layer che
-            // sfuma a 0 mentre il nuovo sfuma a 0.75 via CSS transition). Durante quella
-            // finestra di transizione ENTRAMBI i layer sono visibili a opacità intermedia
-            // per un tratto di tempo (fino a 350ms) — se l'intervallo tra i frame durante
-            // il play è più corto (es. velocità 2-3x: 267-400ms), il frame successivo
-            // arriva prima che la dissolvenza sia completa, causando lo stesso tipo di
-            // sovrapposizione/lampeggio già risolto per il radar. Ora: swap istantaneo
-            // sempre (nuovo visibile subito, vecchio rimosso subito, nessuna transizione).
-            // FIX FRAME VUOTI/FANTASMA: "satelliteLayer" viene aggiornato SOLO quando il
-            // nuovo frame è confermato buono (qui sotto). Se il frame non ha immagine
-            // collegata (404) o arriva "stale" (superato da un frame successivo durante
-            // il play), satelliteLayer continua a puntare al vero ultimo frame visibile,
-            // che resta sulla mappa senza interruzioni invece di sparire o restare
-            // "orfano" e dimenticato.
-            var ipLoaded = false;
-            function ipShowImage() {
-                if (ipLoaded) return;
-                // FIX: se la generation è cambiata, questo callback è stale — ignora
-                // (il layer verrà ripulito da cleanupOrphanSatLayers alla prossima chiamata)
-                if (satFrameGen !== myGen) return;
-                ipLoaded = true;
-                satLoadedFrames.add(syncIndex);
-                satTileStats.loaded = 1;
-                updateTileLoadBox();
-                checkPreloadDone();
-                var doShow = function() {
-                    // FIX: setOpacity aggiorna anche options.opacity (prima l'opacity
-                    // veniva scritta direttamente su el.style: options restava 0, quindi
-                    // alla frame successiva oldSatLayer veniva considerato nullo, il
-                    // vecchio layer non era più un backup valido e i layer visibili si
-                    // accumulavano sulla mappa — le "scie fantasma").
-                    // 1.1.0.0: layover satellite a SATELLITE_OPACITY (semitrasparente
-                    // voluto, la mappa sottostante resta visibile) — NON FADE_TARGET.
-                    try { newLayer.setOpacity(SATELLITE_OPACITY); } catch(e) {}
-                    satelliteLayer = newLayer;
-                    if (oldSatLayer) {
-                        try { map.removeLayer(oldSatLayer); } catch(e) {}
-                    }
-                };
-                // FIX FLICKERING: attendi la decodifica completa del JPEG prima di
-                // renderlo visibile — altrimenti il browser mostra il frame durante la
-                // decodifica (progressive JPEG), percepito come sfarfallio al cambio frame.
-                try {
-                    var el = newLayer.getElement();
-                    if (el && typeof el.decode === 'function') {
-                        el.decode().then(doShow).catch(doShow);
-                    } else {
-                        doShow();
-                    }
-                } catch(e) { doShow(); }
-            }
-            newLayer.once('load', function() {
-                ipShowImage();
-            });
-            newLayer.once('error', function() {
-                satTileStats.loaded = 1;
-                updateTileLoadBox();
-                checkPreloadDone();
-                // Frame senza immagine collegata (404/errore di rete): scartiamo il
-                // nuovo layer. satelliteLayer non viene toccato: resta puntato
-                // all'ultimo frame buono (oldSatLayer), che resta visibile.
-                try { map.removeLayer(newLayer); } catch(e) {}
-                ipLoaded = true; // previene i fallback successivi
-            });
-            // Check immediato: se l'immagine è già in cache (preloaded)
-            pendingSatTimers.push(setTimeout(function() {
-                if (!ipLoaded && newLayer && map.hasLayer(newLayer)) {
-                    try {
-                        var el0 = newLayer.getElement();
-                        if (el0 && el0.complete && el0.naturalWidth > 0) {
-                            ipShowImage();
-                        }
-                    } catch(e) {}
-                }
-            }, 50));
-            // Fallback: se load non fire entro 3s, mostra comunque
-            pendingSatTimers.push(setTimeout(function() {
-                if (!ipLoaded && newLayer && map.hasLayer(newLayer)) {
-                    ipShowImage();
-                }
-            }, TILE_FALLBACK_DELAY_MS));
-            return;
-        }
+// 1.2.4.1: rimosso il ramo Infoplaza (URL fissi per frame) — si resta sulle sole sorgenti EUMETSAT WMS.
 
         // --- Sorgenti EUMETSAT WMS ---
         // FIX SATELLITE VUOTO: i frame EUMETSAT più recenti (ultimi ~14 min) non sono
@@ -6504,8 +6290,7 @@
             // 1. Satellite: default EUMETSAT IR ITALIA (bbox Italia) se abilitato,
             // altrimenti la prima sorgente satellite abilitata in questa edizione.
             var _sOk = enabledSatSourceIds();
-            satSource = (_sOk.indexOf('eumetsat_italy') !== -1) ? 'eumetsat_italy'
-                : (_sOk.indexOf('infoplaza_mtg') !== -1) ? 'infoplaza_mtg'
+satSource = (_sOk.indexOf('eumetsat_italy') !== -1) ? 'eumetsat_italy'
                 : (_sOk.length > 0 ? _sOk[0] : 'eumetsat_italy');
             var satSel = document.getElementById('sat-source-select');
             if (satSel) { satSel.value = satSource; satSel.style.display = ''; }
@@ -6523,9 +6308,9 @@
             if (rs) rs.style.display = '';
             updateDpcBlend();
 
-            // 3. Fulmini: primo source abilitato (preferendo sat24_ita se presente)
+// 3. Fulmini: primo source abilitato in questa edizione
             var _lOk = enabledLightningSourceIds();
-            lightningSource = (_lOk.indexOf('sat24_ita') !== -1) ? 'sat24_ita' : (_lOk.length > 0 ? _lOk[0] : 'sat24_ita');
+            lightningSource = _lOk.length > 0 ? _lOk[0] : 'blitzortung';
             var lsSel = document.getElementById('lightning-source-select');
             if (lsSel) { lsSel.value = lightningSource; lsSel.style.display = ''; }
 
@@ -6609,10 +6394,8 @@
                 btnSat2.style.borderColor = '#334155';
                 var satSel2 = document.getElementById('sat-source-select');
                 if (satSel2) { satSel2.style.display = 'none'; }
-                satSource = enabledSatSourceIds()[0] || 'eumetsat';
+satSource = enabledSatSourceIds()[0] || 'eumetsat';
                 if (satSel2) satSel2.value = satSource;
-                if (infoplazaTileLayer && map.hasLayer(infoplazaTileLayer)) { map.removeLayer(infoplazaTileLayer); infoplazaTileLayer = null; }
-                if (infoplazaOverlayLayer && map.hasLayer(infoplazaOverlayLayer)) { map.removeLayer(infoplazaOverlayLayer); infoplazaOverlayLayer = null; }
                 if (radarEmbedActive) { toggleRadarEmbed('off'); }
             }
 
@@ -6646,9 +6429,7 @@
                 }
                 var lsSel2 = document.getElementById('lightning-source-select');
                 if (lsSel2) lsSel2.style.display = 'none';
-                removeLightningTile();
-                if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
-                sat24LightningCacheKey = null;
+removeLightningTile();
                 if (lightningTileRefreshTimer) { clearInterval(lightningTileRefreshTimer); lightningTileRefreshTimer = null; }
                 if (!isLivePanelActive) {
                     disconnectBlitzWs();
@@ -6667,7 +6448,7 @@
             // Reset ai defaults globali (primo provider/source abilitato in questa edizione)
             radarProvider = enabledRadarProviderIds()[0] || 'rainviewer';
             satSource = enabledSatSourceIds()[0] || 'eumetsat';
-            lightningSource = enabledLightningSourceIds()[0] || 'sat24_ita';
+            lightningSource = enabledLightningSourceIds()[0] || 'blitzortung';
 
             showSyncPanelIfNeeded();
             updateSyncCaption();
@@ -6730,10 +6511,8 @@
             // Nascondi il dropdown e chiudi eventuale iframe legacy
             var satSel2 = document.getElementById('sat-source-select');
             if (satSel2) { satSel2.style.display = 'none'; }
-            satSource = enabledSatSourceIds()[0] || 'eumetsat';
+satSource = enabledSatSourceIds()[0] || 'eumetsat';
             if (satSel2) satSel2.value = satSource;
-            if (infoplazaTileLayer && map.hasLayer(infoplazaTileLayer)) { map.removeLayer(infoplazaTileLayer); infoplazaTileLayer = null; }
-            if (infoplazaOverlayLayer && map.hasLayer(infoplazaOverlayLayer)) { map.removeLayer(infoplazaOverlayLayer); infoplazaOverlayLayer = null; }
             if (radarEmbedActive) { toggleRadarEmbed('off'); }
         }
         showSyncPanelIfNeeded();
@@ -7697,11 +7476,9 @@
         var myGen = ++lightningFrameGen;
         // --- Sorgente Blitzortung (New): frame Limaps per timestamp esatto ---
         if (lightningSource === 'blitzortung_new' && isFeatureEnabled('lightningLimaps')) {
-            // Rimuovi gli altri layer fulmini (Infoplaza, Blitzortung old tiles, marker WS)
-            if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
+// Rimuovi gli altri layer fulmini (Blitzortung old tiles, marker WS)
             if (lightningFilterLayer && map.hasLayer(lightningFilterLayer)) { map.removeLayer(lightningFilterLayer); lightningFilterLayer = null; }
             if (lightningMarkerLayer) { map.removeLayer(lightningMarkerLayer); lightningMarkerLayer = null; }
-            sat24LightningCacheKey = null;
             var lmRegion = 'fr';
             var lmInfo = limapsRegionMap[lmRegion];
             var lmUrl = limapsUrl(slotMs, lmRegion);
@@ -7744,114 +7521,11 @@
             });
             return;
         }
-        // --- Sorgenti fulmini Infoplaza (imageOverlay con URL fisso) ---
-        if (isSat24Lightning(lightningSource) && isFeatureEnabled('satelliteSat24')) {
-            var liInfo = infoplazaLightningMap[lightningSource];
-            // Converti slotMs in timestamp YYYYMMDDHHmm per Infoplaza
-            var d = new Date(slotMs);
-            var liTs = String(d.getUTCFullYear()) +
-                String(d.getUTCMonth() + 1).padStart(2, '0') +
-                String(d.getUTCDate()).padStart(2, '0') +
-                String(d.getUTCHours()).padStart(2, '0') +
-                String(d.getUTCMinutes()).padStart(2, '0');
-            var liCacheKey = lightningSource + '_' + liTs;
-            if (liCacheKey === sat24LightningCacheKey && sat24LightningLayer && map.hasLayer(sat24LightningLayer)) return;
-            sat24LightningCacheKey = liCacheKey;
-            // Rimuovi layer Blitzortung se presente
-            if (lightningFilterLayer && map.hasLayer(lightningFilterLayer)) { map.removeLayer(lightningFilterLayer); lightningFilterLayer = null; }
-            var oldLiLayer = (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) ? sat24LightningLayer : null;
-            var liUrl = 'https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/lightning/' + liTs + '/' + liInfo.path + '?palette=lightningboltred';
-            sat24LightningLayer = L.imageOverlay(liUrl, liInfo.bounds, {
-                attribution: '© Infoplaza Lightning',
-                opacity: 0,
-                interactive: false,
-                pane: 'lightningTilePane'
-            }).addTo(map);
-            // Flag per evitare doppia esecuzione (load + fallback)
-            var liLoaded = false;
-            // FIX FULMINI FANTASMA: ogni callback async del layer Infoplaza deve essere
-            // ignorato se il gen è cambiato (toggle spento / player chiuso), così un
-            // load/error/timeout tardivo non ricrea mai l'overlay a player chiuso.
-            function isLiStale() {
-                return !isLightningActive || myGen !== lightningFrameGen;
-            }
-            function liShowImage() {
-                if (liLoaded || isLiStale()) return;
-                liLoaded = true;
-                var doShow = function() {
-                    if (isLiStale() || !sat24LightningLayer || !map.hasLayer(sat24LightningLayer)) return;
-                    // FIX: setOpacity aggiorna anche options.opacity e applica la
-                    // trasparenza (prima l'opacity veniva scritta su el.style direttamente
-                    // e options restava 0 → il layer non risultava mai visibile, quindi
-                    // lo swap vecchio→nuovo e la logica di fallback erano "ciechi").
-                    try {
-                        var el = sat24LightningLayer.getElement();
-                        if (el) { el.style.transition = 'none'; }
-                        sat24LightningLayer.setOpacity(0.8);
-                    } catch(e) {}
-                    if (oldLiLayer) {
-                        try { map.removeLayer(oldLiLayer); } catch(e) {}
-                    }
-                };
-                // FIX FLICKERING: attendi la decodifica completa del JPEG prima di
-                // renderlo visibile — stessa logica anti-sfarfallio del satellite Infoplaza.
-                try {
-                    var el0 = sat24LightningLayer.getElement();
-                    if (el0 && typeof el0.decode === 'function') {
-                        el0.decode().then(doShow).catch(doShow);
-                    } else {
-                        doShow();
-                    }
-                } catch(e) { doShow(); }
-            }
-            sat24LightningLayer.once('load', function() {
-                liShowImage();
-            });
-            sat24LightningLayer.once('error', function() {
-                if (isLiStale()) return;
-                try { map.removeLayer(sat24LightningLayer); } catch(e) {}
-                if (oldLiLayer && map.hasLayer(oldLiLayer)) { sat24LightningLayer = oldLiLayer; }
-                liLoaded = true; // previene fallback
-            });
-            // Check immediato: se l'immagine è già in cache (preloaded),
-            // l'evento load potrebbe essere già scattato prima del once('load').
-            setTimeout(function() {
-                if (!liLoaded && sat24LightningLayer && map.hasLayer(sat24LightningLayer)) {
-                    try {
-                        if (isLiStale()) return;
-                        var el0 = sat24LightningLayer.getElement();
-                        if (el0 && el0.complete && el0.naturalWidth > 0) {
-                            liShowImage();
-                        }
-                    } catch(e) {}
-                }
-            }, 50);
-            // Timeout duro: se la tile non è pronta entro TILE_LOAD_TIMEOUT_MS, la
-            // richiesta è da considerare appesa/lenta: rimuovi il layer, ripristina il
-            // precedente e resetta la cache-key per consentire un nuovo tentativo.
-            pendingSatTimers.push(setTimeout(function() {
-                if (isLiStale()) return;
-                if (liLoaded || !sat24LightningLayer || !map.hasLayer(sat24LightningLayer)) return;
-                console.warn('[sat24-lightning] timeout dopo ' + TILE_LOAD_TIMEOUT_MS + 'ms su ' + liUrl);
-                try { map.removeLayer(sat24LightningLayer); } catch(e) {}
-                if (oldLiLayer) {
-                    sat24LightningLayer = oldLiLayer;
-                    try { sat24LightningLayer.setOpacity(0.8); } catch(e) {}
-                } else {
-                    sat24LightningLayer = null;
-                }
-                sat24LightningCacheKey = null;
-                liLoaded = true;  // ignora eventuali load tardivi
-            }, TILE_LOAD_TIMEOUT_MS));
-            return;
-        }
+// 1.2.4.1: rimosso il ramo fulmini Infoplaza (sat24_ita/sat24_eu) — restano Blitzortung e Limaps.
         // --- Sorgente Blitzortung (default) ---
         // Tile/proxy Blitzortung (images.weserv.nl + blitzortung.org) accessibili
         // solo se la sorgente Blitzortung e' abilitata in questa edizione.
-        if (!isFeatureEnabled('lightningBlitzortung')) return;
-        // Rimuovi layer Infoplaza se presente
-        if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
-        sat24LightningCacheKey = null;
+if (!isFeatureEnabled('lightningBlitzortung')) return;
         // NON rimuovere il marker layer — i marker devono persistere
         // Crea il layerGroup una sola volta
         if (!lightningMarkerLayer) {
@@ -8041,15 +7715,10 @@
             map.removeLayer(lightningFilterLayer);
             lightningFilterLayer = null;
         }
-        if (lightningTileLayer && map.hasLayer(lightningTileLayer)) {
+if (lightningTileLayer && map.hasLayer(lightningTileLayer)) {
             map.removeLayer(lightningTileLayer);
             lightningTileLayer = null;
         }
-        if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) {
-            map.removeLayer(sat24LightningLayer);
-            sat24LightningLayer = null;
-        }
-        sat24LightningCacheKey = null;
         if (limapsLightningLayer && map.hasLayer(limapsLightningLayer)) {
             map.removeLayer(limapsLightningLayer);
             limapsLightningLayer = null;
@@ -8066,17 +7735,8 @@
         lightningTileCacheTime = 0;
     }
 
-    // Sorgenti fulmini Infoplaza (stesso formato tile del satellite)
-    // URL: https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/lightning/{timestamp}/{path}?palette=lightningboltred
-    const infoplazaLightningMap = {
-        'sat24_ita': { path: '7/44/65/51/72', bounds: [[48.9225, 2.8125], [34.3071, 22.5000]], label: 'Infoplaza Fulmini Italia' },
-        'sat24_eu':  { path: '4/3/6/8/11',   bounds: [[74.0195, -45.0000], [0.0000, 67.5000]], label: 'Infoplaza Fulmini Europa' }
-    };
-    // Sorgente vettoriale Blitzortung: usa il WebSocket buffer per renderizzare marker per timeframe
+// Sorgente vettoriale Blitzortung: usa il WebSocket buffer per renderizzare marker per timeframe
     // Nessuna immagine PNG — solo marker SVG con lat/lon/tempo dal blitzWsBuffer
-    function isSat24Lightning(source) {
-        return source === 'sat24_ita' || source === 'sat24_eu';
-    }
     function changeLightningSource(source) {
         // Se la sorgente richiesta non e' abilitata in questa edizione, riallinea
         // al primo source fulmini abilitato (la tendina la nasconde comunque).
@@ -8094,17 +7754,13 @@
         lightningSource = source;
         if (!isLightningActive) return;
         // Rimuovi vecchi layer
-        if (lightningFilterLayer && map.hasLayer(lightningFilterLayer)) { map.removeLayer(lightningFilterLayer); lightningFilterLayer = null; }
-        if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
+if (lightningFilterLayer && map.hasLayer(lightningFilterLayer)) { map.removeLayer(lightningFilterLayer); lightningFilterLayer = null; }
         if (limapsLightningLayer && map.hasLayer(limapsLightningLayer)) { map.removeLayer(limapsLightningLayer); limapsLightningLayer = null; }
         if (lightningMarkerLayer) { map.removeLayer(lightningMarkerLayer); lightningMarkerLayer = null; }
-        sat24LightningCacheKey = null;
         limapsLightningCacheKey = null;
         limapsImgCache = {};
         limapsGoodFrames = {};
         limapsFrameGen++;
-        // Svuota cache immagini Infoplaza per forzare precaricamento nuovo
-        infoplazaImgCache = {};
         // Riattiva preload
         syncPreloadActive = false;
         var pBtn = document.getElementById('sync-preload-btn');
@@ -8163,10 +7819,7 @@
             // Nascondi dropdown sorgente fulmini
             var lsSel2 = document.getElementById('lightning-source-select');
             if (lsSel2) lsSel2.style.display = 'none';
-            removeLightningTile();
-            // Rimuovi anche il layer Infoplaza se presente
-            if (sat24LightningLayer && map.hasLayer(sat24LightningLayer)) { map.removeLayer(sat24LightningLayer); sat24LightningLayer = null; }
-            sat24LightningCacheKey = null;
+removeLightningTile();
             // Ferma il refresh dei tile
             if (lightningTileRefreshTimer) { clearInterval(lightningTileRefreshTimer); lightningTileRefreshTimer = null; }
             // Disconnetti WebSocket se anche il LIVE panel è spento
@@ -9891,8 +9544,6 @@
             if (legendEl) legendEl.style.display = 'none';
             if (statusEl) statusEl.style.display = 'none';
             if (attribEl) attribEl.style.display = 'none';
-            // Spegni PRETEMP se attivo
-            if (pretempActive) togglePretemp();
             radarEmbedActive = true;
             if (window.__radarEmbedResize) window.removeEventListener('resize', window.__radarEmbedResize);
             window.__radarEmbedResize = syncRadarEmbedHeight;
@@ -10642,9 +10293,7 @@
         var status = document.getElementById('sync-preload-status');
         if (btn) { btn.innerText = '⏳ Preload...'; btn.disabled = true; }
         if (status) status.innerText = '0/' + syncTimeline.length;
-        stopSyncPlay();
-        // Svuota cache immagini Infoplaza per forzare precaricamento nuovo
-        infoplazaImgCache = {};
+stopSyncPlay();
         // Preload frame in background con Image() — NON tocca la mappa
         syncPreloadFrame(0, gen);
     }
@@ -10690,7 +10339,7 @@
         } catch(e) {}
         // Raccogli URL immagine satellite EUMETSAT (una GetMap singola per frame)
         try {
-            if (isSatelliteActive && typeof eumetsatLayerMap !== 'undefined' && !isInfoplazaSource(satSource)) {
+            if (isSatelliteActive && typeof eumetsatLayerMap !== 'undefined') {
                 var _ei = eumetsatLayerMap[satSource] || eumetsatLayerMap['eumetsat'];
                 // Clamp identico a showSatFrameAt: i frame EUMETSAT più recenti (~15 min)
                 // non sono ancora sul server; precaricarli a vuoto sprecava richieste e
@@ -10704,27 +10353,7 @@
                 var preStatic = (satStaticFailed[satSource] === preIso) ? null : satStaticUrl(satSource, preIso);
                 urls.push(preStatic || buildEumetsatLiveGetMap(_ei.layer, preIso, _ei.frameWidth || EUMETSAT_FRAME_WIDTH, _ei.bounds));
             }
-        } catch(e) {}
-        // Raccogli URL immagine satellite Infoplaza (singola immagine per frame)
-        try {
-            if (isSatelliteActive && isInfoplazaSource(satSource)) {
-                var ipPre = infoplazaLayerMap[satSource];
-                var ipTsPre = isoToInfoplazaTimestamp(slot.iso, ipPre.interval);
-                urls.push('https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/' + ipPre.tileLayer + '/' + ipTsPre + '/' + ipPre.path + '?outputtype=jpeg');
-            }
-        } catch(e) {}
-        // Raccogli URL immagine fulmini Infoplaza se attivi
-        try {
-            if (isLightningActive && isSat24Lightning(lightningSource)) {
-                var liPre = infoplazaLightningMap[lightningSource];
-                var liTsPre = String(new Date(slot.ms).getUTCFullYear()) +
-                    String(new Date(slot.ms).getUTCMonth() + 1).padStart(2, '0') +
-                    String(new Date(slot.ms).getUTCDate()).padStart(2, '0') +
-                    String(new Date(slot.ms).getUTCHours()).padStart(2, '0') +
-                    String(new Date(slot.ms).getUTCMinutes()).padStart(2, '0');
-                urls.push('https://imn-rust-lb.infoplaza.io/v4/nowcast/tiles/lightning/' + liTsPre + '/' + liPre.path + '?palette=lightningboltred');
-            }
-        } catch(e) {}
+} catch(e) {}
         // Se niente da precaricare, salta al prossimo frame
         if (urls.length === 0) { syncPreloadFrame(idx + 1, gen); return; }
         var completed = 0;
@@ -11652,16 +11281,19 @@ var fmIdx = 0;
 var fmMeta = null;
 var fmRasterLayer = null;
 var fmVectorLayer = null;
+var fmLayerKey = null; // mitigazione churn: cache-by-url del frame renderizzato (cur.url|vurl|clipBounds)
 var fmAbort = null;
 var fmOpts = { contours: false, arrows: false, arrowStyle: 'arrow', grid: false, dark: false };
 var fmRegion = 'domain';
 var fmClipBounds = null;
 var fmTilePending = 0;
 var fmLoaderTimer = null;
+    var fmLoaderFallbackTimer = null; // fallback 25s di fmLoaderShow (cancellato in fmLoaderHide)
     var fmPreloadActive = false;
     var fmPreloadGen = 0;
     var fmWarmLayer = null;
-    var fmWarmKey = null;
+    var fmWarmKey = null; // exposed per test di stato warm-ahead
+    var fmPendingPreloadLayer = null; // layer preload attualmente in volo (cleanup al cancel)
 
 function fmEl(id) { return document.getElementById(id); }
 function fmSetStatus(text) { var el = fmEl('fm-status'); if (el) el.textContent = text; }
@@ -11777,12 +11409,13 @@ function fmLoaderShow() {
         fmLoaderTimer = -1;
         var e = fmEl('fm-map-loader');
         if (e) e.classList.add('active');
-        setTimeout(fmLoaderHide, 25000);
+        fmLoaderFallbackTimer = setTimeout(fmLoaderHide, 25000);
     }, 350);
 }
 function fmLoaderHide() {
     if (fmLoaderTimer !== null && fmLoaderTimer !== -1) clearTimeout(fmLoaderTimer);
     fmLoaderTimer = null;
+    if (fmLoaderFallbackTimer !== null) { clearTimeout(fmLoaderFallbackTimer); fmLoaderFallbackTimer = null; }
     var e = fmEl('fm-map-loader');
     if (e) e.classList.remove('active');
 }
@@ -11945,6 +11578,10 @@ function fmVectorStyle(props, layerName) {
     if (layerName === 'grid') return { strokeStyle: 'rgba(15,23,42,0.35)', lineWidth: 1, lineCap: 'round' };
     return null;
 }
+function fmLayerOnMap(l) {
+    if (!l) return false;
+    try { return typeof map !== 'undefined' && !!map && (!map.hasLayer || map.hasLayer(l)); } catch (e) { return false; }
+}
 function fmRemoveLayers() {
     if (fmRasterLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmRasterLayer); } catch (e) { } }
     if (fmVectorLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmVectorLayer); } catch (e) { } }
@@ -11955,6 +11592,13 @@ function fmRebuild() {
     if (!fmModule || !fmAdapter || typeof map === 'undefined' || !map || !fmMeta || !fmActive) return;
     var cur = fmCurrentOmUrl();
     if (!cur) return;
+    var vurl = fmVectorUrl(cur.url);
+    var key = cur.url + '|' + (vurl || '') + '|' + (fmClipBounds ? fmClipBounds.join(',') : '');
+    if (key === fmLayerKey && fmLayerOnMap(fmRasterLayer)
+        && (!vurl || fmLayerOnMap(fmVectorLayer))) {
+        // mitigazione churn: cache-by-url (pattern 1.0.0.14 adattato) - stesso frame, layer vivi
+        return;
+    }
     fmRemoveLayers();
     fmTilePending = 0;
     var layerBounds = null;
@@ -11967,7 +11611,6 @@ function fmRebuild() {
         fmRasterLayer = fmAdapter.createTileLayer('om://' + cur.url, rasterOpts);
         fmAttachTileEvents(fmRasterLayer);
         fmRasterLayer.addTo(map);
-        var vurl = fmVectorUrl(cur.url);
         if (vurl) {
             var vecOpts = { pane: 'forecastMapsPaneVector', style: fmVectorStyle };
             if (layerBounds) vecOpts.bounds = layerBounds;
@@ -11978,6 +11621,7 @@ function fmRebuild() {
     } catch (e) {
         fmSetStatus('Errore rendering: ' + (e && e.message ? e.message : e));
     }
+    fmLayerKey = key;
     fmUpdateTimeDisplay(cur.valid);
     fmUpdateLegend();
         fmWarmNext();
@@ -12073,6 +11717,10 @@ function fmStopPlay() {
 
     function fmStopPreload() {
         fmPreloadGen++;
+        if (fmPendingPreloadLayer) {
+            try { if (typeof map !== 'undefined' && map) map.removeLayer(fmPendingPreloadLayer); } catch (e) { }
+            fmPendingPreloadLayer = null;
+        }
         if (!fmPreloadActive) return;
         fmPreloadActive = false;
         var btn = fmEl('fm-preload-btn');
@@ -12114,13 +11762,18 @@ function fmStopPlay() {
         var finish = function () {
             if (advanced) return;
             advanced = true;
-            if (gen !== fmPreloadGen) return;
-            try { if (map) map.removeLayer(layer); } catch (e) { }
+            if (gen !== fmPreloadGen) {
+                try { if (typeof map !== 'undefined' && map && (!map.hasLayer || map.hasLayer(layer))) map.removeLayer(layer); } catch (e) { }
+                if (fmPendingPreloadLayer === layer) fmPendingPreloadLayer = null;
+                return;
+            }
+            try { if (typeof map !== 'undefined' && map) map.removeLayer(layer); } catch (e) { }
+            if (fmPendingPreloadLayer === layer) fmPendingPreloadLayer = null;
             fmPreloadFrame((idx + 1) % total, gen, done + 1, total);
         };
         layer.on('load', finish);
         setTimeout(finish, 12000);
-        try { layer.addTo(map); } catch (e) { finish(); }
+        try { layer.addTo(map); fmPendingPreloadLayer = layer; } catch (e) { finish(); }
     }
 
     function fmStopWarm() {
@@ -12130,13 +11783,14 @@ function fmStopPlay() {
     }
 
     function fmWarmNext() {
-        fmStopWarm();
         if (!fmActive || fmPreloadActive || !fmMeta || !fmMeta.valid_times.length) return;
         if (!fmAdapter || typeof map === 'undefined' || !map) return;
         var n = fmMeta.valid_times.length;
         if (n < 2) return;
         var url = fmOmUrlForIndex((fmIdx + 1) % n);
         if (!url) return;
+        if (fmWarmKey === url && fmLayerOnMap(fmWarmLayer)) return; // mitigazione churn: warm già pronto per lo stesso frame
+        fmStopWarm();
         try {
             fmWarmLayer = fmAdapter.createTileLayer('om://' + url, { pane: 'forecastMapsPanePre', opacity: 0 });
             fmWarmKey = url;
@@ -12429,188 +12083,6 @@ function toggleForecastMaps() {
     }
 
 
-    // ================= PRETEMP =================
-    let pretempActive = false;
-    let pretempHistory = [];
-    let pretempNavBound = false;
-    const PRETEMP_BASE = 'https://pretemp.it';
-
-    // Carica una pagina di pretemp.it via proxy e la mostra in un iframe (srcdoc):
-    // gli stili della pagina ospite non sporcano l'app (isolamento), e il sito viene
-    // ricomposto con i SUOI fogli di stile → aspetto originale, scuro e coerente.
-    async function pretempLoadPage(targetUrl, opts) {
-        // PRETEMP disabilitato in questa edizione: nessuna richiesta ai proxy CORS.
-        if (!isFeatureEnabled('pretempEmbed')) return;
-        const content = document.getElementById('pretemp-content');
-        if (!opts || !opts.noPush) {
-            if (pretempHistory[pretempHistory.length - 1] !== targetUrl) pretempHistory.push(targetUrl);
-        }
-        updatePretempBackBtn();
-
-        content.innerHTML = '<div class="pretemp-loading">Caricamento...</div>';
-
-        // LIGHT EDITION: proxy CORS pubblici (proxy.cors.sh, allorigins, corsproxy.io,
-        // codetabs) RIMOSSI — la versione Light non dipende da proxy di terze parti.
-        // Si tenta il fetch DIRETTO; se il CORS di pretemp.it lo blocca, si apre la
-        // pagina ufficiale in una nuova scheda. (Il pannello è comunque disattivato
-        // dal flag pretempEmbed=false: percorso morto, zero richieste.)
-        let htmlFound = null;
-
-        try {
-            const res = await fetchWithTimeout(targetUrl, 10000);
-            if (res && res.ok) {
-                const text = await res.text();
-                if (text && text.length > 500) htmlFound = text;
-            }
-        } catch (e) { /* CORS della pagina ospite: si usa il link diretto sotto */ }
-
-        if (!htmlFound) {
-            content.innerHTML = '<div class="pretemp-error">Impossibile caricare la pagina.<br><br><a href="' + targetUrl + '" target="_blank" style="color:#c084fc;">Apri su pretemp.it →</a></div>';
-            return;
-        }
-
-        // Parse della pagina ospite per estrarre stili e corpo (senza eseguire i suoi script)
-        let dom;
-        try {
-            dom = new DOMParser().parseFromString(htmlFound, 'text/html');
-        } catch(e) {
-            content.innerHTML = '<div class="pretemp-error">Pagina non leggibile. <a href="' + targetUrl + '" target="_blank" style="color:#c084fc;">Apri su pretemp.it →</a></div>';
-            return;
-        }
-
-        // Elementi attivi o concentrabili NON iniettati; niente handler di evento nei tag
-        dom.querySelectorAll('script, iframe, object, embed').forEach(el => el.remove());
-        dom.querySelectorAll('*').forEach(el => {
-            for (let i = el.attributes.length - 1; i >= 0; i--) {
-                const n = el.attributes[i].name;
-                if (n.indexOf('on') === 0) el.removeAttribute(n);
-            }
-            if ((el.tagName === 'A') && (el.getAttribute('href') || '').trim().toLowerCase().startsWith('javascript:')) {
-                el.removeAttribute('href');
-            }
-        });
-
-        // Layout ospite: header/nav/footer non servono dentro l'embed
-        dom.querySelectorAll('header, nav, footer').forEach(el => el.remove());
-
-        // Fogli di stile della pagina ospite, assolutizzati (tag <link> completi)
-        const css = Array.from(dom.querySelectorAll('link[rel="stylesheet"]'))
-            .map(l => l.getAttribute('href'))
-            .filter(h => h)
-            .map(h => '<link rel="stylesheet" href="' + h.replace(/^\//, PRETEMP_BASE + '/') + '">')
-            .join('');
-
-        const bodyHtml = (dom.body ? dom.body.innerHTML : '').trim();
-
-        // Documento ricomposto per l'iframe srcdoc: con <base> i link/img relativi
-        // risolvono su pretemp.it; il mini-script interno notifica i click al parent,
-        // che naviga via proxy senza cambiare pagina reale.
-        const doc =
-            '<!DOCTYPE html><html><head>' +
-            '<meta charset="utf-8">' +
-            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-            '<base href="' + PRETEMP_BASE + '/">' +
-            '<title>PRETEMP</title>' +
-            '<style>html,body{margin:0;background:#0f172a}body{overflow-x:hidden}img{max-width:100%;height:auto}</style>' +
-            css +
-            '</head><body class="bg-slate-950 text-slate-50 antialiased"><div class="min-h-screen flex flex-col">' +
-            bodyHtml +
-            '</div>' +
-            '<script>document.addEventListener("click",function(e){var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a)return;var h=a.getAttribute("href")||"";if(!h||h.indexOf("#")===0||h.toLowerCase().indexOf("javascript:")===0||h.toLowerCase().indexOf("mailto:")===0)return;e.preventDefault();parent.postMessage({pretempNav:h},"*");},true);<\/script>' +
-            '</body></html>';
-
-        const iframe = document.createElement('iframe');
-        iframe.title = 'PRETEMP';
-        iframe.srcdoc = doc;
-        content.innerHTML = '';
-        content.appendChild(iframe);
-    }
-
-    function updatePretempBackBtn() {
-        const bb = document.getElementById('pretemp-back');
-        if (bb) bb.disabled = pretempHistory.length <= 1;
-    }
-
-    function pretempListenNav() {
-        if (pretempNavBound) return;
-        pretempNavBound = true;
-        window.addEventListener('message', function(ev) {
-            const d = ev.data;
-            if (!d || !d.pretempNav) return;
-            const h = String(d.pretempNav);
-            const url = /^https?:\/\//i.test(h) ? h : PRETEMP_BASE + '/' + h.replace(/^\//, '');
-            if (url.indexOf('pretemp.it') === -1) { window.open(url, '_blank', 'noopener'); return; }
-            pretempLoadPage(url);
-        });
-    }
-
-    function togglePretemp() {
-        // PRETEMP (proxy + iframe pretemp.it) disabilitato in questa edizione.
-        if (!pretempActive && !isFeatureEnabled('pretempEmbed')) {
-            var statusNoPt = document.getElementById('status-msg');
-            if (statusNoPt) statusNoPt.innerText = '⛔ PRETEMP disabilitato in questa edizione.';
-            var btnNoPt = document.getElementById('btn-pretemp');
-            if (btnNoPt) { btnNoPt.innerText = '⛈️ PRETEMP (non disponibile)'; btnNoPt.style.borderColor = '#ef4444'; }
-            return;
-        }
-        var container = document.getElementById('pretemp-container');
-        var btn = document.getElementById('btn-pretemp');
-        var mapEl = document.getElementById('leaflet-map');
-        var preloadEl = document.getElementById('preload-overlay');
-        var calettaEl = document.getElementById('caletta-popup');
-        var legendEl = document.getElementById('legend-container');
-        var statusEl = document.getElementById('status-msg');
-        var attribEl = document.querySelector('.attribution-small');
-        pretempActive = !pretempActive;
-
-        if (!pretempActive) {
-            // Ripristina la mappa
-            container.style.display = 'none';
-            if (btn) btn.classList.remove('active');
-            if (mapEl) mapEl.style.display = '';
-            if (preloadEl) preloadEl.style.display = '';
-            if (calettaEl) calettaEl.style.display = '';
-            if (legendEl) legendEl.style.display = '';
-            if (statusEl) statusEl.style.display = '';
-            if (attribEl) attribEl.style.display = '';
-            if (mapEl && map && mapEl.style.display !== 'none') {
-                setTimeout(function(){ if (map) map.invalidateSize(); }, 200);
-            }
-            // Ripristina timeline se necessario
-            if (typeof showSyncPanelIfNeeded === 'function') showSyncPanelIfNeeded();
-            return;
-        }
-
-        // Mostra PRETEMP, nascondi la mappa
-        container.style.display = 'block';
-        if (btn) btn.classList.add('active');
-        if (mapEl) mapEl.style.display = 'none';
-        if (preloadEl) preloadEl.style.display = 'none';
-        if (calettaEl) calettaEl.style.display = 'none';
-        if (calettaPopupVisible) closeCaletta();
-        if (legendEl) legendEl.style.display = 'none';
-        if (statusEl) statusEl.style.display = 'none';
-        if (attribEl) attribEl.style.display = 'none';
-
-        // Se radar embed attivo, spegnilo
-        if (radarEmbedActive) toggleRadarEmbed('off');
-
-        // Navigazione interna (iframe srcdoc → postMessage) + bottone back nella toolbar
-        pretempListenNav();
-        var bb = document.getElementById('pretemp-back');
-        if (bb && !bb.__backBound) {
-            bb.__backBound = true;
-            bb.addEventListener('click', function() {
-                if (pretempHistory.length <= 1) return;
-                pretempHistory.pop(); // la pagina corrente
-                var prev = pretempHistory[pretempHistory.length - 1];
-                if (prev) pretempLoadPage(prev, { noPush: true });
-            });
-        }
-
-        // Carica l'archivio di pretemp.it
-        pretempLoadPage('https://pretemp.it/archivio');
-    }
 
     // ================= NASCONDI/MOSTRA CERCHIETTI =================
     // ================= VISTA CONTINUA (gradiente raster interpolato IDW) =================
@@ -13132,6 +12604,22 @@ function toggleForecastMaps() {
         };
     }
 
+    // Helper CONDIVISI per le richieste Open-Meteo (percorso singolo + dual-model:
+    // unificano le due implementazioni buildUrl/fetchOne quasi identiche - 1.2.4.1).
+    function buildWeatherUrl(lats, lons, hourlyParams, modelParam, forecastDays) {
+        return getApiBaseUrl() + '?latitude=' + lats + '&longitude=' + lons +
+            '&hourly=' + hourlyParams + '&daily=' + DAILY_PARAMS +
+            '&timezone=Europe%2FRome' + modelParam + forecastDays + getApiKeyParam();
+    }
+    async function fetchWeatherByUrl(url, timeoutMs, attempts, onData, errLabel) {
+        try {
+            var data = await fetchJsonWithRetry(url, timeoutMs, attempts);
+            return onData ? onData(data) : true;
+        } catch (e) {
+            console.warn(errLabel + ': ' + e.message);
+            return false;
+        }
+    }
     // Caricamento Open-Meteo adattivo al timeout lato server dell'API:
     // 1) batch (20 coordinate, timeout 20s, 2 tentativi) → 2) se il server lo
     // tronca o risponde in errore, dimezza ricorsivamente il gruppo (16s) →
@@ -13170,21 +12658,16 @@ function toggleForecastMaps() {
             }
         }
         function buildUrl(slotsFor) {
-            var lats = slotsFor.map(function(s) { return s.lat; }).join(',');
-            var lons = slotsFor.map(function(s) { return s.lon; }).join(',');
-            return getApiBaseUrl() + '?latitude=' + lats + '&longitude=' + lons +
-                '&hourly=' + hourlyParams + '&daily=' + DAILY_PARAMS +
-                '&timezone=Europe%2FRome' + modelParam + forecastDays + getApiKeyParam();
+            return buildWeatherUrl(
+                slotsFor.map(function(s) { return s.lat; }).join(','),
+                slotsFor.map(function(s) { return s.lon; }).join(','),
+                hourlyParams, modelParam, forecastDays);
         }
         async function fetchOne(slotsFor, timeoutMs, attempts) {
-            try {
-                var data = await fetchJsonWithRetry(buildUrl(slotsFor), timeoutMs, attempts);
+            return await fetchWeatherByUrl(buildUrl(slotsFor), timeoutMs, attempts, function(data) {
                 storeResp(data, slotsFor);
                 return true;
-            } catch (e) {
-                console.warn('[Weather] gruppo ' + slotsFor.length + ' punto/i fallito: ' + e.message);
-                return false;
-            }
+            }, '[Weather] gruppo ' + slotsFor.length + ' punto/i fallito');
         }
         // Rientro adattivo: dimezza finché possibile, poi singoli punti
         async function splitGroup(grp) {
@@ -13210,8 +12693,7 @@ function toggleForecastMaps() {
     // Ogni provincia viene campionata su 3 punti: capoluogo + 2 punti interni al
     // poligono GeoJSON. Il rischio per-provincia sarà il MAX (worst-case convettivo),
     // così una cella estrema in una zona qualsiasi della provincia emerge sulla mappa.
-    // Fallback robusto: se i poligoni mancano, si campionano i soli capoluoghi.
-    // ================= CAMPIONAMENTO MULTI-PUNTO PER PROVINCIA =================
+// Fallback robusto: se i poligoni mancano, si campionano i soli capoluoghi.
     // Ogni provincia viene campionata su più punti (capoluogo + punti interni),
     // il rischio per-provincia è il MAX sui suoi punti (worst-case convettivo).
     // V1 = metodo storico (bit-identico al rilasciato: capoluogo + centroidi/bbox).
@@ -14341,24 +13823,19 @@ function toggleForecastMaps() {
             }
         }
         function buildUrl(pt) {
-            return getApiBaseUrl() + '?latitude=' + pt.lat + '&longitude=' + pt.lon +
-                '&hourly=' + hourlyParams + '&daily=' + DAILY_PARAMS +
-                '&timezone=Europe%2FRome' + dualModelParam + forecastDays + getApiKeyParam();
+            return buildWeatherUrl(pt.lat, pt.lon, hourlyParams, dualModelParam, forecastDays);
         }
         async function fetchOne(pt, timeoutMs, attempts) {
-            try {
-                if (isSviluppoActive) {
-                    console.log('[API] Dual Model request queued · Models: best_match + ecmwf_ifs · Punto: ' + pt.index + ' · Peso (budget): ' + apiWeightFromUrl(buildUrl(pt)));
-                }
-                var data = await fetchJsonWithRetry(buildUrl(pt), timeoutMs, attempts);
+            var url = buildUrl(pt);
+            if (isSviluppoActive) {
+                console.log('[API] Dual Model request queued · Models: best_match + ecmwf_ifs · Punto: ' + pt.index + ' · Peso (budget): ' + apiWeightFromUrl(url));
+            }
+            return await fetchWeatherByUrl(url, timeoutMs, attempts, function(data) {
                 var split = splitDualModelResponse(data);
                 saveSplit(pt.index, split);
                 if (isSviluppoActive) console.log('[API] Dual response received · splitting Best Match / ECMWF');
-                return split.best_match && split.best_match.daily;
-            } catch (e) {
-                console.warn('[Dual] punto ' + pt.index + ' fallito: ' + e.message);
-                return false;
-            }
+                return !!(split.best_match && split.best_match.daily);
+            }, '[Dual] punto ' + pt.index + ' fallito');
         }
         var okCount = 0;
         // Ordinamento capoluoghi per primi (coordIdx 0) come il percorso singolo
@@ -14822,51 +14299,31 @@ function toggleForecastMaps() {
         if (!dayCodes.length) {
             return (data.daily.weathercode && data.daily.weathercode[d] != null) ? data.daily.weathercode[d] : 0;
         }
-        function isWet(code) { return (code >= 51 && code <= 99); }
-        function isThunder(code) { return isThunderstormCode(code); }
-        function isSnow(code) { return (code >= 71 && code <= 77) || (code >= 85 && code <= 86); }
         var wetCodes = [], dryCodes = [], thunderCodes = [];
         for (var j = 0; j < dayCodes.length; j++) {
             var c = dayCodes[j];
-            if (isThunder(c)) thunderCodes.push(c);
-            if (isWet(c)) wetCodes.push(c);
+            if (wcIsThunder(c)) thunderCodes.push(c);
+            if (wcIsWet(c)) wetCodes.push(c);
             else dryCodes.push(c);
         }
-        function mode(arr) {
-            if (!arr.length) return 0;
-            var counts = {};
-            for (var k = 0; k < arr.length; k++) {
-                var v = arr[k];
-                counts[v] = (counts[v] || 0) + 1;
-            }
-            var bestCode = arr[0], bestCount = 0;
-            for (var code in counts) {
-                var cc = parseInt(code);
-                if (counts[code] > bestCount || (counts[code] === bestCount && cc > bestCode)) {
-                    bestCount = counts[code];
-                    bestCode = cc;
-                }
-            }
-            return bestCode;
-        }
         // PRIORITÀ: un temporale, anche isolato, va sempre segnalato
-        if (thunderCodes.length > 0) return mode(thunderCodes);
+        if (thunderCodes.length > 0) return wcMode(thunderCodes);
 
         var precipSum = (data.daily.precipitation_sum && data.daily.precipitation_sum[d] != null) ? data.daily.precipitation_sum[d] : 0;
         var hasRain = (precipSum >= 0.1) && (wetCodes.length > 0);
         if (!hasRain) {
             // Nessuna pioggia significativa: moda delle ore asciutte
-            return dryCodes.length ? mode(dryCodes) : (data.daily.weathercode[d] || 0);
+            return dryCodes.length ? wcMode(dryCodes) : (data.daily.weathercode[d] || 0);
         }
         var wetShare = wetCodes.length / dayCodes.length;
         if (wetShare >= DAILY_ICON_RAIN_DOMINANT_SHARE) {
             // La maggior parte delle ore diurne è bagnata: pioggia piena, codice reale
-            return mode(wetCodes);
+            return wcMode(wetCodes);
         }
         // Pioggia presente ma minoritaria: icona VARIABILE (sole/nuvola + pioggia),
         // mai il codice di pioggia continua "piena"
-        var wetMode = mode(wetCodes);
-        if (isSnow(wetMode)) {
+        var wetMode = wcMode(wetCodes);
+        if (wcIsSnow(wetMode)) {
             // Neve minoritaria → rovesci di neve (85 lieve, 86 se il tipo dominante era già intenso)
             return (wetMode >= 75) ? 86 : 85;
         }
@@ -15914,6 +15371,28 @@ function toggleForecastMaps() {
     // pioggia (che e' pioggia stratiforme, NON temporale). Definizione unica centralizzata.
     function isThunderstormCode(code) {
         return Number.isFinite(code) && code >= 95 && code <= 99;
+    }
+    // Helper condivisi weathercode (unificazione daily/slot - 1.2.4.1).
+    // Stessa semantica usata da computeDailyWeathercode e computeSlotWeathercode.
+    function wcIsWet(code) { return (code >= 51 && code <= 99); }
+    function wcIsThunder(code) { return isThunderstormCode(code); }
+    function wcIsSnow(code) { return (code >= 71 && code <= 77) || (code >= 85 && code <= 86); }
+    function wcMode(arr) {
+        if (!arr.length) return 0;
+        var counts = {};
+        for (var k = 0; k < arr.length; k++) {
+            var v = arr[k];
+            counts[v] = (counts[v] || 0) + 1;
+        }
+        var bestCode = arr[0], bestCount = 0;
+        for (var code in counts) {
+            var cc = parseInt(code);
+            if (counts[code] > bestCount || (counts[code] === bestCount && cc > bestCode)) {
+                bestCount = counts[code];
+                bestCode = cc;
+            }
+        }
+        return bestCode;
     }
     function isConvectiveShowerCode(code) {
         return Number.isFinite(code) && code >= 80 && code <= 82;
@@ -19879,39 +19358,25 @@ function renderContinuousOverlay() {
     // Ritorna { code, tempMax, tempMin, wind, emoji } o null
     // Calcola un weathercode rappresentativo per una fascia oraria (6h).
     //   - Temporale (95-99) anche isolato vince sempre (priorita di sicurezza)
-    //   - Se >=60% delle ore e bagnata -> pioggia piena
+    //   - Se >= soglia dominante (DAILY_ICON_RAIN_DOMINANT_SHARE, 70%) delle ore e bagnata -> pioggia piena
     //   - Se pioggia minoritaria -> variabile (80/81/82) o 85/86 neve
     //   - Se nessuna pioggia -> moda ore asciutte
     function computeSlotWeathercode(codes, precipSum) {
         if (!codes || !codes.length) return 0;
-        function isWet(c) { return (c >= 51 && c <= 99); }
-        function isThunder(c) { return (c >= 95 && c <= 99); }
-        function isSnow(c) { return (c >= 71 && c <= 77) || (c >= 85 && c <= 86); }
         var wetCodes = [], dryCodes = [], thunderCodes = [];
         for (var j = 0; j < codes.length; j++) {
             var c = codes[j];
-            if (isThunder(c)) thunderCodes.push(c);
-            if (isWet(c)) wetCodes.push(c);
+            if (wcIsThunder(c)) thunderCodes.push(c);
+            if (wcIsWet(c)) wetCodes.push(c);
             else dryCodes.push(c);
         }
-        function mode(arr) {
-            if (!arr.length) return 0;
-            var counts = {};
-            for (var k = 0; k < arr.length; k++) { var v = arr[k]; counts[v] = (counts[v] || 0) + 1; }
-            var best = arr[0], bestCnt = 0;
-            for (var code in counts) {
-                var cc = parseInt(code);
-                if (counts[code] > bestCnt || (counts[code] === bestCnt && cc > best)) { bestCnt = counts[code]; best = cc; }
-            }
-            return best;
-        }
-        if (thunderCodes.length > 0) return mode(thunderCodes);
+        if (thunderCodes.length > 0) return wcMode(thunderCodes);
         var hasRain = (precipSum >= 0.1) && (wetCodes.length > 0);
-        if (!hasRain) return dryCodes.length ? mode(dryCodes) : 0;
+        if (!hasRain) return dryCodes.length ? wcMode(dryCodes) : 0;
         var wetShare = wetCodes.length / codes.length;
-        if (wetShare >= 0.6) return mode(wetCodes);
-        var wetMode = mode(wetCodes);
-        if (isSnow(wetMode)) return (wetMode >= 75) ? 86 : 85;
+        if (wetShare >= DAILY_ICON_RAIN_DOMINANT_SHARE) return wcMode(wetCodes);
+        var wetMode = wcMode(wetCodes);
+        if (wcIsSnow(wetMode)) return (wetMode >= 75) ? 86 : 85;
         if (precipSum >= 15) return 82;
         if (precipSum >= 5) return 81;
         return 80;
@@ -20377,8 +19842,8 @@ function renderContinuousOverlay() {
         }
         var sz = enabledSatSourceIds();
         if (sz.indexOf(satSource) === -1) satSource = sz.length > 0 ? sz[0] : 'eumetsat';
-        var lz = enabledLightningSourceIds();
-        if (lz.indexOf(lightningSource) === -1) lightningSource = lz.length > 0 ? lz[0] : 'sat24_ita';
+var lz = enabledLightningSourceIds();
+        if (lz.indexOf(lightningSource) === -1) lightningSource = lz.length > 0 ? lz[0] : 'blitzortung';
 
         // --- Selettori: nascondi le opzioni delle sorgenti disabilitate ---
         function syncSelect(id, map) {
@@ -20405,16 +19870,13 @@ function renderContinuousOverlay() {
         syncSelect('radar-embed-select', [
             ['meteoradar', 'radarMeteoRadarEmbed'], ['dpc', 'radarDpcEmbed'], ['windy', 'radarWindyEmbed']
         ]);
-        syncSelect('sat-source-select', [
+syncSelect('sat-source-select', [
             ['eumetsat_italy', 'satelliteEumetsat'],
             ['eumetsat_airmass_italy', 'satelliteEumetsat'], ['eumetsat_geocolour_italy', 'satelliteEumetsat'],
             ['eumetsat', 'satelliteEumetsat'],
-            ['eumetsat_airmass', 'satelliteEumetsat'], ['eumetsat_geocolour', 'satelliteEumetsat'],
-            ['infoplaza_mtg', 'satelliteSat24'], ['infoplaza_ir', 'satelliteSat24'],
-            ['infoplaza_eu_mtg', 'satelliteSat24'], ['infoplaza_eu_ir', 'satelliteSat24']
+            ['eumetsat_airmass', 'satelliteEumetsat'], ['eumetsat_geocolour', 'satelliteEumetsat']
         ]);
-        syncSelect('lightning-source-select', [
-            ['sat24_ita', 'satelliteSat24'], ['sat24_eu', 'satelliteSat24'],
+syncSelect('lightning-source-select', [
             ['blitzortung', 'lightningBlitzortung'], ['blitzortung_new', 'lightningLimaps']
         ]);
         syncSelect('map-style-select', [
@@ -20428,7 +19890,6 @@ function renderContinuousOverlay() {
         var dpcASel = document.getElementById('dpc-alert-select');
         if (dpcASel && !isFeatureEnabled('dpcAlerts')) dpcASel.style.display = 'none';
         if (!isFeatureEnabled('forecastMaps')) { var bFm = document.getElementById('btn-forecast-maps'); if (bFm) bFm.style.display = 'none'; }
-        if (!isFeatureEnabled('pretempEmbed')) { var bPt = document.getElementById('btn-pretemp'); if (bPt) bPt.style.display = 'none'; }
         if (!isFeatureEnabled('openMeteo')) {
             var asSel = document.getElementById('api-source-select');
             if (asSel) asSel.style.display = 'none';

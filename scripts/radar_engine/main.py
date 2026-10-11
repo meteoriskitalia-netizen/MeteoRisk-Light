@@ -47,7 +47,7 @@ from radar_engine import history
 from radar_engine import fetch
 from radar_engine import detect as detect_mod
 from radar_engine import tracking as track_mod
-from radar_engine.config import load_config
+from radar_engine.config import load_config, CONFIG
 
 _OK = 0
 _DEGRADED = 3
@@ -384,10 +384,16 @@ def _phase2_evaluate(bundle, config):
     ecfg = p2_cfg.get("environment") or {}
     lcfg = p2_cfg.get("lightning") or {}
     otcfg = p2_cfg.get("ot") or {}
-    hook_radius = float(hcfg.get("footprint_radius_km", 45.0))
-    struct_radius = float(scfg.get("local_radius_km", 45.0))
+    # R1: i default di fallback dei raggi NON sono magic numbers, ma i valori
+    # base di config.CONFIG["phase2"] (fonte unica); usati solo se la chiave
+    # manca nel blocco iniettato.
+    hook_radius = float(hcfg.get(
+        "footprint_radius_km", CONFIG["phase2"]["hook"]["footprint_radius_km"]))
+    struct_radius = float(scfg.get(
+        "local_radius_km", CONFIG["phase2"]["structure"]["local_radius_km"]))
     ltg_radius = float(lcfg.get("radius_km", 30.0))
-    ot_radius = float(otcfg.get("footprint_radius_km", 45.0))
+    ot_radius = float(otcfg.get(
+        "footprint_radius_km", CONFIG["phase2"]["ot"]["footprint_radius_km"]))
     try:
         ltg_min_strikes = int(lcfg.get("min_strikes", 1))
     except (TypeError, ValueError):

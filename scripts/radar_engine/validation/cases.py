@@ -4,9 +4,12 @@
 Meteorisk Radar Engine — validation.cases (Fase 1.5)
 
 Casi retrospettivi: metadata-only nel repository (cases/cases.json). I GeoTIFF
-radar DPC vivono esclusivamente FUORI dal repo (RADAR_SAMPLES_DIR); la
-risoluzione campioni avviene per pattern della directory samples:
-    <RADAR_SAMPLES_DIR>/<YYYY-MM-DD>/VMI-<HHMM>.tif   (HHMM, UTC, griglia 5min)
+radar DPC vivono esclusivamente FUORI dal repo; la risoluzione campioni avviene
+per pattern della directory samples (v. samples_root, L1):
+    <SAMPLES_ROOT>/<YYYY-MM-DD>/VMI-<HHMM>.tif   (HHMM, UTC, griglia 5min)
+Priorità di SAMPLES_ROOT: env METEORISK_SAMPLES_DIR -> env RADAR_SAMPLES_DIR
+(legacy) -> path relativo alla repo (scripts/_samples) se presente ->
+percorso assoluto legacy (solo fallback).
 
 Tipi evento consentiti (categorie NEUTRE, nessuna inferenza supercell):
     ORDINARY_CONVECTION | ORGANIZED_MULTICELL | LINEAR_CONVECTION |
@@ -37,6 +40,11 @@ EVENT_TYPES = (
 )
 
 DEFAULT_SAMPLES_DIR = r"C:\Users\aless\AppData\Local\Temp\opencode\radar_samples"
+
+# fallback relativo alla repo (L1): <repo_root>/scripts/_samples
+_REPO_ROOT = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
+_REPO_RELATIVE_SAMPLES = os.path.join(_REPO_ROOT, "scripts", "_samples")
 
 
 def _find_cases_json(start=None):
@@ -80,9 +88,25 @@ def _validate_case(case):
         datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ")
 
 
-def samples_root(env_var="RADAR_SAMPLES_DIR"):
-    """Directory campioni (esterna al repo). Priorità: env -> default temp."""
-    return os.environ.get(env_var) or DEFAULT_SAMPLES_DIR
+def samples_root(env_var=None):
+    """Directory campioni (di solito esterna al repo). Priorità (L1):
+    env METEORISK_SAMPLES_DIR -> env RADAR_SAMPLES_DIR (legacy) -> path
+    relativo alla repo (scripts/_samples, solo se esiste) -> percorso assoluto
+    legacy. `env_var` esplicito (retro-compat) aggiunge una variabile alla
+    catena senza cambiare la priorità."""
+    env_vars = [v for v in ("METEORISK_SAMPLES_DIR", env_var, "RADAR_SAMPLES_DIR")
+                if v]
+    seen = set()
+    for var in env_vars:
+        if var in seen:
+            continue
+        seen.add(var)
+        val = os.environ.get(var)
+        if val:
+            return val
+    if os.path.isdir(_REPO_RELATIVE_SAMPLES):
+        return _REPO_RELATIVE_SAMPLES
+    return DEFAULT_SAMPLES_DIR
 
 
 def resolve_case_frames(case, root=None, step_min=5):

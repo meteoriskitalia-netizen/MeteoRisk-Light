@@ -54,6 +54,26 @@ _DEF_WEIGHTS = {
     "growth_sustained": 0.20,
 }
 
+# L7 — normalizzazione della MEDIA dBZ (mean core): estremi NOMINATI (non magic).
+_DBZ_MEAN_NORM_LO = 20.0   # dBZ floor per la normalizzazione della media
+_DBZ_MEAN_NORM_HI = 45.0   # dBZ ceiling per la normalizzazione della media
+
+
+def _organized_floor(cfg):
+    """Soglia minima dell'Organization Score per il gate 'organization_organized'.
+
+    R1: NON un magic number. È il floor della banda 'Organized Convective Cell'
+    in scoring.bands (fonte unica); override opzionale con cfg
+    ['organization_organized']. Fallback 56.0 solo se la banda è assente."""
+    override = cfg.get("organization_organized")
+    if override is not None:
+        return float(override)
+    from . import config as _cfg
+    for lo, _hi, name in _cfg.CONFIG["scoring"]["bands"]:
+        if name == "Organized Convective Cell":
+            return float(lo)
+    return 56.0
+
 
 def _cfg_defaults():
     """Blocco supercell di default (riflette config.CONFIG)."""
@@ -95,7 +115,7 @@ def _components(track, cfg):
     max_dbz_max = max(maxes) if maxes else 0.0
     mean_dbz_mean = sum(means) / len(means) if means else 0.0
     intensity_core = 0.6 * _norm(max_dbz_max, ref_lo, ref_hi) + \
-        0.4 * _norm(mean_dbz_mean, 20.0, 45.0)
+        0.4 * _norm(mean_dbz_mean, _DBZ_MEAN_NORM_LO, _DBZ_MEAN_NORM_HI)
 
     org = track.motion.get("organization_score", 0) or 0
     organization = _clamp01(float(org) / 100.0)
@@ -134,7 +154,7 @@ def _gates(track, cfg):
     return {
         "intensity_core_dbz": max_dbz_max >= float(cfg["intensity_core_dbz"]),
         "min_frames": len(track.points) >= int(cfg.get("min_frames", 2)),
-        "organization_organized": float(org) >= 56.0,
+        "organization_organized": float(org) >= _organized_floor(cfg),
     }
 
 

@@ -171,6 +171,10 @@ def is_png(path):
         return False
 
 
+# L5: la validazione è BEST-EFFORT su magic bytes (12-byte header), NON un
+# decode completo: è un guard rapido per decidere se scaricare/saltare uno
+# slot. Un file webp reale ma con header inatteso non esiste in pratica dai
+# server DPC/GWC (sempre RIFF..WEBP); al massimo si scarica di nuovo inutilmente.
 def is_webp(body):
     """True se `body` (bytes) e' un WebP: RIFF in testa e 'WEBP' in byte 8:11."""
     return (len(body) >= 12 and body[:4] == WEBP_MAGIC
@@ -204,6 +208,12 @@ def png_to_webp(body):
         out = io.BytesIO()
         image.save(out, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
     return out.getvalue()
+
+
+# L5: cache in-memory delle directory già sottoposte a migrazione legacy
+# (una sola chiamata a migrate_legacy_png per cartella, anche se process_source
+# gira per-slot). Resettare all'avvio = sempre coerente col disco.
+_MIGRATED_LEGACY_DIRS = set()
 
 
 def migrate_legacy_png(src_dir):
@@ -273,15 +283,20 @@ def process_source(source_id, src, slot, out_root):
     body = None
     if legacy.exists():
         # Frame legacy PNG su disco: migrazione locale in WebP, zero richieste
-        # al WMS. Se la conversione fallisce (file corrotto) il legacy viene
-        # eliminato e lo slot ricade sul download come un frame nuovo.
-        try:
-            migrate_legacy_png(src_dir)
-        except Exception as exc:  # noqa: BLE001
-            _log("[satellite_engine] slot=%s source=%s status=migrazione-fallita motivo=%s"
-                 % (name, source_id, exc))
-            if legacy.exists():
-                legacy.unlink()
+        # al WMS. La migrazione converte TUTTI i PNG della cartella, quindi va
+        # eseguita UNA volta per cartella (cache _MIGRATED_LEGACY_DIRS). Se la
+        # conversione fallisce (file corrotto) il legacy viene eliminato e lo
+        # slot ricade sul download come un frame nuovo.
+        src_key = str(src_dir.resolve())
+        if src_key not in _MIGRATED_LEGACY_DIRS:
+            try:
+                migrate_legacy_png(src_dir)
+            except Exception as exc:  # noqa: BLE001
+                _log("[satellite_engine] slot=%s source=%s status=migrazione-fallita motivo=%s"
+                     % (name, source_id, exc))
+                if legacy.exists():
+                    legacy.unlink()
+            _MIGRATED_LEGACY_DIRS.add(src_key)
         if is_webp_file(target):
             body = target.read_bytes()
     if body is None:

@@ -9,7 +9,7 @@ mesocyclone o rotation:
 
     persistence            -> 20%   (n-frame / ref, ref=finestra prevista 5)
     intensity              -> 20%   (max dBZ normalizzato su [20, 55])
-    intensity_consistency  -> 15%   (1 - std(max dBZ) normalizzato)
+    intensity_consistency  -> 15%   (1 - (max-min dBZ)/(ref_hi-ref_lo))
     spatial_coherence      -> 15%   (solidità e compattezza medie)
     motion_consistency     -> 15%   (regolarità velocità + direzione)
     growth_sustained       -> 15%   (crescita area e mantensi intensità)
@@ -59,6 +59,9 @@ def _full_score_components(track, cfg):
     areas = [p.area_km2 for p in track.points]
     intensity = _norm_intensity(max(maxes), ref_lo, ref_hi)
 
+    # NOTA: la "consistency" misura lo SPREAD (max-min) normalizzato sulla
+    # banda [ref_lo, ref_hi], NON lo std. max==min -> 1.0 (stabile);
+    # spread == (ref_hi - ref_lo) -> 0.0.
     intensity_consistency = 1.0 - _clamp01(
         (max(maxes) - min(maxes)) / max(ref_hi - ref_lo, 1e-9)
     ) if n > 1 else 1.0

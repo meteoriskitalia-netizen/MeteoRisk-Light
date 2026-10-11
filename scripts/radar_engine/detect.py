@@ -158,6 +158,6 @@ def detect_cells(raster, cfg_detect):
         cells.append(cell)
 
     cells.sort(key=lambda c: c.area_km2, reverse=True)
-    for i, c in enumerate(cells):
-        c.frame_index = i
+    # R2: rimosso `c.frame_index = i` (indice in lista, NON frame): ogni
+    # chiamante (main, calibration, run_phase17/18) imposta il vero frame_index.
     return cells

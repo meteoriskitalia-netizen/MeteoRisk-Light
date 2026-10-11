@@ -11,7 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.4.0.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.4.1.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -41,9 +41,9 @@ ok('CLASSI: updateViewportClasses imposta app-* su <html> e <body>',
 
 // ---------- 2. PRIORITÀ 1 — mappa dominante (45-65dvh) ----------
 ok('P1: #leaflet-map mobile usa 56dvh (dentro 45-65dvh)',
-  /#leaflet-map,\s*#radar-embed-container,\s*#pretemp-container\s*\{\s*height:\s*clamp\(45dvh,\s*56dvh,\s*66dvh\);[\s\S]{0,40}min-height:\s*300px/.test(style));
-ok('P1: anche radar-embed e pretemp ricevono la stessa altezza mobile',
-  /#leaflet-map,\s*#radar-embed-container,\s*#pretemp-container/.test(style));
+  /#leaflet-map,\s*#radar-embed-container\s*\{\s*height:\s*clamp\(45dvh,\s*56dvh,\s*66dvh\);[\s\S]{0,40}min-height:\s*300px/.test(style));
+ok('P1: anche radar-embed riceve la stessa altezza mobile',
+  /#leaflet-map,\s*#radar-embed-container/.test(style));
 ok('P1: tablet 768-1024 altezza mappa clamp(380px,60vh,640px)',
   /height:\s*clamp\(380px,\s*60vh,\s*640px\)/.test(style));
 ok('P1: desktop: #leaflet-map resta height:560px (invariato)',
@@ -95,7 +95,7 @@ ok('P9: .metric-grid 1 colonna a 320px', /metric-grid\s*\{\s*grid-template-colum
 // ---------- 9. PRIORITÀ 10 — landscape ----------
 const lsc = style.match(/@media\s*\(orientation:\s*landscape\)\s*(?:and\s*\(max-height:\s*520px\))?\s*\{?([\s\S]*?)\}?\s*@media?\s*(?:\(orientation|\})/);
 ok('P10: landscape riduce mappa a 48dvh',
-  /#leaflet-map,\s*#radar-embed-container,\s*#pretemp-container\s*\{[^}]*height:\s*48dvh/.test(style));
+  /#leaflet-map,\s*#radar-embed-container\s*\{[^}]*height:\s*48dvh/.test(style));
 ok('P10: landscape nasconde il sottotitolo header (compatta)',
   /landscape[\s\S]{0,600}\.app-title\s+p\s*\{\s*display:\s*none/.test(style));
 

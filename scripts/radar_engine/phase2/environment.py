@@ -74,6 +74,9 @@ SRH1_LEVELS_HPA = (1000, 925)           # nodi per proxy SRH_0_1km
 DEEP_LEVELS_HPA = (1000, 925, 850, 700, 500)  # profilo profondo/EBWD
 CAPE_GATE_JKG = 100.0             # sotto questa CAPE l'ambiente e' secco
 CIN_TERM_CAP = 4.0                # cap del termine -40/muCIN (SCP)
+# L4 — termine CIN dello STP (SPL): (200 + CIN)/150 (std: CIN=-100 -> 0.67).
+CIN_TERM_OFFSET_SB = 200.0        # offset: CIN <= -200 -> termine <= 0
+CIN_TERM_DIVISOR_SB = 150.0       # denominatore del termine sbCIN
 SHIP_Q_CLAMP = (11.0, 13.6)       # g/kg (caps US della specifica)
 SHIP_BWD_CLAMP = (7.0, 27.0)      # m/s (caps US della specifica)
 SHIP_T500_MAX_C = -5.5            # T500 usata = min(T500, -5.5)
@@ -330,7 +333,7 @@ def stp_env(sb_cape, sb_lcl_m, srh1, bwd06_ms, sb_cin):
     except (TypeError, ValueError):
         lcl_term = 0.0
     try:
-        cin_term = _term((200.0 + float(sb_cin)) / 150.0) \
+        cin_term = _term((CIN_TERM_OFFSET_SB + float(sb_cin)) / CIN_TERM_DIVISOR_SB) \
             if sb_cin is not None else 0.0
     except (TypeError, ValueError):
         cin_term = 0.0

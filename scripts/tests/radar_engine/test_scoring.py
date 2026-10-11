@@ -126,3 +126,17 @@ def test_no_hook_meso_rotation_terms_in_bands():
         assert "supercell" not in label.lower()
         assert "hook" not in label.lower()
         assert "meso" not in label.lower()
+
+
+def test_intensity_consistency_is_range_spread_not_std():
+    """M4: intensity_consistency = 1 - (max-min)/(ref_hi-ref_lo), NON 1-std.
+    max==min -> 1.0 ; spread == (ref_hi - ref_lo) -> 0.0."""
+    ref_lo, ref_hi = CONFIG["scoring"]["intensity_ref_dbz"]
+    flat = make_track([make_cell(12.0, 41.0, T0, max_dbz=40.0),
+                       make_cell(12.1, 41.0, T0 + 300000, max_dbz=40.0)], 1)
+    spread = make_track([make_cell(12.0, 41.0, T0, max_dbz=ref_lo),
+                         make_cell(12.1, 41.0, T0 + 300000, max_dbz=ref_hi)], 1)
+    _, _, _, c_flat = organization_score(flat)
+    _, _, _, c_spread = organization_score(spread)
+    assert c_flat["intensity_consistency"] == 1.0
+    assert c_spread["intensity_consistency"] == 0.0

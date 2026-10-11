@@ -4,10 +4,10 @@
 MeteoRisk Radar Engine — validation.run_phase17 (Fase 1.7)
 
 Esegue la validazione multiscala sui casi retrospettivi reali (GeoTIFF FUORI
-dal repo, RADAR_SAMPLES_DIR): detect -> cell tracking (layer locale Fase 1.6,
-config di produzione) -> aggregazione storm objects -> StormObjectTracker ->
-confronto CELL vs STORM OBJECT (metrics/phase17_compare) -> aggregation
-comparison (3 metodi).
+dal repo, SAMPLES_ROOT = cases.samples_root(), v. L1): detect -> cell tracking
+(layer locale Fase 1.6, config di produzione) -> aggregazione storm objects ->
+StormObjectTracker -> confronto CELL vs STORM OBJECT (metrics/phase17_compare)
+-> aggregation comparison (3 metodi).
 
 Output (data/validation/, mai raw):
     phase17_validation.json           - metriche + success criteria per caso
@@ -146,7 +146,6 @@ def _write_storm_samples(objs, tracks, out_dir):
                 if name == "storm_tracks.json"
                 else output.build_storm_objects_geojson(bundle))
         import json as _json
-        _json.dumps(text)
         with open(path, "w", encoding="utf-8") as fh:
             _json.dump(text, fh, indent=2, ensure_ascii=False)
     print(f"wrote sample storm outputs -> {out_dir}")

@@ -8,8 +8,9 @@ marcati come EXPERIMENTAL DEFAULTS (non calibrati su dataset reali): vanno
 validati retrospettivamente prima di qualunque uso operativo.
 
 Il file può essere sovrascritto parzialmente con un JSON (opzione --config /
-variabile RADAR_ENGINE_CONFIG): l'override è un merge 1-livello sui singoli
-blocchi (source, preprocess, detect, tracking, scoring, phase2, output).
+variabile RADAR_ENGINE_CONFIG): l'override è un merge RICORSIVO (i dict si
+fondono a ogni profondità; scalari/liste sostituiti) sui blocchi (source,
+preprocess, detect, tracking, storm, scoring, supercell, phase2, output).
 """
 
 import json
@@ -71,6 +72,10 @@ CONFIG = {
                                            #  = default di produzione, vedi Fase1.6)
         "prediction_gate_km": None,        # None -> = step gate da max_storm_speed
         "diagnostics": False,              # per-match diag (Mai nel dataset pubbl.)
+        # ---- Fase 1.8 (M1) — GRACE/COASTING — EXPERIMENTAL ----
+        "max_coast_frames": 0,             # 0=OFF: frame senza celle -> morte
+                                           # immediata; N>0: sopravvive N frame
+                                           # consecutivi privi di celle.
     },
     "storm": {
         # Fase 1.7 — LAYER MULTISCALA (CELL -> STORM OBJECT -> STORM SYSTEM).
@@ -115,6 +120,7 @@ CONFIG = {
             "max_storm_speed_kmh": None,    # gate fisico (None = off Fase 1.6)
             "prediction_gate_km": None,
             "diagnostics": False,
+            "max_coast_frames": 0,          # 0=OFF (M1 grace/coasting, v. tracking)
         },
         "ambiguity": {
             # metrica DIAGNOSTICA di qualità dell'identificazione (non meteo):
@@ -283,21 +289,29 @@ CONFIG = {
 }
 
 
-def merge_config(base, overrides):
-    """Merge 1-livello: overrides (dict) aggiorna i blocchi esistenti di base."""
-    merged = dict(base)
+def _deep_merge(base, overrides):
+    """Merge ricorsivo: i dict si fondono a ogni profondità, gli altri tipi
+    (scalari, liste, tuple) vengono SOSTITUITI."""
+    out = dict(base)
     for key, value in (overrides or {}).items():
-        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
-            section = dict(merged[key])
-            section.update(value)
-            merged[key] = section
+        if key in out and isinstance(out[key], dict) and isinstance(value, dict):
+            out[key] = _deep_merge(out[key], value)
         else:
-            merged[key] = value
-    return merged
+            out[key] = value
+    return out
+
+
+def merge_config(base, overrides):
+    """Merge ricorsivo: overrides (dict) si fonde su base a ogni profondità.
+
+    R3: la precedente versione 1-livello sostituiva un intero sotto-blocco non
+    nominato (es. override di 'storm.tracking' perdeva 'aggregation',
+    'ambiguity'; idem per i sotto-blocchi di 'phase2')."""
+    return _deep_merge(base, overrides)
 
 
 def load_config(path=None):
-    """Carica la configurazione con eventuale override JSON (merge 1-livello)."""
+    """Carica la configurazione con eventuale override JSON (merge ricorsivo)."""
     cfg = merge_config(CONFIG, {})
     path = path or os.environ.get("RADAR_ENGINE_CONFIG")
     if path:

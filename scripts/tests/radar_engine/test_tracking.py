@@ -150,3 +150,38 @@ def test_ambiguous_tags_not_in_json_output(tmp_path):
     d = tr.tracks[0].to_dict()
     assert d["n_frames"] == 2
     assert d["events"] == [models.EVENT_BIRTH]
+
+
+def test_coast_grace_survives_one_empty_frame_then_dies():
+    # M1: max_coast_frames=1 -> un frame vuoto non uccide la track.
+    tr = Tracker(_cfg(max_coast_frames=1), diagnostics=True)
+    tr.update([make_cell(12.0, 41.0, T0)], 0)
+    tr.update([make_cell(12.1, 41.0, T0 + 300000)], 1)
+    tr.update([], 2)                       # 1° frame vuoto -> coasting
+    track = tr.tracks[0]
+    assert track.status == models.STATUS_ACTIVE
+    assert models.EVENT_DEATH not in track.events
+    assert tr.diag[-1]["matches"][0]["assignment_status"] == "coasting"
+    tr.update([], 3)                       # 2° frame vuoto -> morte
+    assert track.status == models.STATUS_DEAD
+    assert models.EVENT_DEATH in track.events
+    assert len(track.points) == 2
+
+
+def test_coast_grace_disabled_by_default():
+    # M1: default 0 = OFF -> comportamento Fase 1 (morte immediata).
+    tr = Tracker(_cfg())
+    tr.update([make_cell(12.0, 41.0, T0)], 0)
+    tr.update([], 1)
+    assert tr.tracks[0].status == models.STATUS_DEAD
+
+
+def test_coast_grace_resets_when_reobserved():
+    tr = Tracker(_cfg(max_coast_frames=2))
+    tr.update([make_cell(12.0, 41.0, T0)], 0)
+    tr.update([], 1)                       # coast (1)
+    tr.update([make_cell(12.05, 41.0, T0 + 600000)], 2)   # riprende -> reset
+    track = tr.tracks[0]
+    assert track.status == models.STATUS_ACTIVE
+    assert len(track.points) == 2
+    assert getattr(track, "_coast_frames", 0) == 0

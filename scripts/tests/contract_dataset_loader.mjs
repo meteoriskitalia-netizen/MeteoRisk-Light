@@ -1,3 +1,8 @@
+// Questo verificatore NON è eseguibile dallo snapshot release (manca il dataset
+// baseline). Per generarlo: eseguire scripts/build_meteorisk_dataset.py con il
+// fixture (scripts/tests/gen_fixture_raw.py + fixture_raw.json) e ripristinare
+// data/_staging; in assenza esce con EXIT 1 (atteso).
+//
 // contract_dataset_loader.mjs — CONTRATTO di lettura tra data/latest e il
 // caricatore statico dell'app (1.0.0.4). Verifica in Node gli stessi access
 // path che il loader userà, così il formato JSON NON può divergere.

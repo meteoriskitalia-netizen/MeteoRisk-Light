@@ -40,7 +40,11 @@ from scipy import ndimage
 # ---------------------------------------------------------------------------
 # Costanti — EXPERIMENTAL DEFAULTS (nessuna calibrazione su casi reali)
 # ---------------------------------------------------------------------------
-HOOK_DBZ_THRESHOLD = 45.0          # soglia dBZ del core (config-override opz.)
+# R1: HOOK_DBZ_THRESHOLD rispecchia config.phase2.hook.dbz_threshold (fonte
+# unica di configurazione); main.py inietta quel valore come override a
+# compute_hook_features/hook_score_footprint. Il modulo resta AUTONOMO (nessun
+# import di package: v. docstring), quindi non legge config direttamente.
+HOOK_DBZ_THRESHOLD = 45.0          # = config.phase2.hook.dbz_threshold (45.0)
 HOOK_DBZ_MAX_REF = 60.0            # dBZ di riferimento per il termine intensita'
 HOOK_MIN_CORE_PX = 25              # core minimo (px) per un claim di uncino
 HOOK_CONNECTIVITY = np.ones((3, 3), dtype=np.uint8)  # labelling 8-connesso
@@ -345,6 +349,10 @@ def compute_hook_features(grid, mask_dbz, dbz_threshold=None):
     seg_total = float(sum(dists))
 
     # --- diagnostica: turno firmato (|somma| ~ 360 su loop semplice) ------
+    # R2: la somma |turn| (winding_deg) è DELIBERATAMENTE calcolata e mantenuta
+    # come diagnostica, ma NON è usata come feature/discriminante nello score
+    # (v. docstring punto 4: gonfiata dalla scala dei pixel, nessun valore
+    # discriminante). NON rimuovere: scelta documentata.
     winding = 0.0
     if n >= 3:
         acc = 0.0

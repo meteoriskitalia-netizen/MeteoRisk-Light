@@ -6,11 +6,11 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.3.1
+## Versione attiva: 1.2.4.1
 
-- File applicativo: `mri-light-1.2.3.1.html` (`APP_VERSION = '1.2.3.1'`, changelog
-  entry `{ version: '1.2.3.1', date: '2026-10-10' }`).
-- Contenuto della 1.2.3.1 (release sopra la 1.2.3.0):
+- File applicativo: `mri-light-1.2.4.1.html` (`APP_VERSION = '1.2.4.1'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.0', date: '2026-10-11' }`).
+- Contenuto della 1.2.4.1 (release sopra la 1.2.4.0):
   - **Formato numerico**: i valori meteo della UI passano dall'helper `fmtNum(v,d)`
     (blocco `//#pure# BEGIN numFormat`) con precisione fisica: temperatura/vento/pioggia
     1 decimale, umidita/pressione/probabilita interi; i float lunghi della pipeline IDW
@@ -41,6 +41,15 @@ Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
   - **Multifonte**: prototipo isolato adapter OPERA CIRRUS (`radar_engine/fusion/`), non attivo.
   - **Pannello LIVE**: ospita la funzione "Supercelle radar" (sub-toggle nel LIVE),
     raggiungibile anche senza fulmini.
+  - **Mappe previsionali (1.2.4.0)**: nuova sezione basata su Open-Meteo Weather Map
+    Layer (maps.open-meteo.com / openmeteo.s3.amazonaws.com, CC BY 4.0), nata al posto
+    del vecchio modulo Meteociel (dismesso); solo visualizzazione sinottica, nessun
+    impatto sui calcoli. Selettore modello/dominio (default DWD ICON EU 0.0625,
+    `dwd_icon_eu`; 11 domini), variabile e ora di previsione; selettore area
+    geografica (11 voci: 10 aree bbox predefinite + "Intero dominio"); player con
+    velocita' (Lenta/Normale/Veloce) e slider; tasto "Preload" con contatore di
+    avanzamento + warm-ahead del frame successivo; layer serviti via protocollo `om://`;
+    flag `forecastMaps` attivo di default.
 - **Limiti noti**: l'overshooting top e' un proxy IR-only (senza WV/BTD); l'adapter
   OPERA CIRRUS e' un prototipo isolato e non attivo; le soglie hail/vortex sono
   sperimentali.
@@ -51,7 +60,7 @@ Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
 ## Architettura dati
 
-Sito statico piu' quattro workflow GitHub Actions che aggiornano i dati e pubblicano su Pages:
+Sito statico piu' cinque workflow GitHub Actions che aggiornano i dati e pubblicano su Pages:
 
 | Workflow | Ruolo |
 | --- | --- |
@@ -59,6 +68,7 @@ Sito statico piu' quattro workflow GitHub Actions che aggiornano i dati e pubbli
 | `satellite-engine.yml` | ogni 5 min scarica i frame WMS EUMETSAT (6 sorgenti: 3 Europa + 3 Italia), li ri-codifica in WebP e li pubblica con force-push sul branch orfano `satellite-cache` (finestra rolling di 25 slot = 2 ore). **Niente** build/deploy Pages in questo workflow: i frame arrivano su Pages perche' radar-engine e update-weather-data la restaurano da `satellite-cache` nell'artefatto di deploy |
 | `update-weather-data.yml` | ogni 10 min: check del run ECMWF IFS + canary Best Match -> fetch Open-Meteo -> build, validazione e pubblicazione del dataset derivato in `data/latest/` (commit e deploy **solo** con nuovo dataset valido) |
 | `phenomena-verify.yml` | ogni 10 min valuta i fenomeni grandine/rotazione dai derivati radar + fulmini MLI EUMETSAT (WMS anonimo, CC-BY-4.0) e committa `data/phenomena/{events,badges}.json` su `main` (niente build/deploy: i file arrivano su Pages nell'artefatto di radar-engine e update-weather-data) |
+| `deploy-pages.yml` | deploy manuale/consolidamento: ricostruisce `_site/` con app + `data/latest`, `data/geography`, `data/radar` (incl. archivio rolling `radar-history`), `data/phenomena` e `satellite/` (finestra `satellite-cache`) e pubblica su Pages (`configure-pages` + `upload-pages-artifact@v4` + `deploy-pages@v4`, concurrency dedicata `pages-deploy` come gli altri) |
 
 - I frame satellitari sono WebP a **risoluzione invariata**: stesso slot, stesso
   orologio e stessi formati dati della codifica precedente, solo meno byte.
@@ -80,11 +90,11 @@ Verifiche di riferimento (eseguite su questa release):
 
 ```bash
 python -m pytest scripts\tests\radar_engine -q    # 167 test
-python -m pytest scripts\tests\phenomena -q       # 118 test
-python -m pytest scripts\tests -q                 # 447 test (totale)
+python -m pytest scripts\tests\phenomena -q       # 126 test
+python -m pytest scripts\tests -q                 # 460 test (totale)
 python -m py_compile scripts\satellite_engine.py  # OK
-python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 4 workflow
-node --test "scripts/tests/**/*.mjs"              # suite .mjs: 13 file, 13 PASS
+python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 5 workflow
+node --test "scripts/tests/**/*.mjs"              # suite .mjs: 15 file test_*.mjs (più contract_dataset_loader.mjs, NON eseguibile senza dataset baseline)
 ```
 
 Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
@@ -102,9 +112,9 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.3.1.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.1.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
-- `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify}.yml` — i 4 workflow
+- `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages}.yml` — i 5 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
 - `scripts/satellite_engine.py` + `scripts/satellite_engine_requirements.txt` — download
   dei frame EUMETSAT e ri-codifica WebP

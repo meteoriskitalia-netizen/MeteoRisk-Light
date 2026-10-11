@@ -1,44 +1,73 @@
-name: Deploy MeteoRisk Light to GitHub Pages
+name: Deploy Pages (manuale / consolidamento)
+
+# DEploy Pages MANUALE/CONSOLIDAMENTO. Il workflow che viveva SOLO sul remoto
+# era rotto: copiava mri-light-1.2.3.1.html (inesistente) e non includeva
+# radar/phenomena/satellite nell'artefatto. Questo file ricostruisce _site in
+# modo GENUINO replicando il deploy inline di radar-engine.yml e di
+# update-weather-data.yml (stesso ordine, stesse guardie e stessi path):
+#   - cp mri-light-1.2.4.1.html _site/index.html
+#   - data/latest, data/geography, data/radar (con restore dell'archivio
+#     rolling radar-history), data/phenomena e satellite (con restore della
+#     finestra satellite-cache).
+# Senza questi restore un deploy manuale DROPPEREBBE da Pages i dati che
+# vivono solo sui branch dedicati (radar-history / satellite-cache).
+# Trigger: solo workflow_dispatch (manuale) + repository_dispatch (esterno,
+# tipo ci-run come gli altri motori): nessuna cron, nessun download: questo
+# workflow NON tocca i motori dati, ripubblica soltanto lo stato attuale.
 
 on:
   workflow_dispatch:
+  repository_dispatch:
+    types: [ci-run]
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
+  deploy-pages:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
+    # Stesso group "pages-deploy" usato da radar-engine A LIVELLO DI JOB: i
+    # deploy dei workflow che pubblicano su Pages si serializzano tra loro
+    # (cancel-in-progress: false -> le run in coda proseguono).
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Build static site
+      # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
+      # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + satellite)
         run: |
           mkdir -p _site/data
-          cp mri-light-1.2.3.1.html _site/index.html
-          cp -R data/latest _site/data/latest
-          cp -R data/geography _site/data/geography
+          cp mri-light-1.2.4.1.html _site/index.html
+          if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
+          if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
+          if git fetch --depth 1 origin "+radar-history:refs/heads/radar-history-base" 2>/dev/null && git restore --source radar-history-base --worktree -- data/radar/history 2>/dev/null; then
+            echo "[INFO] Archivio rolling radar-history ripristinato per l'artifact."
+          fi
+          if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
+          if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
+          if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
+            echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
+          fi
+          if [ -d satellite ]; then cp -R satellite _site/satellite; fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy su GitHub Pages
+        if: success()
         id: deployment
         uses: actions/deploy-pages@v4

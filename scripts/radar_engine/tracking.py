@@ -68,7 +68,14 @@ _EPS = 1e-12
 # Geografia / distanza
 # ---------------------------------------------------------------------------
 def haversine_km(lonlat1, lonlat2):
-    """Distanza great-circle in km tra due (lon, lat)."""
+    """Distanza great-circle (geodetica) in km tra due (lon, lat).
+
+    Usa il raggio medio terrestre R=6371.0088 km ed è la convenzione DISTANZA
+    del radar engine (tracking, kinematics, storm_tracking, scoring). NON è la
+    stessa formula di `common.km_between` (equirettangolare, 111.32 km/grado),
+    usata per griglia/sampling: a ~41°N la deviazione relativa tra le due è
+    <0.5% nel range 10–200 km (v. tests/radar_engine/test_distance_consistency).
+    """
     lon1, lat1 = map(math.radians, lonlat1)
     lon2, lat2 = map(math.radians, lonlat2)
     dlon = lon2 - lon1
@@ -177,7 +184,11 @@ def match_cost_improved(features, cell, cfg):
 
     area_norm = abs(features["area_avg_km2"] - cell.area_km2) / \
         max(features["area_avg_km2"], cell.area_km2, _EPS)
-    i_ref = float(cfg.get("intensity_ref_dbz_cost", 35.0))
+    # default dalla config base (fonte unica), non un magic number
+    from . import config as _config
+    i_ref = float(cfg.get(
+        "intensity_ref_dbz_cost",
+        _config.CONFIG["tracking"]["intensity_ref_dbz_cost"]))
     int_norm = min(1.0, abs(features["dbz_avg"] - cell.max_dbz) / max(i_ref, _EPS))
     overlap = 1.0 - _circle_iou(last, features["area_avg_km2"],
                                  cell.centroid_lonlat, cell.area_km2)
@@ -275,7 +286,14 @@ class Tracker:
 
     # -----------------------------------------------------------------------
     def update(self, cells, frame_index):
-        """Frame corrente (celle rilevate) -> aggiorna le track attive."""
+        """Frame corrente (celle rilevate) -> aggiorna le track attive.
+
+        Coasting (grace): config `max_coast_frames`, default 0 = OFF. Con il
+        default una track attiva muore al primo frame senza celle assegnabili
+        (comportamento Fase 1 invariato). Con un valore N>0 una track attiva
+        sopravvive fino a N frame consecutivi privi di celle (riga diagnostica
+        assignment_status='coasting'); se una cella torna assegnabile la track
+        la riprende e il contatore si azzera."""
         active = [t for t in self.tracks if t.status == models.STATUS_ACTIVE]
         if not active or not cells:
             rows = []
@@ -284,7 +302,16 @@ class Tracker:
                 rows.append({"track_id": self._next_track_id - 1,
                              "prev_cell_id": None, "current_cell_id": cell.cell_id,
                              "assignment_status": "new_track"})
+            max_coast = int(self.cfg.get("max_coast_frames", 0) or 0)
             for t in active:
+                if not cells and max_coast > 0 and \
+                        getattr(t, "_coast_frames", 0) < max_coast:
+                    t._coast_frames = getattr(t, "_coast_frames", 0) + 1
+                    rows.append({"track_id": t.track_id,
+                                 "prev_cell_id": t.points[-1].cell_id,
+                                 "current_cell_id": None,
+                                 "assignment_status": "coasting"})
+                    continue
                 t.status = models.STATUS_DEAD
                 t.death_ms = t.points[-1].timestamp_ms
                 t.events.append(models.EVENT_DEATH)
@@ -359,6 +386,7 @@ class Tracker:
             cell = cells[ci]
             track = active[ti]
             track.points.append(models.TrackPoint(track.track_id, frame_index, cell))
+            track._coast_frames = 0
             if ti in amb_rows or ci in amb_cols:
                 track.events.append(models.EVENT_AMBIGUOUS)
 
