@@ -3,19 +3,33 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 # MeteoRisk forecast-maps-v2 — MOTORE server-side delle "Mappe previsionali V2".
 #   - Fonti: file spaziali Open-Meteo su S3 anonimo
 #     (data_spatial/<dominio>/.../<valid_time>.om + latest.json come indice).
-#   - Motore: scripts/forecast_v2/forecast_v2_engine.py -> data/fm2/*.om +
-#     data/fm2/latest.json (crop Italia multi-variabile, NO-OP GUARD, orizzonte
-#     INTERO del manifest primario: --valid-frames 0, nessun cap sul prune).
-#     Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
+#   - Motore: scripts/forecast_v2/forecast_v2_engine.py -> data/fm2/<dominio>/*.om
+#     + data/fm2/<dominio>/latest.json (crop Italia multi-variabile, NO-OP GUARD,
+#     orizzonte INTERO del manifest del dominio: --valid-frames 0, nessun cap sul
+#     prune). Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
+#   - MULTI-DOMINIO = MATRIX (strategia scelta): UN JOB PER DOMINIO
+#     (matrix.domain, 10 domini GEOGCRS). Motivo: i domini globali pubblicano
+#     ~200 frame ciascuno (es. ncep_gfs025 209): un unico job seriale (timeout 20')
+#     sforerebbe. Il matrix isola i fallimenti (un dominio KO non uccide gli altri,
+#     fail-fast:false), parallelizza i download e riduce la pressione su S3.
+#     Il rischio e' la collisione di push concorrenti sullo stesso branch:
+#     mitigato con concurrency PER-DOMINIO (forecast-maps-v2-<dominio>,
+#     cancel-in-progress:false), commit selettivo sul path data/fm2/<dominio> e push
+#     con retry `git pull --rebase --autostash` (i path sono disgiunti per dominio:
+#     nessun conflitto di contenuto, il rebase riallinea solo la history).
+#   - chmi_aladin_central_europe_2km NON e' nella matrice: il suo CRS e' PROJCRS
+#     (Lambert), il motore lo salterebbe con `SKIP dominio ... (PROJCRS/Lambert)`
+#     e un job con SOLO domini skip uscirebbe 1 (nessun dominio ok). Restano i 10
+#     domini GEOGCRS.
 #   - EGRESS: i frame full-size S3 sono tenuti in cache GitHub
-#     (.cache_fm2_frames, actions/cache) e riusati tra run via --frames-cache:
-#     si scaricano solo i frame nuovi, non l'intera finestra ogni volta.
-#   - Commit SOLO se data/fm2 cambia (nessun churn a manifest invariato).
+#     (.cache_fm2_frames/<dominio>/<VALID>.om, actions/cache) e riusati tra run via
+#     --frames-cache: si scaricano solo i frame nuovi. Cache PER-DOMINIO
+#     (key fm2-frames-<dominio>-<run_number> + restore-keys fm2-frames-<dominio>-).
+#   - Commit SOLO se data/fm2/<dominio> cambia (nessun churn a manifest invariato).
 #   - Il deploy Pages NON e' toccato qui: data/fm2 arriva su Pages tramite la
 #     build _site di deploy-pages / update-weather-data / radar-engine
-#     (cp -R data/fm2), come per data/phenomena.
-#   - group di concorrenza PROPRIO "forecast-maps-v2" (cancel-in-progress:false):
-#     le run si serializzano tra loro senza bloccare/degradare i deploy Pages.
+#     (cp -R data/fm2: ricorsivo, copre la struttura per-dominio), come per
+#     data/phenomena.
 
 on:
   schedule:
@@ -35,9 +49,29 @@ permissions:
 jobs:
   engine:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Un job per dominio (10 domini GEOGCRS). Ogni job e' autonomo e parallelo:
+    # il fallimento/timeout di un dominio non ferma gli altri (fail-fast:false).
+    # timeout per-job alzato (20' -> 60') per coprire i domini globali con ~200
+    # frame al primo run a cache fredda; a cache calda il run e' molto piu' corto.
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        domain:
+          - dwd_icon_eu
+          - ecmwf_ifs025
+          - dwd_icon
+          - dwd_icon_d2
+          - italia_meteo_arpae_icon_2i
+          - ncep_gfs025
+          - meteofrance_arpege_world025
+          - ukmo_global_deterministic_10km
+          - jma_gsm
+          - cma_grapes_global
     concurrency:
-      group: forecast-maps-v2
+      # Group PER-DOMINIO: le run dello stesso dominio si serializzano tra loro,
+      # ma domini diversi procedono in parallelo senza degradare i deploy Pages.
+      group: forecast-maps-v2-${{ matrix.domain }}
       cancel-in-progress: false
     steps:
       - name: Checkout
@@ -55,20 +89,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r scripts/forecast_v2/requirements.txt
 
-      # Cache PERSISTENTE dei frame Open-Meteo full-size scaricati dall'S3
-      # (.cache_fm2_frames/<dominio>/<VALID>.om). Chiave nuova ad ogni run
-      # (github.run_number) + restore-keys col prefisso "fm2-frames-": il job
-      # ripristina l'ultima cache disponibile (politica LRU di GitHub, 10 GB per
-      # repo) e la risalva aggiornata a fine run. Il motore riusa i frame gia'
-      # presenti (verifica Content-Length via HEAD) e scarica SOLO i nuovi,
-      # riducendo l'egress S3 da ~800 MB/run a ~40 MB/ciclo.
+      # Cache PERSISTENTE PER-DOMINIO dei frame Open-Meteo full-size scaricati
+      # dall'S3 (.cache_fm2_frames/<dominio>/<VALID>.om). Chiave nuova ad ogni run
+      # (github.run_number) + restore-keys col prefisso "fm2-frames-<dominio>-":
+      # il job ripristina l'ultima cache disponibile per QUEL dominio (politica LRU
+      # di GitHub, 10 GB per repo) e la risalva aggiornata a fine run. Il motore
+      # riusa i frame gia' presenti (verifica Content-Length via HEAD) e scarica
+      # SOLO i nuovi, riducendo l'egress S3.
       - name: Cache frame Open-Meteo (.om)
         uses: actions/cache@v4
         with:
           path: .cache_fm2_frames
-          key: fm2-frames-${{ github.run_number }}
+          key: fm2-frames-${{ matrix.domain }}-${{ github.run_number }}
           restore-keys: |
-            fm2-frames-
+            fm2-frames-${{ matrix.domain }}-
 
       - name: Build cache mappe previsionali V2
         id: engine
@@ -78,7 +112,7 @@ jobs:
             FORCE="--force"
           fi
           python scripts/forecast_v2/forecast_v2_engine.py \
-            --domains dwd_icon_eu ecmwf_ifs025 \
+            --domains ${{ matrix.domain }} \
             --valid-frames 0 \
             --out data/fm2 \
             --frames-cache .cache_fm2_frames \
@@ -90,10 +124,12 @@ jobs:
           {
             echo "## MeteoRisk — Forecast Maps V2"
             echo ""
-            if [ -f data/fm2/latest.json ]; then
-              python -c "import json; d=json.load(open('data/fm2/latest.json')); f=d.get('frames',[]); print('reference_time:', d.get('reference_time')); print('frame:', len(f), '— valid_times:', len(d.get('valid_times', []))); print('byte totali:', sum(x.get('bytes',0) for x in f)); print('domini:', d.get('domains')); print('warning:', len(d.get('warnings', []))); print('pruned:', d.get('pruned'))"
+            echo "Dominio: \`${{ matrix.domain }}\`"
+            echo ""
+            if [ -f data/fm2/${{ matrix.domain }}/latest.json ]; then
+              python -c "import json; d=json.load(open('data/fm2/${{ matrix.domain }}/latest.json')); f=d.get('frames',[]); print('reference_time:', d.get('reference_time')); print('frame:', len(f), '— valid_times:', len(d.get('valid_times', []))); print('byte totali:', sum(x.get('bytes',0) for x in f)); print('dominio:', d.get('domain')); print('warning:', len(d.get('warnings', []))); print('pruned:', d.get('pruned'))"
             else
-              echo "latest.json non disponibile (run fallita prima del motore?)."
+              echo "latest.json non disponibile per il dominio '${{ matrix.domain }}' (run fallita prima del motore?)."
             fi
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
@@ -103,17 +139,20 @@ jobs:
         run: |
           git config user.name "meteorisk-bot"
           git config user.email "actions@users.noreply.github.com"
-          if [ ! -d data/fm2 ]; then
-            echo "[INFO] Nessun output forecast_v2: niente da committare."
+          if [ ! -d "data/fm2/${{ matrix.domain }}" ]; then
+            echo "[INFO] Nessun output per il dominio '${{ matrix.domain }}': niente da committare."
             exit 0
           fi
-          git add data/fm2
+          git add -A "data/fm2/${{ matrix.domain }}"
           if git diff --cached --quiet; then
-            echo "[INFO] Nessuna modifica a data/fm2 (NO-OP)."
+            echo "[INFO] Nessuna modifica a data/fm2/${{ matrix.domain }} (NO-OP)."
             exit 0
           fi
-          git commit -m "chore(fm2): aggiornamento cache mappe previsionali V2 (.om crop Italia)"
-          # Retry: altri workflow pushano su main -> race possibile.
+          git commit -m "chore(fm2): aggiornamento cache dominio ${{ matrix.domain }} (.om crop Italia)"
+          # Retry: gli altri job matrix pushano sullo stesso main -> race possibile.
+          # `git pull --rebase --autostash`: i path sono disgiunti per dominio, quindi
+          # il rebase riallinea la history senza conflitti di contenuto; --autostash
+          # protegge eventuali modifiche non committate durante il pull.
           push_ok=0
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin main && git push origin main; then

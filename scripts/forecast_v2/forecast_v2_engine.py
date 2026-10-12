@@ -3,60 +3,66 @@
 """
 forecast_v2_engine.py — MeteoRisk "Mappe previsionali V2" (ENGINE-ONLY, server).
 
-Motore che costruisce in GitHub Actions una CACHE GITHUB di mappe previsionali:
-per ogni istante di previsione produce UN file `.om` multi-variabile croppato
-sull'Italia, leggibile dal reader WML 0.2.2 (stesso formato del POC
-`spike_omfiles/`, verificato bit-exact).
+Motore che costruisce in GitHub Actions una CACHE GITHUB di mappe previsionali
+MULTI-DOMINIO: per ogni dominio richiesto e per ogni istante di previsione
+produce UN file `.om` multi-variabile croppato sull'Italia, leggibile dal reader
+WML 0.2.2 (stesso formato del POC `spike_omfiles/`, verificato bit-exact).
 
     python scripts/forecast_v2/forecast_v2_engine.py \
-        [--domains dwd_icon_eu ecmwf_ifs025] [--valid-frames 0] \
+        [--domains dwd_icon_eu ecmwf_ifs025 ...] [--valid-frames 0] \
         [--out data/fm2] [--once] [--no-prune] [--dry-run] [--force] \
         [--frames-cache .cache_fm2_frames]
 
-    --valid-frames 0 (default) o negativo = pubblica l'INTERO orizzonte del
-    manifest primario (tutti i valid_times). N > 0 = primi N frame.
+    --valid-frames 0 (default) o negativo = pubblica l'INTERO orizzonte di ogni
+    dominio (tutti i valid_times del rispettivo manifest). N > 0 = primi N frame.
 
 Dati sorgente (Open-Meteo "spatial" files, accesso S3 anonimo):
     https://openmeteo.s3.amazonaws.com/data_spatial/<dominio>/<YYYY>/<MM>/<DD>/<HH00Z>/<YYYY-MM-DDTHH00.om
     https://openmeteo.s3.amazonaws.com/data_spatial/<dominio>/latest.json   (manifest)
 
-Disegno (V1 del motore, scelte DICHIARATE):
-  - GRIGLIA UNICA: il crop e' calcolato sulla griglia del dominio PRIMARIO
-    (V2_DOMAINS[0] = dwd_icon_eu). Tutte le variabili pubblicate condividono la
-    stessa scatola (grid del crop nel manifest), cosi' il client legge con un
-    solo set di range.
-  - MULTI-DOMINIO: per ogni variabile si prende il PRIMO dominio (in ordine
-    V2_DOMAINS) che la contiene *nel file di quell'istante*. Le variabili non
-    presenti nel primario vengono cercate nel secondario e RI-CAMPIONATE sulla
-    griglia del primario con nearest-neighbor sui centri-cella (nessuna
-    interpolazione: solo nearest, documentato). Questo e' esatto per celle
-    allineate e approssimato altrove (il secondario ha risoluzione diversa).
-  - Il manifest `latest.json` di un dominio elenca un SUPERSET delle variabili:
-    alcune (accumuli/flussi, es. precipitation/rain/showers/weather_code/
-    wind_gusts_10m) NON esistono nel frame di analisi (valid_time ==
-    reference_time) e compaiono solo ai passi successivi -> la presenza reale
-    viene rilevata PER-FILE dai child del `.om` scaricato, non dal manifest.
-  - DERIVATE lato server quando manca la sorgente diretta:
-        wind_speed_10m      = sqrt(u^2 + v^2)
-        wind_direction_10m  = (atan2(-u, -v) in gradi, 0..360)  [direzione "da"]
-        dew_point_2m        = Magnus(T2m, RH2m)
-    (surface_pressure non e' derivabile senza quota: se assente in tutti i
-    domini viene OMESSA con warning.)
-  - NO-OP GUARD: se il manifest esistente ha reference_time e valid_times
-    identici ai nuovi (e non --force), esce 0 SENZA scaricare/riscrivere nulla
-    (evita ~144 commit/giorno inutili, come phenomena-verify).
-  - ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest primario
+Disegno (V2 del motore, scelte DICHIARATE):
+  - MULTI-DOMINIO INDIPENDENTE: ogni dominio elencato in `--domains` e' trattato
+    in modo AUTONOMO (fine del paradigma primario+secondario). Ogni dominio
+    produce la PROPRIA cache, sulla PROPRIA griglia, nel proprio sottodirectory
+    `data/fm2/<dominio>/`, con il proprio `latest.json`. Un dominio non fornisce
+    mai frame a un altro.
+  - RICONOSCIMENTO CRS: dal `crs_wkt` del manifest (e del frame) si riconosce il
+    sistema di riferimento. Se NON inizia per `GEOGCRS` (es. il `PROJCRS`
+    Lambert del `chmi_aladin_central_europe_2km`) il dominio viene SKIPPATO con
+    log esplicito `SKIP dominio '<d>': griglia proiettata non supportata
+    (PROJCRS/Lambert)` e la run prosegue con gli altri.
+  - GRIGLIA DERIVATA: `latMin/lonMin/latMax/lonMax` vengono letti dal `BBOX[...]`
+    del `crs_wkt` (regex); `nx,ny` dal `.shape == (ny,nx)` del PRIMO frame `.om`
+    del dominio (via `OmFileReader`, stesso `fetch_frame` -> va in frames-cache).
+    Poi `dx=(lonMax-lonMin)/(nx-1)`, `dy=(latMax-latMin)/(ny-1)`. Il dict griglia
+    e' memorizzato in una cache per-run. La tabella `GRIDS` resta solo come
+    FALLBACK (dry-run, dove il frame non si scarica) e come GUARDIA di coerenza:
+    se i dx/dy derivati si scostano >1% dai valori noti (e il dominio e' in
+    GRIDS) si logga un warning ma si USANO i valori derivati.
+  - CROP ITALIA: bbox (36.5, 6.5, 47.2, 18.6) applicato alla griglia del dominio
+    corrente tramite `bbox_to_indices`/`target_latlon` (generici).
+  - ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest del dominio
     (nessuna troncatura a un numero fisso di frame). --valid-frames 0/negativo
     (default) = intero orizzonte; N > 0 = primi N.
-  - PRUNING: in `--out` resta ESATTAMENTE la finestra corrente (le ancore
-    `valid_times` pubblicate in questo run); ogni `.om` estraneo (reference_time
-    precedenti) viene rimosso. `V2_MAX_FRAMES` e' un cap OPZIONALE di sicurezza
-    del pruning (0 default = nessun cap): non tronca mai l'orizzonte pubblicato.
+  - VARIABILI: lista UNICA `V2_RISK_VARS` (27) per tutti i domini. Nessun set
+    per-dominio: la presenza reale e' decisa FILE-PER-FILE dai child del `.om`.
+    Le derivate (wind_speed_10m, wind_direction_10m, dew_point_2m) sono calcolate
+    solo se la sorgente diretta manca; `surface_pressure` non e' derivabile senza
+    quota e se assente viene OMESSA con warning.
+  - NO-OP GUARD PER-DOMINIO: se `data/fm2/<dominio>/latest.json` esiste con lo
+    stesso `reference_time` e gli stessi `valid_times` (e non --force) il dominio
+    viene saltato SENZA scaricare/riscrivere (evita commit inutili).
+  - PRUNING PER-DOMINIO: in `data/fm2/<dominio>/` resta ESATTAMENTE la finestra
+    corrente (le ancore `valid_times` pubblicate in questo run); ogni `.om`
+    estraneo (reference_time precedenti) viene rimosso. `V2_MAX_FRAMES` e' un cap
+    OPZIONALE di sicurezza del pruning (0 default = nessun cap).
   - FRAMES-CACHE (--frames-cache): cache PERSISTENTE dei frame `.om` full-size
     (ripristinata in CI via actions/cache), layout `<dir>/<dominio>/<VALID>.om`.
     Un frame in cache viene riusato SENZA download se la sua Content-Length
-    combacia con quella remota (HEAD leggero; fallback: size locale). Riduce
-    l'egress CI riusando i frame gia' scaricati tra run consecutive.
+    combacia con quella remota (HEAD leggero; fallback: size locale).
+  - EXIT: se TUTTI i domini falliscono -> exit 1. Se almeno UN dominio e' `ok`
+    (anche solo NO-OP) -> exit 0, con summary esplicito `ok`/`skip`/`fail` (il
+    workflow deve poter committare la cache dei domini riusciti).
   - Scrittura ATOMICA (.tmp -> os.replace) e nessun segreto: l'accesso S3 e'
     anonimo. Nessuna dipendenza oltre `omfiles` e `numpy`.
 
@@ -73,6 +79,7 @@ import datetime as _dt
 import json
 import math
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -99,7 +106,7 @@ S3_BASE = "https://openmeteo.s3.amazonaws.com/data_spatial"
 # (lat_min, lon_min, lat_max, lon_max) — bbox Italia.
 V2_BBOX = (36.5, 6.5, 47.2, 18.6)
 
-# Dominio primario PRIMO (definisce la griglia del crop), poi i secondari.
+# Domini di default (MULTI-DOMINIO INDIPENDENTE: nessun ordine di priorita').
 V2_DOMAINS = ["dwd_icon_eu", "ecmwf_ifs025"]
 
 # Lista ORDINATA delle variabili di rischio desiderate, con sinonimi/forme.
@@ -137,16 +144,11 @@ V2_RISK_VARS = [
 ]
 
 # Cap OPZIONALE di sicurezza del pruning (numero massimo di frame `.om`
-# mantenuti in --out). 0 = NESSUN CAP: si mantiene l'orizzonte INTERO del
-# manifest primario (tutti i valid_times). Il pruning "vero" rimuove comunque
-# ogni frame estraneo alla finestra corrente (`keep_files` = ancore pubblicate);
-# questo cap scatta solo se `keep_files > max_frames`. Con 0 NON tronca mai
-# l'orizzonte richiesto. E' anche il default di --valid-frames (0 = intero).
+# mantenuti in una dir di dominio). 0 = NESSUN CAP: si mantiene l'orizzonte
+# INTERO del manifest (tutti i valid_times). E' anche il default di
+# --valid-frames (0 = intero).
 V2_MAX_FRAMES = 0
 V2_OUT = "data/fm2"
-
-# Tolleranza (ore) per agganciare il valid_time del secondario all'ancora.
-V2_SECONDARY_MAX_DT_HOURS = 3
 
 # Fattori di scala usati SOLO per le variabili derivate (le altre ereditano il
 # scale_factor originale del file sorgente). Convenzione Open-Meteo:
@@ -162,12 +164,30 @@ DEFAULT_SCALE = 1.0
 DEFAULT_CHUNKS = [32, 32]
 DEFAULT_COMPRESSION = "pfor_delta_2d_int16"
 
-# Griglie (RegularGridFromOrigin): origine a cella (lonMin/latMin) + passo.
+# Prefisso WKT dei CRS geografici supportati. Tutto cio' che non inizia per
+# GEOGCRS (es. PROJCRS/Lambert) viene SKIPPATO.
+GEOGRAPHIC_CRS_PREFIX = "GEOGCRS"
+
+# Regex del BBOX nel WKT (ordine WKT: [latMin, lonMin, latMax, lonMax]).
+_BBOX_RE = re.compile(
+    r"BBOX\s*\[\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*,\s*"
+    r"([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*\]")
+
+# Tabella delle griglie NOTE dei 10 domini GEOGCRS. NON e' la fonte unica:
+# la griglia di run e' DERIVATA da crs_wkt (BBOX) + shape del frame. Questa
+# tabella serve SOLO come (a) FALLBACK nel --dry-run (dove il frame non si
+# scarica, quindi nx/ny non e' derivabile) e (b) GUARDIA di coerenza sui dx/dy.
 GRIDS = {
-    "dwd_icon_eu": {"nx": 1377, "ny": 657, "lonMin": -23.5, "latMin": 29.5,
-                    "dx": 0.0625, "dy": 0.0625},
-    "ecmwf_ifs025": {"nx": 1440, "ny": 721, "lonMin": -180.0, "latMin": -90.0,
-                     "dx": 0.25, "dy": 0.25},
+    "dwd_icon_eu":                  {"nx": 1377, "ny": 657,  "dx": 0.0625,   "dy": 0.0625},
+    "ecmwf_ifs025":                 {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
+    "ncep_gfs025":                  {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
+    "dwd_icon":                     {"nx": 2879, "ny": 1441, "dx": 0.125,    "dy": 0.125},
+    "meteofrance_arpege_world025":  {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
+    "ukmo_global_deterministic_10km": {"nx": 2560, "ny": 1920, "dx": 0.140625, "dy": 0.09375},
+    "jma_gsm":                      {"nx": 720,  "ny": 361,  "dx": 0.5,      "dy": 0.5},
+    "cma_grapes_global":            {"nx": 2880, "ny": 1440, "dx": 0.125,    "dy": 0.125},
+    "dwd_icon_d2":                  {"nx": 1215, "ny": 746,  "dx": 0.02,     "dy": 0.02},
+    "italia_meteo_arpae_icon_2i":   {"nx": 761,  "ny": 761,  "dx": 0.025,    "dy": 0.02},
 }
 
 
@@ -175,7 +195,7 @@ GRIDS = {
 # Utility I/O di rete
 # ---------------------------------------------------------------------------
 def _urlopen(url, timeout=60):
-    req = urllib.request.Request(url, headers={"User-Agent": "MeteoRisk-Light/1.2.4.2"})
+    req = urllib.request.Request(url, headers={"User-Agent": "MeteoRisk/1.2.5 multi-domain"})
     return urllib.request.urlopen(req, timeout=timeout)
 
 
@@ -226,7 +246,7 @@ def http_content_length(url, timeout=30):
     try:
         req = urllib.request.Request(
             url, method="HEAD",
-            headers={"User-Agent": "MeteoRisk-Light/1.2.4.2"})
+            headers={"User-Agent": "MeteoRisk/1.2.5 multi-domain"})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             cl = r.headers.get("Content-Length")
             return int(cl) if cl is not None else None
@@ -301,13 +321,79 @@ def s3_manifest_url(domain):
 
 
 # ---------------------------------------------------------------------------
-# Griglie e crop
+# Griglie e crop (derivazione da crs_wkt + frame; GRIDS solo fallback/guardia)
 # ---------------------------------------------------------------------------
-def grid_for(domain):
-    """Ritorna la griglia (dict) del dominio; KeyError se ignoto."""
-    if domain not in GRIDS:
-        raise KeyError("grid sconosciuta per dominio '%s'" % domain)
-    return dict(GRIDS[domain])
+def is_geographic_crs(crs_wkt):
+    """True se il CRS e' geografico (WKT GEOGCRS...). PROJCRS/Lambert -> False."""
+    return (crs_wkt or "").lstrip().upper().startswith(GEOGRAPHIC_CRS_PREFIX)
+
+
+def crs_kind(crs_wkt):
+    """Etichetta leggibile del tipo di CRS (per log/report SKIP)."""
+    head = (crs_wkt or "").lstrip().split("[", 1)[0].strip()
+    return head or "(assente)"
+
+
+def parse_bbox(crs_wkt):
+    """Estrae (latMin, lonMin, latMax, lonMax) dal `BBOX[...]` del WKT."""
+    m = _BBOX_RE.search(crs_wkt or "")
+    if not m:
+        return None
+    lat_min, lon_min, lat_max, lon_max = (float(x) for x in m.groups())
+    return lat_min, lon_min, lat_max, lon_max
+
+
+def derive_grid(crs_wkt, nx, ny):
+    """Griglia RegularGridFromOrigin derivata da crs_wkt (BBOX) + nx/ny (shape).
+
+    Ritorna il dict {nx,ny,lonMin,latMin,dx,dy} oppure None se BBOX assente o
+    dimensioni non valide.
+    """
+    bbox = parse_bbox(crs_wkt)
+    if bbox is None:
+        return None
+    lat_min, lon_min, lat_max, lon_max = bbox
+    if nx is None or ny is None or int(nx) < 2 or int(ny) < 2:
+        return None
+    nx, ny = int(nx), int(ny)
+    dx = (lon_max - lon_min) / (nx - 1)
+    dy = (lat_max - lat_min) / (ny - 1)
+    return {"nx": nx, "ny": ny, "lonMin": lon_min, "latMin": lat_min,
+            "dx": dx, "dy": dy}
+
+
+def grid_guard(domain, grid):
+    """Confronta la griglia derivata con quella nota (GRIDS). Ritorna warning.
+
+    Se il dominio NON e' in GRIDS non c'e' nulla da confrontare (nessun log).
+    Scarto > 1% su dx/dy -> warning, ma il chiamante usa comunque i derivati.
+    """
+    known = GRIDS.get(domain)
+    if not known:
+        return []
+    msgs = []
+    for key in ("dx", "dy"):
+        kv = known.get(key)
+        gv = grid.get(key)
+        if kv and gv and abs(gv - kv) / kv > 0.01:
+            msgs.append("griglia derivata %s=%.6g != noto %.6g (>1%%): uso derivato"
+                        % (key, gv, kv))
+    return msgs
+
+
+def frame_shape(path):
+    """(ny, nx) dal PRIMO child array del frame `.om` (o None)."""
+    reader = OmFileReader.from_path(path)
+    try:
+        for i in range(reader.num_children):
+            c = reader.get_child_by_index(i)
+            if not c.is_scalar:
+                shp = getattr(c, "shape", None)
+                if shp is not None and len(shp) == 2:
+                    return int(shp[0]), int(shp[1])
+        return None
+    finally:
+        reader.close()
 
 
 def bbox_to_indices(grid, bbox):
@@ -356,9 +442,9 @@ def nearest_indices(grid, lats, lons):
 def read_and_resample(reader, name, src_grid, tgt_lats, tgt_lons):
     """Legge `name` dal reader e lo porta sulla griglia target (nearest).
 
-    Per la griglia del primario il risultato e' il crop esatto (nearest = identita'
-    perche' le due griglie coincidono e i centri sono allineati). Per griglie
-    diverse e' un nearest-neighbor sui centri-cella del target.
+    Nel multi-dominio indipendente la griglia target E' la griglia del dominio
+    stesso (crop Italia): nearest = identita' perche' i centri-cella del target
+    coincidono con quelli della sorgente, quindi il risultato e' il crop esatto.
     """
     jj, ii = nearest_indices(src_grid, tgt_lats, tgt_lons)
     jmin, jmax = int(jj.min()), int(jj.max())
@@ -413,7 +499,7 @@ def derive_dew_point(t2m, rh):
 
 
 # ---------------------------------------------------------------------------
-# Risoluzione variabili per frame
+# Risoluzione variabili per frame (multi-dominio INDIPENDENTE, no secondario)
 # ---------------------------------------------------------------------------
 def resolve_direct(risk, child_names):
     """Primo candidato presente nei child; ritorna nome sorgente o None."""
@@ -423,61 +509,47 @@ def resolve_direct(risk, child_names):
     return None
 
 
-def resolve_frame(primary_reader, primary_grid, secondary_reader, secondary_grid,
-                  risk_vars, tgt_lats, tgt_lons, idx):
-    """Costruisce gli array di output del frame + metadati di provenienza.
+def resolve_domain_frame(reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domain):
+    """Costruisce gli array di output del frame del dominio + metadati.
 
     Ritorna (arrays, variables_meta, warnings). `arrays` e' dict
-    nome_pubblicato -> np.float32 crop.
+    nome_pubblicato -> np.float32 crop. Nessun dominio secondario: la griglia
+    sorgente E' la griglia del dominio (il crop e' esatto).
     """
     arrays = {}
     meta = {}
     warnings = []
 
-    primary_names = array_child_names(primary_reader)
-    primary_crop = {}
+    names = array_child_names(reader)
 
-    # 1) risoluzione diretta dal primario
+    # 1) risoluzione diretta (file-per-file) dalla griglia del dominio
     for rv in risk_vars:
-        src = resolve_direct(rv, primary_names)
+        src = resolve_direct(rv, names)
         if src is None:
             continue
-        primary_crop[rv["name"]] = read_and_resample(
-            primary_reader, src, primary_grid, tgt_lats, tgt_lons)
-        meta[rv["name"]] = {"source_domain": "primary", "source_var": src, "derived": False}
+        arrays[rv["name"]] = read_and_resample(
+            reader, src, grid, tgt_lats, tgt_lons)
+        meta[rv["name"]] = {"source_domain": domain, "source_var": src,
+                            "derived": False}
 
-    # 2) risoluzione dal secondario per le variabili dirette mancanti
-    if secondary_reader is not None:
-        sec_names = array_child_names(secondary_reader)
-        for rv in risk_vars:
-            if rv["name"] in meta:
-                continue
-            src = resolve_direct(rv, sec_names)
-            if src is None:
-                continue
-            arrays[rv["name"]] = read_and_resample(
-                secondary_reader, src, secondary_grid, tgt_lats, tgt_lons)
-            meta[rv["name"]] = {"source_domain": "secondary",
-                                "source_var": src, "derived": False}
-
-    arrays.update(primary_crop)
-
-    # 3) derivate: vento
+    # 2) derivate: vento
     u = arrays.get("wind_u_component_10m")
     v = arrays.get("wind_v_component_10m")
     if u is not None and v is not None:
         if "wind_speed_10m" not in arrays:
             arrays["wind_speed_10m"] = derive_wind_speed(u, v)
-            meta["wind_speed_10m"] = {"source_domain": "derived",
-                                      "source_var": "wind_u_component_10m+wind_v_component_10m",
-                                      "derived": True}
+            meta["wind_speed_10m"] = {
+                "source_domain": "derived",
+                "source_var": "wind_u_component_10m+wind_v_component_10m",
+                "derived": True}
         if "wind_direction_10m" not in arrays:
             arrays["wind_direction_10m"] = derive_wind_direction(u, v)
-            meta["wind_direction_10m"] = {"source_domain": "derived",
-                                          "source_var": "wind_u_component_10m+wind_v_component_10m",
-                                          "derived": True}
+            meta["wind_direction_10m"] = {
+                "source_domain": "derived",
+                "source_var": "wind_u_component_10m+wind_v_component_10m",
+                "derived": True}
 
-    # 3b) derivate: dew point
+    # 2b) derivate: dew point
     t2m = arrays.get("temperature_2m")
     rh = arrays.get("relative_humidity_2m")
     if "dew_point_2m" not in arrays and t2m is not None and rh is not None:
@@ -486,11 +558,11 @@ def resolve_frame(primary_reader, primary_grid, secondary_reader, secondary_grid
                                 "source_var": "temperature_2m+relative_humidity_2m",
                                 "derived": True}
 
-    # 4) variabili richieste ma irrisolte -> warning
+    # 3) variabili richieste ma irrisolte -> warning
     for rv in risk_vars:
         if rv["name"] not in arrays:
-            warnings.append("variabile '%s' assente in tutti i domini (%s): omessa"
-                            % (rv["name"], ",".join(rv["sources"])))
+            warnings.append("variabile '%s' assente nel dominio '%s' (%s): omessa"
+                            % (rv["name"], domain, ",".join(rv["sources"])))
 
     return arrays, meta, warnings
 
@@ -508,7 +580,12 @@ def write_frame_om(path, ordered, arrays, scales, crs_wkt, coordinates,
         if name not in arrays:
             continue
         arr = np.ascontiguousarray(np.asarray(arrays[name], dtype=np.float32))
-        c = w.write_array(arr, chunks=DEFAULT_CHUNKS,
+        # I domini a griglia grossa producono crop piccoli (es. jma_gsm 25x22):
+        # il chunk non puo' eccedere la dimensione dell'array, quindi lo si
+        # clampa al minimo tra DEFAULT_CHUNKS e la shape effettiva.
+        chunks = [min(DEFAULT_CHUNKS[0], int(arr.shape[0])),
+                  min(DEFAULT_CHUNKS[1], int(arr.shape[1]))]
+        c = w.write_array(arr, chunks=chunks,
                           scale_factor=float(scales.get(name, DEFAULT_SCALE)),
                           add_offset=0.0, compression=DEFAULT_COMPRESSION, name=name)
         children.append(c)
@@ -535,13 +612,10 @@ def prune_frames(out_dir, keep_files, max_frames):
 
     `keep_files` e' l'insieme dei frame pubblicati in questo run (= le ancore
     `valid_times`). Qualsiasi altro `.om` rimasto da run precedenti (reference
-    time piu' vecchi) viene rimosso: cosi' la cache contiene ESATTAMENTE la
-    finestra corrente e non si cancella mai un frame appena scritto (che sarebbe
-    possibile con un semplice "tieni i max_frames nomi piu' grandi", dato che le
-    ancore sono i valid_times PIU' PROSSIMI al reference, non i piu' lontani).
-    Cap OPZIONALE di sicurezza: se `max_frames > 0` e `keep_files` lo supera,
-    tiene i piu' recenti per nome; `max_frames <= 0` = NESSUN cap (mantiene
-    l'orizzonte intero).
+    time piu' vecchi) viene rimosso: cosi' la cache del dominio contiene
+    ESATTAMENTE la finestra corrente e non si cancella mai un frame appena
+    scritto. Cap OPZIONALE di sicurezza: se `max_frames > 0` e `keep_files` lo
+    supera, tiene i piu' recenti per nome; `max_frames <= 0` = NESSUN cap.
     """
     keep = set(keep_files)
     all_files = sorted([f for f in os.listdir(out_dir) if f.endswith(".om")])
@@ -568,7 +642,7 @@ def prune_frames(out_dir, keep_files, max_frames):
 
 
 # ---------------------------------------------------------------------------
-# Pianificazione
+# Pianificazione / orchestrazione
 # ---------------------------------------------------------------------------
 def load_manifest(domain):
     data, err = http_read_json(s3_manifest_url(domain))
@@ -577,96 +651,81 @@ def load_manifest(domain):
     return data
 
 
-def pick_secondary_valid(sec_valid_times, anchor_iso):
-    """valid_time del secondario piu' vicino all'ancora entro tolleranza."""
-    anchor = parse_iso(anchor_iso)
-    best, best_dt = None, None
-    for sv in sec_valid_times:
-        d = abs((parse_iso(sv) - anchor).total_seconds())
-        if best_dt is None or d < best_dt:
-            best, best_dt = sv, d
-    if best is None or best_dt > V2_SECONDARY_MAX_DT_HOURS * 3600:
-        return None
-    return best
+def _now_iso():
+    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-def main(argv=None):
-    ap = argparse.ArgumentParser(description="MeteoRisk Forecast V2 — cache GitHub di mappe .om")
-    ap.add_argument("--domains", nargs="+", default=list(V2_DOMAINS),
-                    help="Domini in ordine di priorita' (il primo definisce la griglia del crop).")
-    ap.add_argument("--valid-frames", type=int, default=V2_MAX_FRAMES,
-                    help="Numero di frame (valid_times) da pubblicare a partire dal "
-                         "primo. 0 (default) o negativo = INTERO orizzonte del manifest "
-                         "primario (tutti i valid_times).")
-    ap.add_argument("--out", default=V2_OUT, help="Directory di output (default %s)." % V2_OUT)
-    ap.add_argument("--once", action="store_true",
-                    help="Esegue un solo ciclo ed esce (default/compat).")
-    ap.add_argument("--no-prune", action="store_true", help="Non rimuove i frame oltre il limite.")
-    ap.add_argument("--dry-run", action="store_true", help="Stampa il piano senza scaricare/scrivere.")
-    ap.add_argument("--force", action="store_true", help="Ignora il NO-OP guard (riscrive sempre).")
-    ap.add_argument("--cache-dir", default=None,
-                    help="Directory cache dei download (default: temp di sistema).")
-    ap.add_argument("--frames-cache", default="",
-                    help="Cache PERSISTENTE dei frame .om (<dir>/<dominio>/<VALID>.om), "
-                         "riusata se la Content-Length remota combacia (default: vuoto = "
-                         "disabilitata, comportamento invariato).")
-    args = ap.parse_args(argv)
+def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
+    """Elabora UN dominio in modo indipendente. Ritorna un dict di esito.
 
-    # --valid-frames <= 0 (default 0) = pubblica l'INTERO orizzonte del manifest.
-    if not args.domains:
-        print("%s ERRORE: --domains vuoto" % LOG)
-        return 1
+    Status: "ok" (prodotto o NO-OP), "skip" (CRS non supportato), "fail".
+    In --dry-run non scarica nulla: la griglia usa il fallback GRIDS per nx/ny.
+    """
+    res = {"domain": domain, "status": "fail", "reason": None}
 
-    primary = args.domains[0]
-    if primary not in GRIDS:
-        print("%s ERRORE: dominio primario '%s' senza griglia nota." % (LOG, primary))
-        return 1
-    for d in args.domains[1:]:
-        if d not in GRIDS:
-            print("%s ERRORE: dominio '%s' senza griglia nota." % (LOG, d))
-            return 1
+    m = load_manifest(domain)
+    if not m:
+        res["reason"] = "manifest assente"
+        print("%s [FAIL] dominio '%s': manifest assente." % (LOG, domain))
+        return res
 
-    primary_grid = grid_for(primary)
-    idx = bbox_to_indices(primary_grid, V2_BBOX)
-    tgt_lats, tgt_lons = target_latlon(primary_grid, idx)
-    out_grid = idx["out_grid"]
+    crs_wkt = m.get("crs_wkt", "") or ""
+    ref_time = m.get("reference_time")
+    valid_times = sorted(set(m.get("valid_times", [])))
+    res["reference_time"] = ref_time
+    res["completed"] = m.get("completed")
+    res["n_valid_times"] = len(valid_times)
+    res["crs_kind"] = crs_kind(crs_wkt)
 
-    print("%s bbox=%s -> crop %dx%d su %s (lonMin=%.4f latMin=%.4f dx=dy=%.4f)"
-          % (LOG, V2_BBOX, out_grid["nx"], out_grid["ny"], primary,
-             out_grid["lonMin"], out_grid["latMin"], out_grid["dx"]))
+    # --- Riconoscimento CRS ---
+    if not is_geographic_crs(crs_wkt):
+        res["status"] = "skip"
+        res["reason"] = "griglia proiettata non supportata (%s)" % crs_kind(crs_wkt)
+        print("%s SKIP dominio '%s': griglia proiettata non supportata "
+              "(PROJCRS/Lambert)" % (LOG, domain))
+        return res
 
-    # manifest dei domini
-    manifests = {}
-    for d in args.domains:
-        m = load_manifest(d)
-        if m:
-            manifests[d] = m
-
-    if primary not in manifests:
-        print("%s ERRORE: manifest del primario '%s' non disponibile." % (LOG, primary))
-        return 1
-
-    pm = manifests[primary]
-    ref_time = pm.get("reference_time")
-    valid_times = sorted(set(pm.get("valid_times", [])))
     if not ref_time or not valid_times:
-        print("%s ERRORE: manifest primario privo di reference_time/valid_times." % LOG)
-        return 1
+        res["reason"] = "manifest privo di reference_time/valid_times"
+        print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
+        return res
 
     if args.valid_frames > 0:
-        anchors = valid_times[: args.valid_frames]  # primi N (i piu' prossimi)
+        anchors = valid_times[: args.valid_frames]
     else:
-        anchors = list(valid_times)  # 0/negativo = INTERO orizzonte
-    print("%s reference_time=%s valid_times=%d -> ancore=%d (%s .. %s)"
-          % (LOG, ref_time, len(valid_times), len(anchors), anchors[0], anchors[-1]))
+        anchors = list(valid_times)
+    res["anchors"] = anchors
 
-    out_dir = os.path.abspath(args.out)
+    out_dir = os.path.join(os.path.abspath(args.out), domain)
     latest_path = os.path.join(out_dir, "latest.json")
+    res["out_dir"] = out_dir
+    res["latest_path"] = latest_path
 
-    # ---- NO-OP GUARD (prima di scaricare i frame) ----
+    # --- DRY-RUN: pianifica SENZA scaricare (nx/ny da fallback GRIDS) ---
+    if dry_run:
+        known = GRIDS.get(domain)
+        grid = None
+        if known:
+            grid = derive_grid(crs_wkt, known["nx"], known["ny"])
+        res["grid"] = grid
+        res["grid_source"] = "fallback(GRIDS)" if grid else "unknown"
+        if grid:
+            idx = bbox_to_indices(grid, V2_BBOX)
+            res["crop"] = idx["out_grid"]
+        res["status"] = "ok"
+        nx = grid["nx"] if grid else "?"
+        ny = grid["ny"] if grid else "?"
+        crop = res.get("crop")
+        crop_s = ("%dx%d" % (crop["nx"], crop["ny"])) if crop else "?"
+        print("%s [PLAN] dominio '%s': ref=%s griglia=%sx%s (%s) dx=%.6g dy=%.6g "
+              "crop=%s frame=%d out=%s"
+              % (LOG, domain, ref_time, nx, ny, res["grid_source"],
+                 grid["dx"] if grid else float("nan"),
+                 grid["dy"] if grid else float("nan"), crop_s, len(anchors),
+                 os.path.join(out_dir, "<VALID>.om")))
+        return res
+
+    # --- NO-OP GUARD per-dominio (prima di scaricare i frame) ---
     if not args.force and os.path.isfile(latest_path):
         try:
             with open(latest_path, "r", encoding="utf-8") as fh:
@@ -675,141 +734,111 @@ def main(argv=None):
             old = None
         if (old and old.get("reference_time") == ref_time
                 and list(old.get("valid_times", [])) == list(anchors)):
-            print("%s NO-OP: manifest invariato (reference_time/valid_times identici). Esco 0."
-                  % LOG)
-            return 0
+            res["status"] = "ok"
+            res["noop"] = True
+            res["reason"] = "manifest invariato"
+            print("%s NO-OP dominio '%s': manifest invariato "
+                  "(reference_time/valid_times identici). Salto." % (LOG, domain))
+            return res
 
-    if args.dry_run:
-        plan = {
-            "dry_run": True,
-            "primary": primary,
-            "domains": args.domains,
-            "out": out_dir,
-            "reference_time": ref_time,
-            "grid": out_grid,
-            "anchors": anchors,
-            "risk_vars": [rv["name"] for rv in V2_RISK_VARS],
-            "valid_frames": args.valid_frames,
-            "all_horizon": args.valid_frames <= 0,
-            "max_frames_cap": V2_MAX_FRAMES,
-            "prune": not args.no_prune,
-            "manifest_present": os.path.isfile(latest_path),
-        }
-        print("%s DRY-RUN plan:\n%s" % (LOG, json.dumps(plan, indent=2, ensure_ascii=False)))
-        return 0
+    # --- Griglia derivata dal PRIMO frame (cache per-run) ---
+    grid = grid_cache.get(domain)
+    if grid is None:
+        first = anchors[0]
+        fpath, _ = fetch_frame(s3_url(domain, ref_time, first), domain,
+                               valid_time_to_filename(first), cache_dir,
+                               frames_cache, label="griglia")
+        if fpath is None:
+            res["reason"] = "download del primo frame (griglia) fallito"
+            print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
+            return res
+        shape = frame_shape(fpath)
+        if not shape:
+            res["reason"] = "shape del primo frame non leggibile"
+            print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
+            return res
+        ny, nx = shape
+        grid = derive_grid(crs_wkt, nx, ny)
+        if grid is None:
+            res["reason"] = "crs_wkt privo di BBOX o dimensioni non valide"
+            print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
+            return res
+        for w in grid_guard(domain, grid):
+            print("%s [WARN] dominio '%s': %s" % (LOG, domain, w))
+        grid_cache[domain] = grid
 
-    # ---- cache download ----
-    cache_dir = args.cache_dir or os.path.join(tempfile.gettempdir(), "mri_fm2_cache")
-    os.makedirs(cache_dir, exist_ok=True)
-    frames_cache = os.path.abspath(args.frames_cache) if args.frames_cache else ""
-    if frames_cache:
-        os.makedirs(frames_cache, exist_ok=True)
-        print("%s frames-cache attiva: %s" % (LOG, frames_cache))
+    res["grid"] = grid
+    res["grid_source"] = "crs_wkt+frame"
+    idx = bbox_to_indices(grid, V2_BBOX)
+    tgt_lats, tgt_lons = target_latlon(grid, idx)
+    out_grid = idx["out_grid"]
+    res["crop"] = out_grid
+
+    print("%s dominio '%s' ref=%s griglia nx=%d ny=%d dx=%.6g dy=%.6g -> "
+          "crop %dx%d" % (LOG, domain, ref_time, grid["nx"], grid["ny"],
+                          grid["dx"], grid["dy"], out_grid["nx"], out_grid["ny"]))
+
     os.makedirs(out_dir, exist_ok=True)
-
-    sec_domain = args.domains[1] if len(args.domains) > 1 else None
-    sec_valid_times = sorted(set(manifests[sec_domain].get("valid_times", []))) if sec_domain else []
-    sec_ref = manifests[sec_domain].get("reference_time") if sec_domain else None
 
     ordered_names = [rv["name"] for rv in V2_RISK_VARS]
     frames = []
     variables_map = {}
     sizes_map = {}
     all_warnings = []
-    written_files = []
 
     for vi, anchor in enumerate(anchors):
-        print("%s frame %d/%d valid_time=%s" % (LOG, vi + 1, len(anchors), anchor))
-        # primario
-        p_url = s3_url(primary, ref_time, anchor)
-        p_dst, _ = fetch_frame(p_url, primary, valid_time_to_filename(anchor),
-                               cache_dir, frames_cache, label="primario")
-        if p_dst is None:
-            print("%s [WARN] salto frame %s (download primario fallito)." % (LOG, anchor))
-            all_warnings.append("frame %s: download primario fallito" % anchor)
+        print("%s   frame %d/%d valid_time=%s" % (LOG, vi + 1, len(anchors), anchor))
+        fpath, _ = fetch_frame(s3_url(domain, ref_time, anchor), domain,
+                               valid_time_to_filename(anchor), cache_dir,
+                               frames_cache, label="frame")
+        if fpath is None:
+            print("%s [WARN] salto frame %s (download fallito)." % (LOG, anchor))
+            all_warnings.append("frame %s: download fallito" % anchor)
             continue
 
-        primary_reader = OmFileReader.from_path(p_dst)
+        reader = OmFileReader.from_path(fpath)
         try:
-            crs_wkt = ""
+            crs_frame = ""
             coordinates = "lat lon"
             try:
-                crs_wkt = primary_reader.get_child_by_name("crs_wkt").read_scalar()
+                crs_frame = reader.get_child_by_name("crs_wkt").read_scalar()
             except Exception:  # noqa: BLE001
-                pass
+                crs_frame = crs_wkt
+            if not crs_frame:
+                crs_frame = crs_wkt
 
-            # secondario (solo se qualche variabile diretta manca nel primario)
-            secondary_reader = None
-            secondary_grid = None
-            sec_anchor = None
-            if sec_domain:
-                p_names = array_child_names(primary_reader)
-                missing_direct = []
-                for rv in V2_RISK_VARS:
-                    if rv["name"] in ("wind_speed_10m", "wind_direction_10m", "dew_point_2m"):
-                        continue  # derivabili
-                    if resolve_direct(rv, p_names) is None:
-                        missing_direct.append(rv)
-                sec_manifest_vars = set(manifests[sec_domain].get("variables", []))
-                wanted = [rv for rv in missing_direct
-                          if any(c in sec_manifest_vars for c in rv["sources"])]
-                if wanted:
-                    sec_anchor = pick_secondary_valid(sec_valid_times, anchor)
-                    if sec_anchor:
-                        s_url = s3_url(sec_domain, sec_ref, sec_anchor)
-                        s_dst, _ = fetch_frame(
-                            s_url, sec_domain, valid_time_to_filename(sec_anchor),
-                            cache_dir, frames_cache, label="secondario")
-                        if s_dst is not None:
-                            secondary_reader = OmFileReader.from_path(s_dst)
-                            secondary_grid = grid_for(sec_domain)
-
-            arrays, vmeta, warns = resolve_frame(
-                primary_reader, primary_grid, secondary_reader, secondary_grid,
-                V2_RISK_VARS, tgt_lats, tgt_lons, idx)
-
-            # rinomina i provenance generici in nome dominio reale
-            for k, m in vmeta.items():
-                if m["source_domain"] == "primary":
-                    m["source_domain"] = primary
-                elif m["source_domain"] == "secondary":
-                    m["source_domain"] = sec_domain
+            arrays, vmeta, warns = resolve_domain_frame(
+                reader, grid, V2_RISK_VARS, tgt_lats, tgt_lons, idx, domain)
 
             # scale factor: originale per i passthrough, default per le derivate
             scales = {}
-            for name, m in vmeta.items():
-                if m["derived"]:
+            for name, mm in vmeta.items():
+                if mm["derived"]:
                     scales[name] = DERIVED_SCALE.get(name, DEFAULT_SCALE)
                 else:
-                    dom_key = m["source_domain"]
-                    rd = primary_reader if dom_key == primary else secondary_reader
-                    cm = child_meta(rd, m["source_var"]) if rd is not None else None
+                    cm = child_meta(reader, mm["source_var"])
                     scales[name] = cm["scale"] if cm else DEFAULT_SCALE
 
             vt_dt = parse_iso(anchor)
             ref_dt = parse_iso(ref_time)
             fname = valid_time_to_filename(anchor) + ".om"
-            fpath = os.path.join(out_dir, fname)
+            fpath_out = os.path.join(out_dir, fname)
             size, nvars = write_frame_om(
-                fpath, ordered_names, arrays, scales, crs_wkt, coordinates,
+                fpath_out, ordered_names, arrays, scales, crs_frame, coordinates,
                 int(vt_dt.timestamp()), int(ref_dt.timestamp()))
-            written_files.append(fname)
             frames.append({"valid_time": anchor, "file": fname, "bytes": size,
-                           "variables": nvars,
-                           "secondary_valid_time": sec_anchor})
+                           "variables": nvars})
             variables_map[anchor] = vmeta
             sizes_map[anchor] = size
             all_warnings.extend(["%s: %s" % (anchor, w) for w in warns])
             print("%s   scritto %s (%d byte, %d var)" % (LOG, fname, size, nvars))
-
-            if secondary_reader is not None:
-                secondary_reader.close()
         finally:
-            primary_reader.close()
+            reader.close()
 
     if not frames:
-        print("%s ERRORE: nessun frame scritto (tutti i download falliti?)." % LOG)
-        return 1
+        res["reason"] = "nessun frame scritto (tutti i download falliti?)"
+        print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
+        return res
 
     removed = []
     if not args.no_prune:
@@ -818,16 +847,17 @@ def main(argv=None):
 
     manifest = {
         "version": "fm2-1",
-        "generated_at": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": _now_iso(),
+        "domain": domain,
         "reference_time": ref_time,
         "valid_times": anchors,
-        "domains": args.domains,
-        "primary_domain": primary,
         "bbox": {"lat_min": V2_BBOX[0], "lon_min": V2_BBOX[1],
                  "lat_max": V2_BBOX[2], "lon_max": V2_BBOX[3]},
         "grid": out_grid,
+        "source_grid": {k: grid[k] for k in ("nx", "ny", "lonMin", "latMin", "dx", "dy")},
+        "grid_source": "crs_wkt+frame",
         "var_order": ordered_names,
-        "resampling": "nearest (centri-cella) dal secondario alla griglia del primario",
+        "resampling": "per-domain nearest (crop Italia)",
         "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
         "frames": frames,
         "variables": variables_map,
@@ -838,15 +868,127 @@ def main(argv=None):
     write_json_atomic(latest_path, manifest)
 
     total_bytes = sum(f["bytes"] for f in frames)
-    print("%s FATTO: %d frame scritti, %d byte totali (%.1f KiB)."
-          % (LOG, len(frames), total_bytes, total_bytes / 1024.0))
+    print("%s [OK] dominio '%s': %d frame, %d byte totali (%.1f KiB)."
+          % (LOG, domain, len(frames), total_bytes, total_bytes / 1024.0))
     if removed:
-        print("%s prune: rimossi %d frame vecchi (%s)" % (LOG, len(removed), ", ".join(removed)))
+        print("%s   prune: rimossi %d frame vecchi." % (LOG, len(removed)))
     uniq_warn = sorted(set(all_warnings))
     if uniq_warn:
-        print("%s warning (%d):" % (LOG, len(uniq_warn)))
+        print("%s   warning (%d):" % (LOG, len(uniq_warn)))
         for w in uniq_warn:
-            print("%s   - %s" % (LOG, w))
+            print("%s     - %s" % (LOG, w))
+
+    res["status"] = "ok"
+    res["n_frames"] = len(frames)
+    res["bytes"] = total_bytes
+    return res
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        description="MeteoRisk Forecast V2 — cache GitHub multi-dominio di mappe .om")
+    ap.add_argument("--domains", nargs="+", default=list(V2_DOMAINS),
+                    help="Domini da elaborare, ciascuno INDIPENDENTE (nessun ordine "
+                         "di priorita'; ognuno produce data/fm2/<dominio>/).")
+    ap.add_argument("--valid-frames", type=int, default=V2_MAX_FRAMES,
+                    help="Numero di frame (valid_times) da pubblicare a partire dal "
+                         "primo, PER OGNI dominio. 0 (default) o negativo = INTERO "
+                         "orizzonte del manifest del dominio (tutti i valid_times).")
+    ap.add_argument("--out", default=V2_OUT,
+                    help="Directory di output radice (default %s); la cache di ogni "
+                         "dominio va in <out>/<dominio>/." % V2_OUT)
+    ap.add_argument("--once", action="store_true",
+                    help="Esegue un solo ciclo ed esce (default/compat).")
+    ap.add_argument("--no-prune", action="store_true", help="Non rimuove i frame oltre il limite.")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Stampa il piano di TUTTI i domini senza scaricare/scrivere.")
+    ap.add_argument("--force", action="store_true", help="Ignora il NO-OP guard (riscrive sempre).")
+    ap.add_argument("--cache-dir", default=None,
+                    help="Directory cache dei download (default: temp di sistema).")
+    ap.add_argument("--frames-cache", default="",
+                    help="Cache PERSISTENTE dei frame .om (<dir>/<dominio>/<VALID>.om), "
+                         "riusata se la Content-Length remota combacia (default: vuoto = "
+                         "disabilitata, comportamento invariato).")
+    args = ap.parse_args(argv)
+
+    if not args.domains:
+        print("%s ERRORE: --domains vuoto" % LOG)
+        return 1
+
+    print("%s multi-dominio: %d domini -> %s"
+          % (LOG, len(args.domains), ", ".join(args.domains)))
+    print("%s valid-frames=%d (%s) out=%s"
+          % (LOG, args.valid_frames,
+             "INTERO orizzonte" if args.valid_frames <= 0 else "primi N",
+             os.path.abspath(args.out)))
+
+    # ---- cache download / frames-cache (non in dry-run: nessuna directory) ----
+    cache_dir = args.cache_dir or os.path.join(tempfile.gettempdir(), "mri_fm2_cache")
+    frames_cache = os.path.abspath(args.frames_cache) if args.frames_cache else ""
+    if not args.dry_run:
+        os.makedirs(cache_dir, exist_ok=True)
+        if frames_cache:
+            os.makedirs(frames_cache, exist_ok=True)
+            print("%s frames-cache attiva: %s" % (LOG, frames_cache))
+        os.makedirs(os.path.abspath(args.out), exist_ok=True)
+
+    grid_cache = {}
+    results = []
+    for d in args.domains:
+        results.append(process_domain(d, args, cache_dir, frames_cache, grid_cache,
+                                      args.dry_run))
+
+    ok = [r for r in results if r["status"] == "ok"]
+    skip = [r for r in results if r["status"] == "skip"]
+    fail = [r for r in results if r["status"] == "fail"]
+
+    if args.dry_run:
+        plan = {
+            "dry_run": True,
+            "out": os.path.abspath(args.out),
+            "valid_frames": args.valid_frames,
+            "all_horizon": args.valid_frames <= 0,
+            "max_frames_cap": V2_MAX_FRAMES,
+            "prune": not args.no_prune,
+            "domains": [
+                {
+                    "domain": r["domain"],
+                    "status": r["status"],
+                    "reason": r["reason"],
+                    "reference_time": r.get("reference_time"),
+                    "completed": r.get("completed"),
+                    "n_valid_times": r.get("n_valid_times"),
+                    "n_frames": len(r.get("anchors", [])) if r["status"] == "ok" else 0,
+                    "crs_kind": r.get("crs_kind"),
+                    "grid_source": r.get("grid_source"),
+                    "source_grid": r.get("grid"),
+                    "crop": r.get("crop"),
+                    "out_dir": r.get("out_dir"),
+                    "frames_glob": (os.path.join(r["out_dir"], "<VALID>.om")
+                                    if r.get("out_dir") else None),
+                    "latest_json": r.get("latest_path"),
+                }
+                for r in results
+            ],
+        }
+        print("%s DRY-RUN plan:\n%s"
+              % (LOG, json.dumps(plan, indent=2, ensure_ascii=False)))
+
+    print("%s ===== SUMMARY =====" % LOG)
+    print("%s ok   (%d): %s" % (LOG, len(ok), ", ".join(r["domain"] for r in ok) or "-"))
+    print("%s skip (%d): %s" % (LOG, len(skip), ", ".join(
+        "%s [%s]" % (r["domain"], r["reason"]) for r in skip) or "-"))
+    print("%s fail (%d): %s" % (LOG, len(fail), ", ".join(
+        "%s [%s]" % (r["domain"], r["reason"]) for r in fail) or "-"))
+
+    # Exit: 0 se almeno un dominio e' ok (anche solo NO-OP); 1 se TUTTI falliscono.
+    if not ok:
+        print("%s ERRORE: nessun dominio ok (tutti falliti)." % LOG)
+        return 1
+    print("%s FATTO: %d/%d domini ok." % (LOG, len(ok), len(results)))
     return 0
 
 
