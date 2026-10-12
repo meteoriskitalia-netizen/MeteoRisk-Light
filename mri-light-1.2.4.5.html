@@ -143,6 +143,7 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
         .fm-time { font-size: 12px; color: #f1f5f9; }
         .fm-legend-bar { height: 12px; border-radius: 3px; border: 1px solid #334155; }
         .fm-legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        .fm-legend-overlay { font-size: 11px; color: #cbd5e1; margin-top: 3px; }
         .fm-status { font-size: 11px; color: #94a3b8; }
         .fm-attrib { font-size: 10px; color: #64748b; line-height: 1.35; }
         .fm-btn-preload { border-color: #f59e0b; color: #f59e0b; font-size: 11px; padding: 3px 7px; }
@@ -1822,9 +1823,12 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.4';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_VERSION = '1.2.4.5';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
     const APP_RELEASE_DATE = '2026-10-12';
     const APP_CHANGELOG = [
+        { version: '1.2.4.5', date: '2026-10-12', changes: [
+            'MAPPE= Rimosso il dominio CHMI ALADIN (2 km) dalle Mappe previsionali: elenco FM_DOMAINS ridotto da 11 a 10 domini, nessun altro cambiamento.',
+        ]},
         { version: '1.2.4.4', date: '2026-10-12', changes: [
             'FIX= Mappe previsionali cache-only: rimossa la sorgente S3, la cache data/fm2 e la sola fonte; gli errori di caricamento (registro domini, fetch metadati, frame mancante) sono ora visibili via fmSetStatus invece che muti; filtro variabili curate applicato sempre.',
         ]},
@@ -11213,7 +11217,6 @@ var FM_WML_URLS = [
 var FM_DOMAINS = [
     { id: 'dwd_icon_eu', label: 'DWD ICON EU (0.0625)', group: 'Europa' },
     { id: 'dwd_icon_d2', label: 'DWD ICON-D2 (2 km, 48 h)', group: 'Europa' },
-    { id: 'chmi_aladin_central_europe_2km', label: 'CHMI ALADIN (2 km)', group: 'Europa' },
     { id: 'italia_meteo_arpae_icon_2i', label: 'ICON 2I ARPAE (Italia)', group: 'Italia' },
     { id: 'ecmwf_ifs025', label: 'ECMWF IFS 0.25', group: 'Globale' },
     { id: 'ncep_gfs025', label: 'NOAA GFS 0.25', group: 'Globale' },
@@ -11237,6 +11240,10 @@ var FM_REGIONS = [
     { id: 'oceania', label: 'Oceania', bbox: [-48, 110, -9, 180] },
     { id: 'arctic', label: 'Artico', bbox: [60, -180, 90, 180] }
 ];
+// MODIFICA B: pseudo-variabile sintetica "Pressione / Geopotenziale" (carta unificata Z500
+// colorato + isobare MSL). NON inserita in FM_CURATED_VARS/FM_VAR_LABELS: iniettata a runtime
+// in fmPopulateVariables dopo il raggruppamento per categoria.
+var FM_SYNTH_PRESSURE_GEOPOT = '__pressure_geopot';
 var FM_CAT_ORDER = ['Pressione', 'Livelli di pressione', 'Temperatura', 'Umidita', 'Precipitazione e neve', 'Nuvolosita', 'Vento', 'Instabilita', 'Quote termiche', 'Radiazione', 'Codice meteo', 'Altro'];
 var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','dew_point_2m','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_speed_10m','wind_direction_10m','wind_u_component_10m','wind_v_component_10m','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height'];
 var FM_VAR_LABELS = {
@@ -11317,7 +11324,9 @@ var fmIdx = 0;
 var fmMeta = null;
 var fmRasterLayer = null;
 var fmVectorLayer = null;
-var fmLayerKey = null; // mitigazione churn: cache-by-url del frame renderizzato (cur.url|vurl|clipBounds)
+var fmLayerKey = null; // mitigazione churn: cache-by-url del frame renderizzato (cur.url|vurl|clipBounds|overlay)
+var fmOverlayVariable = null; // MODIFICA B: overlay isobare MSL (pressure_msl) sul raster Z500; null = nessuno
+var fmContourVar = null; // MODIFICA B: variabile usata per il colore delle isolinee del layer vettoriale corrente
 var fmOpts = { contours: false, arrows: false, arrowStyle: 'arrow', grid: false, dark: false, density: 'fitta' };
 var fmRegion = 'domain';
 var fmClipBounds = null;
@@ -11390,6 +11399,15 @@ function fmDomainBounds() {
     if (!fmModule || !fmModule.domainOptions || !fmModule.GridFactory) return null;
     try {
         var opts = fmModule.domainOptions;
+        // MODIFICA A: in cache mode la griglia reale dei frame e' quella pubblicata dal motore
+        // per il dominio corrente (crop Italia), registrata sull'entry sintetica 'fm2'.
+        if (fmSrcCache) {
+            for (var j = 0; j < opts.length; j++) {
+                if (opts[j] && opts[j].value === 'fm2') {
+                    return fmModule.GridFactory.create(opts[j].grid, null).getBounds();
+                }
+            }
+        }
         for (var i = 0; i < opts.length; i++) {
             if (opts[i] && opts[i].value === fmDomain) {
                 return fmModule.GridFactory.create(opts[i].grid, null).getBounds();
@@ -11543,74 +11561,87 @@ function fmRegisterDomain() {
     return true;
 }
 function fm2FetchMeta(domain, cb) {
-    var cacheUrl = 'data/fm2/latest.json';
-    fetch(cacheUrl, { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-    }).then(function (j) {
-        if (!j) throw new Error('manifest vuoto');
-        var inCache = false;
-        if (j.primary_domain && domain) {
-            if (j.primary_domain === domain) inCache = true;
-        }
-        if (!inCache && j.domains && domain) {
-            try {
-                var ds = j.domains;
-                for (var i = 0; i < ds.length; i++) {
-                    if (ds[i] === domain) { inCache = true; break; }
-                }
-            } catch (e) {}
-        }
-        if (!inCache) { throw new Error('dominio ' + domain + ' non presente in cache'); }
-        var valid_times = [];
-        if (j.frames && j.frames.length) {
-            for (var f = 0; f < j.frames.length; f++) {
-                var fv = j.frames[f].valid_time;
-                if (fv) valid_times.push(fv);
-            }
-        }
-        if (!valid_times.length && j.valid_times && j.valid_times.length) {
-            valid_times = j.valid_times.slice();
-        }
-        if (!valid_times.length) throw new Error('nessun tempo valido (cache)');
-        var varOrder = [];
-        if (j.var_order && j.var_order.length) {
-            varOrder = j.var_order.slice();
-        }
-        var varsOut = [];
-        for (var v = 0; v < varOrder.length; v++) {
-            var vv = varOrder[v];
-            if (FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv])) varsOut.push(vv);
-        }
-        if (varsOut.length === 0 && j.variables) {
-            if (Array.isArray(j.variables)) {
-                varsOut = j.variables.slice();
+    var legacyUrl = 'data/fm2/latest.json';
+    var perDomain = domain ? ('data/fm2/' + encodeURIComponent(domain) + '/latest.json') : legacyUrl;
+    var allowFallback = (!domain || domain === 'fm2') && (perDomain !== legacyUrl);
+    function fetchManifest(url, canFallback, usedLegacy) {
+        fetch(url, { cache: 'no-store' }).then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        }).then(function (j) {
+            if (!j) throw new Error('manifest vuoto');
+            var inCache = false;
+            if (!domain) {
+                inCache = true;
             } else {
-                for (var k in j.variables) {
-                    if (Object.prototype.hasOwnProperty.call(j.variables, k)) varsOut.push(k);
+                // Manifest per-dominio: contiene il campo 'domain'. Restano validi anche
+                // primary_domain / domains[] per retro-compatibilita'.
+                if (j.domain && j.domain === domain) inCache = true;
+                if (!inCache && j.primary_domain && j.primary_domain === domain) inCache = true;
+                if (!inCache && j.domains) {
+                    try {
+                        var ds = j.domains;
+                        for (var i = 0; i < ds.length; i++) {
+                            if (ds[i] === domain) { inCache = true; break; }
+                        }
+                    } catch (e) {}
+                }
+                if (!inCache && !usedLegacy && j.frames && j.frames.length) inCache = true;
+            }
+            if (!inCache) throw new Error('dominio ' + domain + ' non presente in cache');
+            var valid_times = [];
+            if (j.frames && j.frames.length) {
+                for (var f = 0; f < j.frames.length; f++) {
+                    var fv = j.frames[f].valid_time;
+                    if (fv) valid_times.push(fv);
                 }
             }
-        }
-        var metaCache = {
-            valid_times: valid_times,
-            var_order: varOrder,
-            variables: varsOut,
-            frames: j.frames || [],
-            grid: j.grid || null,
-            reference_time: j.reference_time || null,
-            generated_at: j.generated_at || null,
-            primary_domain: j.primary_domain || null,
-            domains: j.domains || []
-        };
-        fmMeta = metaCache;
-        fmSrcCache = true;
-        fm2MetaCache = metaCache;
-        fmRegisterDomain();
-        cb(null, metaCache);
-    })['catch'](function (e) {
-        fmSetStatus('Errore caricamento cache mappe previsionali (' + cacheUrl + '): ' + (e && e.message ? e.message : e));
-        cb(e);
-    });
+            if (!valid_times.length && j.valid_times && j.valid_times.length) {
+                valid_times = j.valid_times.slice();
+            }
+            if (!valid_times.length) throw new Error('nessun tempo valido (cache)');
+            var varOrder = [];
+            if (j.var_order && j.var_order.length) {
+                varOrder = j.var_order.slice();
+            }
+            var varsOut = [];
+            for (var v = 0; v < varOrder.length; v++) {
+                var vv = varOrder[v];
+                if (FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv])) varsOut.push(vv);
+            }
+            if (varsOut.length === 0 && j.variables) {
+                if (Array.isArray(j.variables)) {
+                    varsOut = j.variables.slice();
+                } else {
+                    for (var k in j.variables) {
+                        if (Object.prototype.hasOwnProperty.call(j.variables, k)) varsOut.push(k);
+                    }
+                }
+            }
+            var metaCache = {
+                valid_times: valid_times,
+                var_order: varOrder,
+                variables: varsOut,
+                frames: j.frames || [],
+                grid: j.grid || null,
+                reference_time: j.reference_time || null,
+                generated_at: j.generated_at || null,
+                primary_domain: j.primary_domain || null,
+                domain: j.domain || (usedLegacy ? null : domain),
+                domains: j.domains || []
+            };
+            fmMeta = metaCache;
+            fmSrcCache = true;
+            fm2MetaCache = metaCache;
+            fmRegisterDomain();
+            cb(null, metaCache);
+        })['catch'](function (e) {
+            if (canFallback) { fetchManifest(legacyUrl, false, true); return; }
+            fmSetStatus('Dominio ' + (domain || '') + ' non disponibile in cache (' + url + '): ' + (e && e.message ? e.message : e));
+            cb(e);
+        });
+    }
+    fetchManifest(perDomain, allowFallback, perDomain === legacyUrl);
 }
 function fmFetchMeta(domain, cb) {
     fm2FetchMeta(domain, cb);
@@ -11649,16 +11680,23 @@ function fmPopulateVariables(vars) {
         if (!byCat[c]) byCat[c] = [];
         byCat[c].push(vars[i]);
     }
+    // MODIFICA B: inietta la pseudo-voce sintetica nel gruppo 'Pressione' (additiva).
+    if (vars.indexOf('geopotential_height_500hPa') >= 0 || vars.indexOf('pressure_msl') >= 0) {
+        if (!byCat['Pressione']) byCat['Pressione'] = [];
+        if (byCat['Pressione'].indexOf(FM_SYNTH_PRESSURE_GEOPOT) < 0) byCat['Pressione'].push(FM_SYNTH_PRESSURE_GEOPOT);
+    }
     var catSeen = [];
     for (var k = 0; k < FM_CAT_ORDER.length; k++) { if (byCat[FM_CAT_ORDER[k]]) catSeen.push(FM_CAT_ORDER[k]); }
     for (var kk in byCat) { if (catSeen.indexOf(kk) < 0) catSeen.push(kk); }
+    var activeSel = (fmOverlayVariable === 'pressure_msl') ? FM_SYNTH_PRESSURE_GEOPOT : fmVariable;
     var html = '';
     for (var c2 = 0; c2 < catSeen.length; c2++) {
         var cat = catSeen[c2];
         html += '<optgroup label="' + cat + '">';
         for (var v = 0; v < byCat[cat].length; v++) {
             var vv = byCat[cat][v];
-            html += '<option value="' + vv + '"' + (vv === fmVariable ? ' selected' : '') + '>' + fmVarLabel(vv) + '</option>';
+            var lbl = (vv === FM_SYNTH_PRESSURE_GEOPOT) ? 'Pressione / Geopotenziale' : fmVarLabel(vv);
+            html += '<option value="' + vv + '"' + (vv === activeSel ? ' selected' : '') + '>' + lbl + '</option>';
         }
         html += '</optgroup>';
     }
@@ -11674,7 +11712,7 @@ function fmUpdateTimeDisplay(validIso) {
     if (!el || !fmMeta) return;
     el.textContent = (fmIdx + 1) + '/' + fmMeta.valid_times.length + ' · ' + fmFmtTime(validIso);
 }
-function fmOmUrlForIndex(idx) {
+function fmOmUrlForIndexVar(idx, variableName) {
     if (!fmMeta || !fmMeta.valid_times.length) return null;
     var valid = fmMeta.valid_times[idx];
     if (valid === undefined) return null;
@@ -11683,11 +11721,17 @@ function fmOmUrlForIndex(idx) {
         fmSetStatus('Errore frame cache mappe previsionali mancante (data/fm2): ' + fmFmtTime(valid));
         return null;
     }
-    var cbase = 'data/fm2/' + ffile;
-    var q = 'variable=' + encodeURIComponent(fmVariable) + '&tile_size=512&interpolation=linear';
+    // MODIFICA A: cache per-dominio. In cache mode (fmSrcCache=true, sempre in produzione
+    // dopo il load del manifest) la base e' data/fm2/<dominio>/<file>; in assenza di cache
+    // (es. stato di test con fmMeta impostato a mano) resta la base storica data/fm2/<file>.
+    var dir = (fmSrcCache && fmDomain) ? (encodeURIComponent(fmDomain) + '/') : '';
+    var cbase = 'data/fm2/' + dir + ffile;
+    var vName = variableName || fmVariable;
+    var q = 'variable=' + encodeURIComponent(vName) + '&tile_size=512&interpolation=linear';
     if (fmOpts.dark) q += '&dark=true';
     return cbase + '?' + q;
 }
+function fmOmUrlForIndex(idx) { return fmOmUrlForIndexVar(idx, fmVariable); }
 function fmCurrentOmUrl() {
     if (!fmMeta || !fmMeta.valid_times.length) return null;
     var url = fmOmUrlForIndex(fmIdx);
@@ -11708,8 +11752,18 @@ function fmContourInterval(v) {
     var mult = fmOpts.density === 'media' ? 3 : (fmOpts.density === 'sparsa' ? 6 : 1);
     return base * mult;
 }
-function fmContourFallbackColor(value) {
+function fmContourFallbackColor(value, varName) {
     var v = Number(value) || 0;
+    // MODIFICA B: fallback dedicato alle isobare di pressione (hPa), per non mappare la
+    // pressione con la scala termometrica.
+    if (varName && /pressure_msl|surface_pressure/.test(varName)) {
+        if (v < 980) return 'rgba(124,45,18,0.95)';
+        if (v < 995) return 'rgba(239,68,68,0.95)';
+        if (v < 1005) return 'rgba(249,115,22,0.95)';
+        if (v < 1013) return 'rgba(234,179,8,0.95)';
+        if (v < 1020) return 'rgba(34,197,94,0.95)';
+        return 'rgba(37,99,235,0.95)';
+    }
     if (v < -5) return 'rgba(37,99,235,0.95)';
     if (v < 0) return 'rgba(14,165,233,0.95)';
     if (v < 5) return 'rgba(34,197,94,0.95)';
@@ -11719,10 +11773,11 @@ function fmContourFallbackColor(value) {
     if (v < 35) return 'rgba(220,38,38,0.95)';
     return 'rgba(124,45,18,0.95)';
 }
-function fmContourColor(value) {
+function fmContourColor(value, varName) {
+    var vn = varName || fmContourVar || fmVariable;
     try {
         if (fmModule && typeof fmModule.getColorScale === 'function') {
-            var scale = fmModule.getColorScale(fmVariable, !!fmOpts.dark);
+            var scale = fmModule.getColorScale(vn, !!fmOpts.dark);
             if (scale) {
                 if (typeof fmModule.getColor === 'function') {
                     var c = fmModule.getColor(scale, value);
@@ -11749,13 +11804,18 @@ function fmContourColor(value) {
             }
         }
     } catch (e) { }
-    return fmContourFallbackColor(value);
+    return fmContourFallbackColor(value, vn);
 }
-function fmVectorUrl(baseUrl) {
+function fmVectorUrl(baseUrl, contourVar, forceContours, intervalsOverride) {
+    var cv = contourVar || fmVariable;
     var q = [];
-    if (fmOpts.contours) {
+    if (fmOpts.contours || forceContours) {
         q.push('contours=true');
-        if (fmOpts.density && fmOpts.density !== 'auto') q.push('intervals=' + fmContourInterval(fmVariable));
+        if (intervalsOverride !== undefined && intervalsOverride !== null) {
+            q.push('intervals=' + intervalsOverride);
+        } else if (fmOpts.density && fmOpts.density !== 'auto') {
+            q.push('intervals=' + fmContourInterval(cv));
+        }
     }
     if (fmOpts.arrows) { q.push('arrows=true'); q.push('arrow_style=' + fmOpts.arrowStyle); }
     if (fmOpts.grid) q.push('grid=true');
@@ -11782,8 +11842,22 @@ function fmRebuild() {
     if (fmSrcCache && !fmDomainRegistered) { fmRegisterDomain(); fmLayerKey = null; }
     var cur = fmCurrentOmUrl();
     if (!cur) return;
-    var vurl = fmVectorUrl(cur.url);
-    var key = cur.url + '|' + (vurl || '') + '|' + (fmClipBounds ? fmClipBounds.join(',') : '');
+    var overlayActive = !!fmOverlayVariable;
+    var vurl;
+    if (overlayActive) {
+        // MODIFICA B: raster = geopotential_height_500hPa (cur.url); layer vettoriale = isobare
+        // MSL forzate con intervallo sinottico 4 hPa, sul pane forecastMapsPaneVector.
+        var overlayBase = fmOmUrlForIndexVar(fmIdx, fmOverlayVariable);
+        if (overlayBase) {
+            vurl = fmVectorUrl(overlayBase, fmOverlayVariable, true, 4);
+        } else {
+            vurl = fmVectorUrl(cur.url, fmVariable);
+        }
+    } else {
+        vurl = fmVectorUrl(cur.url);
+    }
+    fmContourVar = overlayActive ? fmOverlayVariable : fmVariable;
+    var key = cur.url + '|' + (vurl || '') + '|' + (fmClipBounds ? fmClipBounds.join(',') : '') + '|' + (fmOverlayVariable || '');
     if (key === fmLayerKey && fmLayerOnMap(fmRasterLayer)
         && (!vurl || fmLayerOnMap(fmVectorLayer))) {
         // mitigazione churn: cache-by-url (pattern 1.0.0.14 adattato) - stesso frame, layer vivi
@@ -11845,6 +11919,11 @@ function fmUpdateLegend() {
     else { lo = (cs.min === null || cs.min === undefined ? '' : cs.min); hi = (cs.max === null || cs.max === undefined ? '' : cs.max); }
     el.innerHTML = '<div class="fm-legend-bar" style="background:linear-gradient(90deg,' + stops.join(',') + ')"></div>'
         + '<div class="fm-legend-labels"><span>' + fmFmtNum(lo) + '</span><span>' + (cs.unit || '') + '</span><span>' + fmFmtNum(hi) + '</span></div>';
+    // MODIFICA B: con overlay attivo aggiunge l'etichetta delle isobare MSL. La scala raster
+    // (geopotential_height_500hPa) resta invariata e la semantica alpha resta 0..1.
+    if (fmOverlayVariable === 'pressure_msl') {
+        el.innerHTML += '<div class="fm-legend-overlay">Isobare MSL (hPa) · passo 4 hPa</div>';
+    }
 }
 function fmDomainChanged() {
     var s = fmEl('fm-domain-select');
@@ -11855,6 +11934,15 @@ function fmDomainChanged() {
 function fmVariableChanged() {
     var s = fmEl('fm-variable-select');
     if (s) fmVariable = s.value;
+    if (fmVariable === FM_SYNTH_PRESSURE_GEOPOT) {
+        // MODIFICA B: carta unificata Z500 + isobare MSL.
+        fmVariable = 'geopotential_height_500hPa';
+        fmOverlayVariable = 'pressure_msl';
+    } else {
+        fmOverlayVariable = null;
+    }
+    var chkC = fmEl('fm-chk-contours');
+    if (fmOverlayVariable === 'pressure_msl' && chkC) chkC.checked = true;
     fmIdx = 0;
     fmSyncSlider();
     fmRebuild();
@@ -11890,7 +11978,7 @@ function fmLoadDomain(dom) {
             vars = (meta.variables || []).slice();
         }
         vars = vars.filter(function (vv) { return FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv]); });
-        if (vars.indexOf(fmVariable) < 0) fmVariable = fmPickDefaultVar(vars);
+        if (vars.indexOf(fmVariable) < 0) { fmVariable = fmPickDefaultVar(vars); fmOverlayVariable = null; }
         fmPopulateVariables(vars);
         if (fmIdx >= meta.valid_times.length) fmIdx = 0;
         fmPopulateTimes(meta.valid_times);

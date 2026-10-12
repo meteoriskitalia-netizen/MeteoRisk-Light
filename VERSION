@@ -1,3 +1,13 @@
+MeteoRisk Light - 1.2.4.5 - MAPPE PREVISIONALI: RIMOSSO IL DOMINIO CHMI ALADIN (2 km) DALL'ELENCO FM_DOMAINS (bump da 1.2.4.4)
+MAJOR=1
+MINOR=2
+PATCH=4
+BUILD=5
+RELEASE_TYPE=release
+DATE=2026-10-12
+NOTE=Release 1.2.4.5 (bump da 1.2.4.4): fix Mappe previsionali. Rimosso il dominio CHMI ALADIN (2 km) dall'elenco FM_DOMAINS (da 11 a 10 domini). Nessun'altra modifica funzionale. File e riferimenti rinominati a 1.2.4.5.
+APP_FILE=mri-light-1.2.4.5.html
+
 MeteoRisk Light - 1.2.4.4 - MAPPE PREVISIONALI CACHE-ONLY: RIMOSSA LA SORGENTE S3, CACHE data/fm2 UNICA FONTE, ERRORI VISIBILI, FILTRO VARIABILI CURATE SEMPRE ATTIVO (bump da 1.2.4.3)
 MAJOR=1
 MINOR=2
@@ -161,3 +171,4 @@ SATEFIX=BUMP 1.0.0.15 — RITAGLIO SATELLITE A EUROPA / FIX MEMORIA EUMETSAT. Il
 SCIAUDIT3=BUMP 1.0.0.13 � APPLICAZIONE DEI 14 MIGLIORAMENTI (bollettini GIALLI) DELL'AUDIT SCIENTIFICO, dopo i 2 CRITICI + 8 IMPORTANTI (1.0.0.12). (1) MEAN-WIND BUNKERS INTEGRALE: centroide 0-6km = media per strato pesata per spessore GEOMETRICO AGL (levelsAGLTable(): quote AGL interp. in log-p dagli anchor 850/700/500 + superficie; meanWindStrata(): media per strato, fallback aritmetico se mancano le quote) al posto della media aritmetica che sovra-pesava i livelli bassi (sez. 4.4/8.5). (2) SHEAR 0-1km + SRH 0-1km: il profilo espone shear01 (sfc-850hPa) e srh1; canale low-level in detectVorticosi per tornado/waterspout non-supercellari (shear01>=10 & srh1>=90, o srh1>=140) (sez. 5.6/8.6). (3) SRH 0-3km allineata alle basi LIGURI (CFMI-PC 150-300/300-450/>450) in escalation vorticosi; SRH>=150 da sola -> livello 2 (sez. 6). (4) DOWNBURST documentato Mediterraneo-sperimentale, nessun peso ritoccato in attesa della validazione empirica F5 (sez. 4.9). (5) MELTING GATE verificato vs Po Valley 2023: il taglio freezing>4500m colpisce solo small/small-medium e preserva large/very-large (sez. 6/8.7). (6) LCL-profile: Open-Meteo non espone LCL di livello -> resta Lawrence documentato (sez. 5.4). (7) SHIP-caps e doppia penalizzazione gia' corretti in 1.0.0.12, solo verifica (sez. 4.7/5.5). FORMULE COMPOSITI INALTERATE; palette e coloring slider invariati. Nuove check test_sciaudit.mjs (17); file/cartella rinominate a 1.0.0.13 in questo bump.
 V2BUMP=BUMP 1.2.4.3 — MAPPE PREVISIONALI V2 (bump da 1.2.4.2): client V2 rimosso dal client; pannello "Mappe previsionali" su sorgente cache data/fm2 preferita con switch cache/S3 (fm-source-select) e registro domini (fmRegisterDomain) nel blocco FM; set variabili curate; motore scripts\forecast_v2\forecast_v2_engine.py a orizzonte INTERO (V2_MAX_FRAMES=0, --valid-frames 0) e workflow forecast-maps-v2.yml allineato (--valid-frames 0). La 1.2.4.2 nello storico ha doppio contenuto: stato pre-rimozione (con client V2, fase A+/B/C) e stato finale post-rimozione; la 1.2.4.3 è la versione ATTIVA.
 CACHEONLY=BUMP 1.2.4.4 — MAPPE PREVISIONALI CACHE-ONLY (bump da 1.2.4.3): rimossa la sorgente S3 (switch fm-source-select, fallback useS3, fmSourcePref, fmSourceChanged, FM_BASE); la cache data/fm2 e' l'unica fonte; errori di fmRegisterDomain/fm2FetchMeta e frame mancante resi visibili via fmSetStatus (prima muti, possibile causa "mappe bianche"); filtro variabili FM_CURATED_VARS applicato sempre. File e riferimenti rinominati a 1.2.4.4; la 1.2.4.3 resta storica.
+CHMI=BUMP 1.2.4.5 — MAPPE PREVISIONALI: rimosso il dominio CHMI ALADIN (2 km) dall'elenco FM_DOMAINS delle Mappe previsionali (da 11 a 10 domini); nessun'altra modifica. File e riferimenti rinominati a 1.2.4.5; la 1.2.4.4 resta storica.

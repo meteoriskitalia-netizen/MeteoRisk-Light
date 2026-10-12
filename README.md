@@ -6,11 +6,14 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.4
+## Versione attiva: 1.2.4.5
 
-- File applicativo: `mri-light-1.2.4.4.html` (`APP_VERSION = '1.2.4.4'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.4', date: '2026-10-12' }`).
-- Contenuto della 1.2.4.4 (release sopra la 1.2.4.3):
+- File applicativo: `mri-light-1.2.4.5.html` (`APP_VERSION = '1.2.4.5'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.5', date: '2026-10-12' }`).
+- Contenuto della 1.2.4.5 (release sopra la 1.2.4.4):
+  - **Mappe previsionali - dominio rimosso**: rimosso il dominio CHMI ALADIN (2 km)
+    (`chmi_aladin_central_europe_2km`) dall'elenco `FM_DOMAINS` delle Mappe previsionali
+    (da 11 a 10 domini); nessun'altra modifica funzionale.
   - **Mappe previsionali cache-only**: rimossa la sorgente S3 (switch `fm-source-select`,
     fallback `useS3`, `fmSourcePref`, `fmSourceChanged`, `FM_BASE`); la cache `data/fm2`
     e' l'unica fonte; gli errori di `fmRegisterDomain`/`fm2FetchMeta` e di frame mancante
@@ -58,7 +61,7 @@ Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
     Layer (maps.open-meteo.com / openmeteo.s3.amazonaws.com, CC BY 4.0), nata al posto
     del vecchio modulo Meteociel (dismesso); solo visualizzazione sinottica, nessun
     impatto sui calcoli. Selettore modello/dominio (default DWD ICON EU 0.0625,
-    `dwd_icon_eu`; 11 domini), variabile e ora di previsione; selettore area
+    `dwd_icon_eu`; 10 domini dopo la rimozione del dominio CHMI ALADIN nella 1.2.4.5), variabile e ora di previsione; selettore area
     geografica (11 voci: 10 aree bbox predefinite + "Intero dominio"); player con
     velocita' (Lenta/Normale/Veloce) e slider; tasto "Preload" con contatore di
     avanzamento + warm-ahead del frame successivo; layer serviti via protocollo `om://`;
@@ -126,7 +129,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.4.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.5.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
