@@ -1374,12 +1374,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
                 <label class="fm-row"><span>Modello / Dominio</span>
                     <select id="fm-domain-select" class="fm-select" onchange="fmDomainChanged()"></select>
                 </label>
-                <label class="fm-row"><span>Sorgente</span>
-                    <select id="fm-source-select" class="fm-select" onchange="fmSourceChanged()">
-                        <option value="cache" selected>Nuova / cache fm2 (Italia)</option>
-                        <option value="s3">Vecchia / S3 (dominio completo)</option>
-                    </select>
-                </label>
                 <label class="fm-row"><span>Variabile</span>
                     <select id="fm-variable-select" class="fm-select" onchange="fmVariableChanged()"></select>
                 </label>
@@ -1828,11 +1822,14 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.3';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_VERSION = '1.2.4.4';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
     const APP_RELEASE_DATE = '2026-10-12';
     const APP_CHANGELOG = [
+        { version: '1.2.4.4', date: '2026-10-12', changes: [
+            'FIX= Mappe previsionali cache-only: rimossa la sorgente S3, la cache data/fm2 e la sola fonte; gli errori di caricamento (registro domini, fetch metadati, frame mancante) sono ora visibili via fmSetStatus invece che muti; filtro variabili curate applicato sempre.',
+        ]},
         { version: '1.2.4.3', date: '2026-10-12', changes: [
-            'V2= Mappe previsionali V2: rimosso il client V2; pannello FM con switch sorgente cache/S3 (fm-source-select) e registro domini (fmRegisterDomain); set variabili curate.',
+            'V2= Mappe previsionali V2: rimosso il client V2; pannello FM con sola sorgente cache data/fm2 (switch S3 rimosso, errori di caricamento visibili) e registro domini (fmRegisterDomain); set variabili curate.',
             'ENGINE= forecast_v2_engine: orizzonte intero (V2_MAX_FRAMES=0, --valid-frames 0).',
         ]},
         { version: '1.2.4.2', date: '2026-10-11', changes: [
@@ -11209,7 +11206,6 @@ stopSyncPlay();
 // Fonte dati: Open-Meteo Weather Map Layer (maps.open-meteo.com), licenza CC BY 4.0.
 // Scopo: SOLO visualizzazione sinottica; nessun impatto sui calcoli dell'app.
 
-var FM_BASE = 'https://openmeteo.s3.amazonaws.com/data_spatial/';
 var FM_WML_URLS = [
     'https://unpkg.com/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs',
     'https://cdn.jsdelivr.net/npm/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs'
@@ -11322,7 +11318,6 @@ var fmMeta = null;
 var fmRasterLayer = null;
 var fmVectorLayer = null;
 var fmLayerKey = null; // mitigazione churn: cache-by-url del frame renderizzato (cur.url|vurl|clipBounds)
-var fmAbort = null;
 var fmOpts = { contours: false, arrows: false, arrowStyle: 'arrow', grid: false, dark: false, density: 'fitta' };
 var fmRegion = 'domain';
 var fmClipBounds = null;
@@ -11337,7 +11332,6 @@ var fmLoaderTimer = null;
     var fmSrcCache = false;
     var fm2MetaCache = null;
     var fmDomainRegistered = false;
-    var fmSourcePref = 'cache';
 
 function fmEl(id) { return document.getElementById(id); }
 function fmSetStatus(text) { var el = fmEl('fm-status'); if (el) el.textContent = text; }
@@ -11537,9 +11531,10 @@ function fmFlushWaiters(ok) {
 }
 function fmRegisterDomain() {
     var g = (fm2MetaCache && fm2MetaCache.grid) || (fmMeta && fmMeta.grid);
-    if (!g || !fmModule || !fmModule.defaultOmProtocolSettings) return false;
+    if (!g) { fmSetStatus('Errore registrazione dominio cache fm2: griglia/metadati mancanti'); return false; }
+    if (!fmModule || !fmModule.defaultOmProtocolSettings) { fmSetStatus('Errore registrazione dominio cache fm2: lib mappe non pronta'); return false; }
     var opts = fmModule.defaultOmProtocolSettings.domainOptions;
-    if (!opts) return false;
+    if (!opts) { fmSetStatus('Errore registrazione dominio cache fm2: domainOptions assenti'); return false; }
     var grid = { type: 'regular', lonMin: g.lonMin, latMin: g.latMin, dx: g.dx, dy: g.dy, nx: g.nx, ny: g.ny };
     var found = null;
     for (var i = 0; i < opts.length; i++) { if (opts[i] && opts[i].value === 'fm2') { found = opts[i]; break; } }
@@ -11549,28 +11544,6 @@ function fmRegisterDomain() {
 }
 function fm2FetchMeta(domain, cb) {
     var cacheUrl = 'data/fm2/latest.json';
-    var useS3 = function () {
-        var url = FM_BASE + domain + '/latest.json';
-        if (fmAbort) { try { fmAbort.abort(); } catch (e) { } }
-        fmAbort = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        var opts = { cache: 'no-store' };
-        if (fmAbort) opts.signal = fmAbort.signal;
-        fetch(url, opts).then(function (r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        }).then(function (j) {
-            if (!j || !j.valid_times || !j.valid_times.length) throw new Error('nessun tempo valido');
-            fmMeta = j;
-            fmSrcCache = false;
-            fm2MetaCache = null;
-            cb(null, j);
-        })['catch'](function (e) {
-            if (e && e.name === 'AbortError') return;
-            fmSetStatus('Errore caricamento run: ' + (e && e.message ? e.message : e));
-            cb(e);
-        });
-    };
-    if (fmSourcePref === 's3') { useS3(); return; }
     fetch(cacheUrl, { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
@@ -11588,7 +11561,7 @@ function fm2FetchMeta(domain, cb) {
                 }
             } catch (e) {}
         }
-        if (!inCache) { useS3(); return; }
+        if (!inCache) { throw new Error('dominio ' + domain + ' non presente in cache'); }
         var valid_times = [];
         if (j.frames && j.frames.length) {
             for (var f = 0; f < j.frames.length; f++) {
@@ -11635,7 +11608,8 @@ function fm2FetchMeta(domain, cb) {
         fmRegisterDomain();
         cb(null, metaCache);
     })['catch'](function (e) {
-        useS3();
+        fmSetStatus('Errore caricamento cache mappe previsionali (' + cacheUrl + '): ' + (e && e.message ? e.message : e));
+        cb(e);
     });
 }
 function fmFetchMeta(domain, cb) {
@@ -11704,21 +11678,15 @@ function fmOmUrlForIndex(idx) {
     if (!fmMeta || !fmMeta.valid_times.length) return null;
     var valid = fmMeta.valid_times[idx];
     if (valid === undefined) return null;
-    var useCacheUrl = fmSrcCache;
-    if (useCacheUrl) {
-        var ffile = fm2FrameFile(idx);
-        if (!ffile) useCacheUrl = false;
+    var ffile = fm2FrameFile(idx);
+    if (!ffile) {
+        fmSetStatus('Errore frame cache mappe previsionali mancante (data/fm2): ' + fmFmtTime(valid));
+        return null;
     }
-    if (useCacheUrl) {
-        var cbase = 'data/fm2/' + fm2FrameFile(idx);
-        var q = 'variable=' + encodeURIComponent(fmVariable) + '&tile_size=512&interpolation=linear';
-        if (fmOpts.dark) q += '&dark=true';
-        return cbase + '?' + q;
-    }
-    var base = FM_BASE + fmDomain + '/' + fmRunDir(fmMeta.reference_time) + '/' + fmValidFile(valid);
-    var q2 = 'variable=' + encodeURIComponent(fmVariable) + '&tile_size=512&interpolation=linear';
-    if (fmOpts.dark) q2 += '&dark=true';
-    return base + '?' + q2;
+    var cbase = 'data/fm2/' + ffile;
+    var q = 'variable=' + encodeURIComponent(fmVariable) + '&tile_size=512&interpolation=linear';
+    if (fmOpts.dark) q += '&dark=true';
+    return cbase + '?' + q;
 }
 function fmCurrentOmUrl() {
     if (!fmMeta || !fmMeta.valid_times.length) return null;
@@ -11884,11 +11852,6 @@ function fmDomainChanged() {
     fmStopPlay();
     fmLoadDomain();
 }
-function fmSourceChanged() {
-    var s = document.getElementById('fm-source-select');
-    fmSourcePref = (s && s.value === 's3') ? 's3' : 'cache';
-    fmLoadDomain(fmDomain);
-}
 function fmVariableChanged() {
     var s = fmEl('fm-variable-select');
     if (s) fmVariable = s.value;
@@ -11926,9 +11889,7 @@ function fmLoadDomain(dom) {
         if (!vars.length) {
             vars = (meta.variables || []).slice();
         }
-        if (!fmSrcCache) {
-            vars = vars.filter(function (vv) { return FM_CURATED_VARS.indexOf(vv) >= 0; });
-        }
+        vars = vars.filter(function (vv) { return FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv]); });
         if (vars.indexOf(fmVariable) < 0) fmVariable = fmPickDefaultVar(vars);
         fmPopulateVariables(vars);
         if (fmIdx >= meta.valid_times.length) fmIdx = 0;
@@ -12082,8 +12043,6 @@ function toggleForecastMaps() {
     if (btn) btn.textContent = '🗺️ Mappe previsionali (ON)';
     fmInvalidateSize();
     fmPopulateDomains();
-    var fmSourceSel = fmEl('fm-source-select');
-    if (fmSourceSel) fmSourceSel.onchange = fmSourceChanged;
     fmEnsureMapLoader();
     fmSetStatus('Carico la libreria…');
     ensureWeatherMapLayer(function (ok) {

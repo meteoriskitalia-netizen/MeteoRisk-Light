@@ -19,7 +19,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.4.3.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.4.4.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -74,7 +74,7 @@ ok('A5g: markup id="fm-region-select"', has(/id="fm-region-select"/));
 ok('A5h: loader mappa id="fm-map-loader" (creato dinamicamente)', has(/d\.id\s*=\s*'fm-map-loader'/));
 
 ok("A6: pane Leaflet createPane('forecastMapsPane')", has(/createPane\('forecastMapsPane'\)/));
-ok('A7a: host dati Open-Meteo Weather Map Layer', has(/https:\/\/openmeteo\.s3\.amazonaws\.com\/data_spatial\//));
+ok('A7a: host S3 Open-Meteo assente nell\'HTML (cache-only)', !has(/openmeteo\.s3\.amazonaws\.com\/data_spatial/) && !has(/fm-source-select/));
 ok('A7b: pin libreria @openmeteo/weather-map-layer@0.2.2', has(/@openmeteo\/weather-map-layer@0\.2\.2\/dist\/index\.mjs/));
 
 // A8: preload / warm (1.2.4.0)
@@ -140,10 +140,10 @@ ctx.fmMeta = {
   variables: ['temperature_2m'],
 };
 
-const EXPECTED = 'https://openmeteo.s3.amazonaws.com/data_spatial/dwd_icon_eu/2026/10/10/1800Z/2026-10-10T2300.om'
+const EXPECTED = 'data/fm2/2026-10-10T2300.om'
   + '?variable=temperature_2m&tile_size=512&interpolation=linear';
 const cur = ctx.fmCurrentOmUrl();
-ok('B3: fmCurrentOmUrl().url = URL raster atteso', cur && cur.url === EXPECTED, cur && cur.url);
+ok('B3: fmCurrentOmUrl().url = URL cache atteso', cur && cur.url === EXPECTED, cur && cur.url);
 ok('B4: fmCurrentOmUrl().valid = valid_times[0]', cur && cur.valid === '2026-10-10T23:00Z');
 ok('B5: fmVectorUrl(url) === null con tutte le opzioni off',
   ctx.fmVectorUrl(EXPECTED) === null, String(ctx.fmVectorUrl(EXPECTED)));

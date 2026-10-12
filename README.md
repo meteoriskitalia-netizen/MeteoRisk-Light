@@ -6,14 +6,18 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.3
+## Versione attiva: 1.2.4.4
 
-- File applicativo: `mri-light-1.2.4.3.html` (`APP_VERSION = '1.2.4.3'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.3', date: '2026-10-12' }`).
-- Contenuto della 1.2.4.3 (release sopra la 1.2.4.2):
+- File applicativo: `mri-light-1.2.4.4.html` (`APP_VERSION = '1.2.4.4'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.4', date: '2026-10-12' }`).
+- Contenuto della 1.2.4.4 (release sopra la 1.2.4.3):
+  - **Mappe previsionali cache-only**: rimossa la sorgente S3 (switch `fm-source-select`,
+    fallback `useS3`, `fmSourcePref`, `fmSourceChanged`, `FM_BASE`); la cache `data/fm2`
+    e' l'unica fonte; gli errori di `fmRegisterDomain`/`fm2FetchMeta` e di frame mancante
+    sono ora visibili via `fmSetStatus` (prima muti -> possibile causa "mappe bianche");
+    filtro variabili `FM_CURATED_VARS` applicato sempre.
   - **Mappe previsionali V2**: rimosso il client V2 dall'app; pannello "Mappe
-    previsionali" con switch sorgente cache/S3 (`fm-source-select`) e registro domini
-    (`fmRegisterDomain`) nel blocco FM; set variabili curate.
+    previsionali" con registro domini (`fmRegisterDomain`) nel blocco FM; set variabili curate.
   - **Motore forecast_v2**: orizzonte intero (`V2_MAX_FRAMES=0`, `--valid-frames 0`)
     con workflow `forecast-maps-v2.yml` allineato.
   - **Popup mappe previsionali in-frame**: su mobile il popup delle mappe previsionali
@@ -122,7 +126,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.3.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.4.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
