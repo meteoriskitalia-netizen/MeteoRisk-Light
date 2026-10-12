@@ -12,7 +12,11 @@ verificato bit-exact nel POC `spike_omfiles/`).
 - `data/fm2/latest.json` — manifest con `reference_time`, `valid_times`, `domains`,
   `grid` del crop, `variables` (per frame e per variabile: dominio sorgente),
   `sizes`, `frames`, `warnings`.
-- Al massimo `V2_MAX_FRAMES` (default 25) frame: i piu' vecchi vengono rimossi.
+- **Orizzonte INTERO**: si pubblicano TUTTI i `valid_times` del manifest primario
+  (nessuna troncatura a un numero fisso di frame). In `--out` resta esattamente
+  la finestra corrente (le ancore pubblicate); i frame di run precedenti vengono
+  rimossi. `V2_MAX_FRAMES` (default `0`) e' un cap *opzionale* di sicurezza del
+  pruning: `0` = nessun cap (non tronca mai l'orizzonte).
 
 Il client legge un file con `readVariable(url, "<nome_var>", ranges)` dove `ranges`
 sono gli indici del crop (vedi `grid` nel manifest: `nx`, `ny`, `lonMin`, `latMin`,
@@ -23,13 +27,13 @@ sono gli indici del crop (vedi `grid` nel manifest: `nx`, `ny`, `lonMin`, `latMi
 ```bash
 python scripts/forecast_v2/forecast_v2_engine.py \
   --domains dwd_icon_eu ecmwf_ifs025 \
-  --valid-frames 25 \
+  --valid-frames 0 \
   --out data/fm2
 
 # Con cache persistente dei frame (riuso tra run, meno egress S3):
 python scripts/forecast_v2/forecast_v2_engine.py \
   --domains dwd_icon_eu ecmwf_ifs025 \
-  --valid-frames 25 \
+  --valid-frames 0 \
   --out data/fm2 \
   --frames-cache .cache_fm2_frames
 ```
@@ -39,7 +43,7 @@ python scripts/forecast_v2/forecast_v2_engine.py \
 | Opzione | Descrizione |
 |---|---|
 | `--domains D1 D2 ...` | Domini in ordine di priorita'. Il primo definisce la griglia del crop. Default: `dwd_icon_eu ecmwf_ifs025`. |
-| `--valid-frames N` | Numero di valid_times da pubblicare (default 25). |
+| `--valid-frames N` | Numero di valid_times da pubblicare a partire dal primo. `0` (default) o negativo = **intero orizzonte** del manifest primario (tutti i valid_times). |
 | `--out DIR` | Directory di output (default `data/fm2`). |
 | `--once` | Un solo ciclo ed esce (default/compat). |
 | `--no-prune` | Non rimuove i frame oltre il limite. |
@@ -115,10 +119,16 @@ variabili** (frame di analisi, con `rain`/`showers`/`surface_pressure`/
 `weather_code` omesse) = **327.200 byte ~= 319,5 KiB** -> **~13,9 KiB/variabile**.
 
 - Stima **unione piena (27 var): ~375-386 KiB/frame**.
-- Stima **finestra 25 frame: ~9,2-9,4 MiB**.
+- Il numero di frame = **orizzonte intero** del manifest primario (variabile per
+  run): osservato **31 `valid_times`** per `dwd_icon_eu` (run `2026-10-12T03:00Z`,
+  passo 1h, `completed=true`; `ecmwf_ifs025`: 49) al momento della verifica.
+  Stima cache `data/fm2` = n_frame x ~375-386 KiB -> **~11,4-11,7 MiB** con 31
+  frame; cresce **linearmente** col numero di `valid_times` (es. ~46-47 MiB con
+  120 frame). Il conteggio reale va letto dal campo `valid_times` di `latest.json`.
 
-Sono **stime** (dipendono dalla comprimibilita' del campo e da quante variabili
-esistono davvero nel frame); il valore sui 23 var e' **misurato**.
+Sono **stime** (dipendono dalla comprimibilita' del campo, da quante variabili
+esistono davvero nel frame e dalla lunghezza dell'orizzonte); il valore misurato
+(327.200 byte su 23 var) resta **misurato**.
 
 ## Come il client (reader WML 0.2.2) legge le variabili
 

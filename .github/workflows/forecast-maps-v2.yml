@@ -4,8 +4,9 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #   - Fonti: file spaziali Open-Meteo su S3 anonimo
 #     (data_spatial/<dominio>/.../<valid_time>.om + latest.json come indice).
 #   - Motore: scripts/forecast_v2/forecast_v2_engine.py -> data/fm2/*.om +
-#     data/fm2/latest.json (crop Italia multi-variabile, NO-OP GUARD, prune a
-#     V2_MAX_FRAMES). Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
+#     data/fm2/latest.json (crop Italia multi-variabile, NO-OP GUARD, orizzonte
+#     INTERO del manifest primario: --valid-frames 0, nessun cap sul prune).
+#     Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
 #   - EGRESS: i frame full-size S3 sono tenuti in cache GitHub
 #     (.cache_fm2_frames, actions/cache) e riusati tra run via --frames-cache:
 #     si scaricano solo i frame nuovi, non l'intera finestra ogni volta.
@@ -78,7 +79,7 @@ jobs:
           fi
           python scripts/forecast_v2/forecast_v2_engine.py \
             --domains dwd_icon_eu ecmwf_ifs025 \
-            --valid-frames 25 \
+            --valid-frames 0 \
             --out data/fm2 \
             --frames-cache .cache_fm2_frames \
             $FORCE

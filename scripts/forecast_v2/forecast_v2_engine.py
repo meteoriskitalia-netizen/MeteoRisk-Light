@@ -9,9 +9,12 @@ sull'Italia, leggibile dal reader WML 0.2.2 (stesso formato del POC
 `spike_omfiles/`, verificato bit-exact).
 
     python scripts/forecast_v2/forecast_v2_engine.py \
-        [--domains dwd_icon_eu ecmwf_ifs025] [--valid-frames 25] \
+        [--domains dwd_icon_eu ecmwf_ifs025] [--valid-frames 0] \
         [--out data/fm2] [--once] [--no-prune] [--dry-run] [--force] \
         [--frames-cache .cache_fm2_frames]
+
+    --valid-frames 0 (default) o negativo = pubblica l'INTERO orizzonte del
+    manifest primario (tutti i valid_times). N > 0 = primi N frame.
 
 Dati sorgente (Open-Meteo "spatial" files, accesso S3 anonimo):
     https://openmeteo.s3.amazonaws.com/data_spatial/<dominio>/<YYYY>/<MM>/<DD>/<HH00Z>/<YYYY-MM-DDTHH00.om
@@ -42,8 +45,13 @@ Disegno (V1 del motore, scelte DICHIARATE):
   - NO-OP GUARD: se il manifest esistente ha reference_time e valid_times
     identici ai nuovi (e non --force), esce 0 SENZA scaricare/riscrivere nulla
     (evita ~144 commit/giorno inutili, come phenomena-verify).
-  - PRUNING: in `--out` restano solo gli ultimi V2_MAX_FRAMES `.om`; i piu'
-    vecchi vengono rimossi. Gli altri fanno parte della cache servita da Pages.
+  - ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest primario
+    (nessuna troncatura a un numero fisso di frame). --valid-frames 0/negativo
+    (default) = intero orizzonte; N > 0 = primi N.
+  - PRUNING: in `--out` resta ESATTAMENTE la finestra corrente (le ancore
+    `valid_times` pubblicate in questo run); ogni `.om` estraneo (reference_time
+    precedenti) viene rimosso. `V2_MAX_FRAMES` e' un cap OPZIONALE di sicurezza
+    del pruning (0 default = nessun cap): non tronca mai l'orizzonte pubblicato.
   - FRAMES-CACHE (--frames-cache): cache PERSISTENTE dei frame `.om` full-size
     (ripristinata in CI via actions/cache), layout `<dir>/<dominio>/<VALID>.om`.
     Un frame in cache viene riusato SENZA download se la sua Content-Length
@@ -128,7 +136,13 @@ V2_RISK_VARS = [
     {"name": "freezing_level_height", "sources": ["freezing_level_height"]},  # FM_CACHE core
 ]
 
-V2_MAX_FRAMES = 25
+# Cap OPZIONALE di sicurezza del pruning (numero massimo di frame `.om`
+# mantenuti in --out). 0 = NESSUN CAP: si mantiene l'orizzonte INTERO del
+# manifest primario (tutti i valid_times). Il pruning "vero" rimuove comunque
+# ogni frame estraneo alla finestra corrente (`keep_files` = ancore pubblicate);
+# questo cap scatta solo se `keep_files > max_frames`. Con 0 NON tronca mai
+# l'orizzonte richiesto. E' anche il default di --valid-frames (0 = intero).
+V2_MAX_FRAMES = 0
 V2_OUT = "data/fm2"
 
 # Tolleranza (ore) per agganciare il valid_time del secondario all'ancora.
@@ -525,8 +539,9 @@ def prune_frames(out_dir, keep_files, max_frames):
     finestra corrente e non si cancella mai un frame appena scritto (che sarebbe
     possibile con un semplice "tieni i max_frames nomi piu' grandi", dato che le
     ancore sono i valid_times PIU' PROSSIMI al reference, non i piu' lontani).
-    Cap di sicurezza: se `keep_files` supera `max_frames`, tiene i piu' recenti
-    per nome.
+    Cap OPZIONALE di sicurezza: se `max_frames > 0` e `keep_files` lo supera,
+    tiene i piu' recenti per nome; `max_frames <= 0` = NESSUN cap (mantiene
+    l'orizzonte intero).
     """
     keep = set(keep_files)
     all_files = sorted([f for f in os.listdir(out_dir) if f.endswith(".om")])
@@ -540,7 +555,7 @@ def prune_frames(out_dir, keep_files, max_frames):
         except OSError as exc:  # noqa: BLE001
             print("%s [WARN] prune fallito %s: %s" % (LOG, f, exc))
     kept = sorted(keep)
-    if len(kept) > max_frames:
+    if max_frames > 0 and len(kept) > max_frames:
         for f in kept[: len(kept) - max_frames]:
             if f in removed:
                 continue
@@ -583,7 +598,9 @@ def main(argv=None):
     ap.add_argument("--domains", nargs="+", default=list(V2_DOMAINS),
                     help="Domini in ordine di priorita' (il primo definisce la griglia del crop).")
     ap.add_argument("--valid-frames", type=int, default=V2_MAX_FRAMES,
-                    help="Numero di frame (valid_times) da pubblicare (default %d)." % V2_MAX_FRAMES)
+                    help="Numero di frame (valid_times) da pubblicare a partire dal "
+                         "primo. 0 (default) o negativo = INTERO orizzonte del manifest "
+                         "primario (tutti i valid_times).")
     ap.add_argument("--out", default=V2_OUT, help="Directory di output (default %s)." % V2_OUT)
     ap.add_argument("--once", action="store_true",
                     help="Esegue un solo ciclo ed esce (default/compat).")
@@ -598,9 +615,7 @@ def main(argv=None):
                          "disabilitata, comportamento invariato).")
     args = ap.parse_args(argv)
 
-    if args.valid_frames < 1:
-        print("%s ERRORE: --valid-frames deve essere >= 1" % LOG)
-        return 1
+    # --valid-frames <= 0 (default 0) = pubblica l'INTERO orizzonte del manifest.
     if not args.domains:
         print("%s ERRORE: --domains vuoto" % LOG)
         return 1
@@ -641,7 +656,10 @@ def main(argv=None):
         print("%s ERRORE: manifest primario privo di reference_time/valid_times." % LOG)
         return 1
 
-    anchors = valid_times[: args.valid_frames]  # i frame piu' prossimi all'ancora temporale
+    if args.valid_frames > 0:
+        anchors = valid_times[: args.valid_frames]  # primi N (i piu' prossimi)
+    else:
+        anchors = list(valid_times)  # 0/negativo = INTERO orizzonte
     print("%s reference_time=%s valid_times=%d -> ancore=%d (%s .. %s)"
           % (LOG, ref_time, len(valid_times), len(anchors), anchors[0], anchors[-1]))
 
@@ -671,7 +689,9 @@ def main(argv=None):
             "grid": out_grid,
             "anchors": anchors,
             "risk_vars": [rv["name"] for rv in V2_RISK_VARS],
-            "max_frames": args.valid_frames,
+            "valid_frames": args.valid_frames,
+            "all_horizon": args.valid_frames <= 0,
+            "max_frames_cap": V2_MAX_FRAMES,
             "prune": not args.no_prune,
             "manifest_present": os.path.isfile(latest_path),
         }

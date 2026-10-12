@@ -6,11 +6,16 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.2
+## Versione attiva: 1.2.4.3
 
-- File applicativo: `mri-light-1.2.4.2.html` (`APP_VERSION = '1.2.4.2'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.2', date: '2026-10-11' }`).
-- Contenuto della 1.2.4.2 (release sopra la 1.2.4.1):
+- File applicativo: `mri-light-1.2.4.3.html` (`APP_VERSION = '1.2.4.3'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.3', date: '2026-10-12' }`).
+- Contenuto della 1.2.4.3 (release sopra la 1.2.4.2):
+  - **Mappe previsionali V2**: rimosso il client V2 dall'app; pannello "Mappe
+    previsionali" con switch sorgente cache/S3 (`fm-source-select`) e registro domini
+    (`fmRegisterDomain`) nel blocco FM; set variabili curate.
+  - **Motore forecast_v2**: orizzonte intero (`V2_MAX_FRAMES=0`, `--valid-frames 0`)
+    con workflow `forecast-maps-v2.yml` allineato.
   - **Popup mappe previsionali in-frame**: su mobile il popup delle mappe previsionali
     non copre piu' l'intera pagina (in-frame nel viewport).
   - **Download tile piu' veloce**: block cache da 512 KB nelle richieste tile
@@ -64,7 +69,7 @@ Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
 ## Architettura dati
 
-Sito statico piu' cinque workflow GitHub Actions che aggiornano i dati e pubblicano su Pages:
+Sito statico piu' sei workflow GitHub Actions che aggiornano i dati e pubblicano su Pages:
 
 | Workflow | Ruolo |
 | --- | --- |
@@ -72,7 +77,8 @@ Sito statico piu' cinque workflow GitHub Actions che aggiornano i dati e pubblic
 | `satellite-engine.yml` | ogni 5 min scarica i frame WMS EUMETSAT (6 sorgenti: 3 Europa + 3 Italia), li ri-codifica in WebP e li pubblica con force-push sul branch orfano `satellite-cache` (finestra rolling di 25 slot = 2 ore). **Niente** build/deploy Pages in questo workflow: i frame arrivano su Pages perche' radar-engine e update-weather-data la restaurano da `satellite-cache` nell'artefatto di deploy |
 | `update-weather-data.yml` | ogni 10 min: check del run ECMWF IFS + canary Best Match -> fetch Open-Meteo -> build, validazione e pubblicazione del dataset derivato in `data/latest/` (commit e deploy **solo** con nuovo dataset valido) |
 | `phenomena-verify.yml` | ogni 10 min valuta i fenomeni grandine/rotazione dai derivati radar + fulmini MLI EUMETSAT (WMS anonimo, CC-BY-4.0) e committa `data/phenomena/{events,badges}.json` su `main` (niente build/deploy: i file arrivano su Pages nell'artefatto di radar-engine e update-weather-data) |
-| `deploy-pages.yml` | deploy manuale/consolidamento: ricostruisce `_site/` con app + `data/latest`, `data/geography`, `data/radar` (incl. archivio rolling `radar-history`), `data/phenomena` e `satellite/` (finestra `satellite-cache`) e pubblica su Pages (`configure-pages` + `upload-pages-artifact@v4` + `deploy-pages@v4`, concurrency dedicata `pages-deploy` come gli altri) |
+| `forecast-maps-v2.yml` | ogni 10 min genera la cache mappe previsionali V2 in `data/fm2/` (`<VALID>.om` + `latest.json`, crop Italia multi-variabile, orizzonte intero `--valid-frames 0`, prune), con cache CI dei frame full-size S3 (`actions/cache@v4` su `.cache_fm2_frames`) |
+| `deploy-pages.yml` | deploy manuale/consolidamento: ricostruisce `_site/` con app + `data/latest`, `data/geography`, `data/radar` (incl. archivio rolling `radar-history`), `data/phenomena`, `data/fm2` e `satellite/` (finestra `satellite-cache`) e pubblica su Pages (`configure-pages` + `upload-pages-artifact@v4` + `deploy-pages@v4`, concurrency dedicata `pages-deploy` come gli altri) |
 
 - I frame satellitari sono WebP a **risoluzione invariata**: stesso slot, stesso
   orologio e stessi formati dati della codifica precedente, solo meno byte.
@@ -97,7 +103,7 @@ python -m pytest scripts\tests\radar_engine -q    # 167 test
 python -m pytest scripts\tests\phenomena -q       # 126 test
 python -m pytest scripts\tests -q                 # 460 test (totale)
 python -m py_compile scripts\satellite_engine.py  # OK
-python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 5 workflow
+python -c "import yaml,glob; [yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"  # 6 workflow
 node --test "scripts/tests/**/*.mjs"              # suite .mjs: 15 file test_*.mjs (più contract_dataset_loader.mjs, NON eseguibile senza dataset baseline)
 ```
 
@@ -116,9 +122,9 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.2.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.3.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
-- `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages}.yml` — i 5 workflow
+- `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
 - `scripts/satellite_engine.py` + `scripts/satellite_engine_requirements.txt` — download
   dei frame EUMETSAT e ri-codifica WebP

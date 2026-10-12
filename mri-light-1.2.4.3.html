@@ -152,19 +152,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
         .fm-map-loader-box { background: rgba(15,23,42,.88); color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
         .fm-spinner { width: 14px; height: 14px; border: 2px solid rgba(226,232,240,.3); border-top-color: #38bdf8; border-radius: 50%; animation: fm-spin .8s linear infinite; display: inline-block; }
         @keyframes fm-spin { to { transform: rotate(360deg); } }
-        /* Fase B V2: pannello overlay previsioni su griglia fm2 (mappa principale) */
-        .v2-panel { position: static; width: 100%; max-width: none; max-height: none; overflow: visible; margin-top: 8px; background: rgba(15,23,42,.95); color: #e2e8f0; border: 1px solid #0891b2; border-radius: 10px; display: none; font-size: 13px; }
-        .v2-panel.active { display: block; }
-        .v2-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-weight: 600; border-bottom: 1px solid #334155; position: sticky; top: 0; background: rgba(15,23,42,.98); }
-        .v2-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-        .v2-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; }
-        .v2-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 4px 6px; font-size: 12px; }
-        .v2-btn { background: #1e293b; color: #e2e8f0; border: 1px solid #0891b2; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 13px; }
-        .v2-btn:hover { background: #334155; }
-        .v2-slider { flex: 1; min-width: 90px; }
-        .v2-time { font-size: 12px; color: #f1f5f9; }
-        .v2-status { font-size: 11px; color: #94a3b8; }
-        .v2-attrib { font-size: 10px; color: #64748b; line-height: 1.35; }
 .sc-item { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 10px; border-bottom: 1px solid #334155; font-size: 11px; color: #e2e8f0; }
 .sc-item:last-child { border-bottom: none; }
 .sc-chip { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-weight: bold; font-size: 10px; }
@@ -235,7 +222,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
         @media (max-width: 600px) {
             .fm-panel { position: static; top: auto; bottom: auto; left: auto; right: auto; width: 100%; max-width: none; max-height: none; }
             .fm-body { max-height: none; }
-            .v2-panel { position: static; top: auto; bottom: auto; left: auto; right: auto; width: 100%; max-width: none; max-height: none; }
         }
 
         .details-card { background: #1e293b; border-radius: 12px; padding: 18px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 14px; }
@@ -1171,7 +1157,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
         <button class="tool-btn" id="btn-satellite" onclick="toggleSatellite()" style="display:none;">🛰️ SATELLITE (OFF)</button>
         <button class="tool-btn" id="btn-forecast" onclick="toggleForecast()">🌤️ Previsioni (OFF)</button>
         <button class="tool-btn" id="btn-forecast-maps" onclick="toggleForecastMaps()" style="border-color:#38bdf8;">🗺️ Mappe previsionali (OFF)</button>
-        <button class="tool-btn" id="btn-v2maps" onclick="toggleV2Maps()" style="border-color:#2dd4bf;" disabled title="Overlay delle previsioni su griglia croppata (cache data/fm2) sovrapposte alla mappa dei fattori di rischio">Prev. su griglia (OFF)</button>
         <button class="tool-btn" id="btn-caletta" onclick="showCaletta()" style="display:none;">🍽️ La Caletta</button>
         <button class="tool-btn" id="btn-high-risk" onclick="toggleHighRiskFilter()">🚨 Evidenzia Zone a Rischio</button>
         <button class="tool-btn" id="btn-live" onclick="toggleLivePanel()" style="border-color:#fbbf24;">🔴 LIVE Panel (OFF)</button>
@@ -1389,6 +1374,12 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
                 <label class="fm-row"><span>Modello / Dominio</span>
                     <select id="fm-domain-select" class="fm-select" onchange="fmDomainChanged()"></select>
                 </label>
+                <label class="fm-row"><span>Sorgente</span>
+                    <select id="fm-source-select" class="fm-select" onchange="fmSourceChanged()">
+                        <option value="cache" selected>Nuova / cache fm2 (Italia)</option>
+                        <option value="s3">Vecchia / S3 (dominio completo)</option>
+                    </select>
+                </label>
                 <label class="fm-row"><span>Variabile</span>
                     <select id="fm-variable-select" class="fm-select" onchange="fmVariableChanged()"></select>
                 </label>
@@ -1426,31 +1417,6 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
                 <div id="fm-legend" class="fm-legend"></div>
 <div id="fm-status" class="fm-status">Apri per caricare le mappe…</div>
                 <div class="fm-attrib">Dati mappe: © Open-Meteo (Weather Map Layer, CC BY 4.0). Modelli DWD / ECMWF / NOAA / Meteo-France / UKMO / JMA / CMA.</div>
-            </div>
-        </div>
-        <!-- Fase B V2: overlay previsioni su griglia fm2 (mappa principale) -->
-        <div id="v2-panel" class="v2-panel">
-            <div class="v2-header">
-                <span>Previsioni su griglia (fm2)</span>
-                <span class="fm-close" onclick="toggleV2Maps()">✕</span>
-            </div>
-            <div class="v2-body">
-                <div class="v2-row">
-                    <label>Variabile
-                        <select id="v2-variable-select" class="v2-select" onchange="v2VariableChanged()"></select>
-                    </label>
-                    <div class="fm-player">
-                        <button id="v2-play-btn" class="v2-btn" onclick="v2TogglePlay()">▶</button>
-                        <button class="v2-btn" onclick="v2Prev()">⏮</button>
-                        <button class="v2-btn" onclick="v2Next()">⏭</button>
-                    </div>
-                </div>
-                <div class="v2-row">
-                    <input type="range" id="v2-slider" class="v2-slider" min="0" max="0" value="0" step="1" oninput="v2SliderChange(this.value)">
-                    <span id="v2-time-display" class="v2-time">—</span>
-                </div>
-                <div id="v2-status" class="v2-status">Attendere: caricamento dei frame…</div>
-                <div class="v2-attrib">Dati: griglia di previsione croppata su Italia da scripts/forecast_v2 (manifest data/fm2/latest.json).</div>
             </div>
         </div>
         <!-- Switch a coriandolo nell'angolo della mappa -->
@@ -1862,9 +1828,13 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.2';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-11';
+    const APP_VERSION = '1.2.4.3';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-12';
     const APP_CHANGELOG = [
+        { version: '1.2.4.3', date: '2026-10-12', changes: [
+            'V2= Mappe previsionali V2: rimosso il client V2; pannello FM con switch sorgente cache/S3 (fm-source-select) e registro domini (fmRegisterDomain); set variabili curate.',
+            'ENGINE= forecast_v2_engine: orizzonte intero (V2_MAX_FRAMES=0, --valid-frames 0).',
+        ]},
         { version: '1.2.4.2', date: '2026-10-11', changes: [
             'FIX= Popup Mappe previsionali in-frame (mobile non copre più la pagina).',
             'TILE= Download tile più veloce (block cache 512 KB: 9→3 richieste/tile).',
@@ -5101,14 +5071,6 @@ const DAILY_PARAMS = "weathercode,temperature_2m_max,temperature_2m_min,precipit
             map.getPane('forecastMapsPaneVector').style.zIndex = 362;
             map.getPane('forecastMapsPaneVector').style.pointerEvents = 'none';
             if (map && !map.getPane('forecastMapsPanePre')) { var _fmp = map.createPane('forecastMapsPanePre'); _fmp.style.zIndex = 1; _fmp.style.opacity = '0'; _fmp.style.pointerEvents = 'none'; }
-        } catch (e) { }
-        // Fase B V2: pane per l'overlay previsioni su griglia fm2 (sotto radar/bordi)
-        try {
-            if (map && !map.getPane('v2Pane')) {
-                var _v2p = map.createPane('v2Pane');
-                _v2p.style.zIndex = 365;
-                _v2p.style.pointerEvents = 'none';
-            }
         } catch (e) { }
         // Satellite Infoplaza: L.imageOverlay usa pane: 'tilePane' (come EUMETSAT)
         // così zIndex 350 (sat) < 400 (radar) e il radar sta sopra
@@ -11280,6 +11242,7 @@ var FM_REGIONS = [
     { id: 'arctic', label: 'Artico', bbox: [60, -180, 90, 180] }
 ];
 var FM_CAT_ORDER = ['Pressione', 'Livelli di pressione', 'Temperatura', 'Umidita', 'Precipitazione e neve', 'Nuvolosita', 'Vento', 'Instabilita', 'Quote termiche', 'Radiazione', 'Codice meteo', 'Altro'];
+var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','dew_point_2m','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_speed_10m','wind_direction_10m','wind_u_component_10m','wind_v_component_10m','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height'];
 var FM_VAR_LABELS = {
     temperature_2m: 'Temperatura 2 m',
     apparent_temperature: 'Temperatura percepita',
@@ -11373,6 +11336,8 @@ var fmLoaderTimer = null;
     var fmPendingPreloadLayer = null; // layer preload attualmente in volo (cleanup al cancel)
     var fmSrcCache = false;
     var fm2MetaCache = null;
+    var fmDomainRegistered = false;
+    var fmSourcePref = 'cache';
 
 function fmEl(id) { return document.getElementById(id); }
 function fmSetStatus(text) { var el = fmEl('fm-status'); if (el) el.textContent = text; }
@@ -11570,6 +11535,18 @@ function fmFlushWaiters(ok) {
     fmWmlWaiters = [];
     for (var i = 0; i < w.length; i++) { try { w[i](ok); } catch (e) { } }
 }
+function fmRegisterDomain() {
+    var g = (fm2MetaCache && fm2MetaCache.grid) || (fmMeta && fmMeta.grid);
+    if (!g || !fmModule || !fmModule.defaultOmProtocolSettings) return false;
+    var opts = fmModule.defaultOmProtocolSettings.domainOptions;
+    if (!opts) return false;
+    var grid = { type: 'regular', lonMin: g.lonMin, latMin: g.latMin, dx: g.dx, dy: g.dy, nx: g.nx, ny: g.ny };
+    var found = null;
+    for (var i = 0; i < opts.length; i++) { if (opts[i] && opts[i].value === 'fm2') { found = opts[i]; break; } }
+    if (found) { found.grid = grid; } else { opts.push({ value: 'fm2', label: 'Cache mappe previsionali V2 (Italia)', grid: grid }); }
+    fmDomainRegistered = true;
+    return true;
+}
 function fm2FetchMeta(domain, cb) {
     var cacheUrl = 'data/fm2/latest.json';
     var useS3 = function () {
@@ -11593,6 +11570,7 @@ function fm2FetchMeta(domain, cb) {
             cb(e);
         });
     };
+    if (fmSourcePref === 's3') { useS3(); return; }
     fetch(cacheUrl, { cache: 'no-store' }).then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
@@ -11629,7 +11607,7 @@ function fm2FetchMeta(domain, cb) {
         var varsOut = [];
         for (var v = 0; v < varOrder.length; v++) {
             var vv = varOrder[v];
-            if (fmVarLabel(vv) || (FM_VAR_LABELS && FM_VAR_LABELS[vv])) varsOut.push(vv);
+            if (FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv])) varsOut.push(vv);
         }
         if (varsOut.length === 0 && j.variables) {
             if (Array.isArray(j.variables)) {
@@ -11654,6 +11632,7 @@ function fm2FetchMeta(domain, cb) {
         fmMeta = metaCache;
         fmSrcCache = true;
         fm2MetaCache = metaCache;
+        fmRegisterDomain();
         cb(null, metaCache);
     })['catch'](function (e) {
         useS3();
@@ -11832,6 +11811,7 @@ function fmRemoveLayers() {
 }
 function fmRebuild() {
     if (!fmModule || !fmAdapter || typeof map === 'undefined' || !map || !fmMeta || !fmActive) return;
+    if (fmSrcCache && !fmDomainRegistered) { fmRegisterDomain(); fmLayerKey = null; }
     var cur = fmCurrentOmUrl();
     if (!cur) return;
     var vurl = fmVectorUrl(cur.url);
@@ -11904,6 +11884,11 @@ function fmDomainChanged() {
     fmStopPlay();
     fmLoadDomain();
 }
+function fmSourceChanged() {
+    var s = document.getElementById('fm-source-select');
+    fmSourcePref = (s && s.value === 's3') ? 's3' : 'cache';
+    fmLoadDomain(fmDomain);
+}
 function fmVariableChanged() {
     var s = fmEl('fm-variable-select');
     if (s) fmVariable = s.value;
@@ -11923,7 +11908,8 @@ function fmDensityChanged() {
     if (el) fmOpts.density = el.value || 'auto';
     fmRebuild();
 }
-function fmLoadDomain() {
+function fmLoadDomain(dom) {
+    if (dom) fmDomain = dom;
     fmStopPlay();
         fmStopPreload();
     fmSetStatus('Carico il run');
@@ -11939,6 +11925,9 @@ function fmLoadDomain() {
         }
         if (!vars.length) {
             vars = (meta.variables || []).slice();
+        }
+        if (!fmSrcCache) {
+            vars = vars.filter(function (vv) { return FM_CURATED_VARS.indexOf(vv) >= 0; });
         }
         if (vars.indexOf(fmVariable) < 0) fmVariable = fmPickDefaultVar(vars);
         fmPopulateVariables(vars);
@@ -12093,469 +12082,19 @@ function toggleForecastMaps() {
     if (btn) btn.textContent = '🗺️ Mappe previsionali (ON)';
     fmInvalidateSize();
     fmPopulateDomains();
+    var fmSourceSel = fmEl('fm-source-select');
+    if (fmSourceSel) fmSourceSel.onchange = fmSourceChanged;
     fmEnsureMapLoader();
     fmSetStatus('Carico la libreria…');
     ensureWeatherMapLayer(function (ok) {
         if (!ok) { fmSetStatus('Libreria mappe non disponibile.'); return; }
         if (!fmMoveHooked && typeof map !== 'undefined' && map) { fmMoveHooked = true; map.on('moveend', fmUpdateBounds); }
         fmUpdateBounds();
+        fmRegisterDomain();
         fmLoadDomain();
     });
 }
 
-// ================= FASE B V2: OVERLAY PREVISIONI SU GRIGLIA fm2 =================
-// Overlay dei dati previsionali grigliati (.om croppati su Italia, cache data/fm2,
-// prodotta da scripts/forecast_v2/forecast_v2_engine.py) sulla MAPPA PRINCIPALE dei
-// fattori di rischio. E' un layer separato da "Mappe previsionali" (FM): non tocca
-// FM_DOMAINS/FM_VAR_LABELS ne' le classi fm-*. Il frame corrente e' reso come tile
-// via WML registrando a runtime il dominio 'fm2' (segmento di URL prima del .om)
-// con la griglia dichiarata nel manifest.
-var v2Active = false;
-var v2Ready = false;
-var v2Meta = null;
-var v2Domain = 'fm2';
-var v2Base = 'data/fm2/';
-var v2Idx = 0;
-var v2Layer = null;
-var v2LayerKey = null;
-var v2Variable = '';
-var v2Grid = null;
-var v2Playing = false;
-var v2PlayTimer = null;
-var v2PrevClipping = null;
-var v2MoveHooked = false;
-var v2FrameKey = null;
-var v2FrameData = null;
-var v2FramePromise = null;
-
-function v2El(id) { return document.getElementById(id); }
-
-function v2FmtTime(iso) {
-    if (!iso) return '—';
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return String(iso);
-    var dd = String(d.getDate()).padStart(2, '0');
-    var mm = String(d.getMonth() + 1).padStart(2, '0');
-    var hh = String(d.getHours()).padStart(2, '0');
-    var mi = String(d.getMinutes()).padStart(2, '0');
-    return dd + '/' + mm + ' ' + hh + ':' + mi;
-}
-
-function v2SetStatus(msg) {
-    var el = v2El('v2-status');
-    if (el) el.textContent = msg;
-}
-
-function v2Init() {
-    if (!isFeatureEnabled('forecastMaps') || typeof L === 'undefined' || v2Ready) return;
-    v2SetStatus('Carico il manifest previsioni...');
-    ensureWeatherMapLayer(function (ok) {
-        if (!ok) {
-            v2SetStatus('Libreria mappe non disponibile: overlay disabilitato.');
-            v2DisableToggle();
-            return;
-        }
-        v2FetchManifest();
-    });
-}
-
-function v2DisableToggle() {
-    var btn = v2El('btn-v2maps');
-    if (btn) btn.disabled = true;
-}
-
-function v2FetchManifest() {
-    fetch(v2Base + 'latest.json', { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-    }).then(function (j) {
-        if (!j || !j.valid_times || !j.valid_times.length || !j.grid) throw new Error('manifest non valido');
-        v2Meta = j;
-        v2Grid = j.grid;
-        if (!(v2Grid.nx > 0 && v2Grid.ny > 0 && isFinite(v2Grid.lonMin) && isFinite(v2Grid.latMin)
-            && v2Grid.dx > 0 && v2Grid.dy > 0)) {
-            throw new Error('griglia manifest non valida');
-        }
-        if (j.version && String(j.version).indexOf('fm2') !== 0) {
-            v2SetStatus('Manifest con versione ' + j.version + ' (attesa fm2-*): formato potenzialmente diverso.');
-        }
-        v2RegisterDomain();
-        v2Ready = true;
-        v2SetupUI();
-        v2SetStatus(v2Meta.valid_times.length + ' frame disponibili (run ' + v2FmtTime(v2Meta.reference_time) + ').');
-    })['catch'](function (e) {
-        v2SetStatus('Dati previsione non disponibili: ' + (e && e.message ? e.message : e));
-        v2DisableToggle();
-    });
-}
-
-function v2RegisterDomain() {
-    if (!v2Grid || !fmModule || !fmModule.defaultOmProtocolSettings) return;
-    var opts = fmModule.defaultOmProtocolSettings.domainOptions;
-    if (!opts || !opts.length) return;
-    var dom = {
-        value: v2Domain,
-        label: 'MeteoRisk cache fm2 (Italia)',
-        grid: {
-            type: 'regular',
-            lonMin: v2Grid.lonMin,
-            latMin: v2Grid.latMin,
-            dx: v2Grid.dx,
-            dy: v2Grid.dy,
-            nx: v2Grid.nx,
-            ny: v2Grid.ny
-        }
-    };
-    var found = null;
-    for (var i = 0; i < opts.length; i++) {
-        if (opts[i] && opts[i].value === v2Domain) { found = opts[i]; break; }
-    }
-    if (found) { found.grid = dom.grid; } else { opts.push(dom); }
-}
-
-function v2SetupUI() {
-    var btn = v2El('btn-v2maps');
-    if (btn) {
-        btn.disabled = false;
-        if (!v2Active) btn.textContent = 'Prev. su griglia (OFF)';
-    }
-    v2PopulateVariables();
-    v2PopulateTimes();
-    v2SyncUI();
-}
-
-function v2PopulateVariables() {
-    var sel = v2El('v2-variable-select');
-    if (!sel || !v2Meta) return;
-    var order = (v2Meta.var_order || []).slice();
-    var def = v2PickDefaultVar(order);
-    if (def) v2Variable = def;
-    var html = '';
-    for (var i = 0; i < order.length; i++) {
-        var v = order[i];
-        html += '<option value="' + v + '"' + (v === v2Variable ? ' selected' : '') + '>' +
-            (FM_VAR_LABELS[v] || v.replace(/_/g, ' ')) + '</option>';
-    }
-    if (!html) html = '<option value="">(nessuna variabile nel manifest)</option>';
-    sel.innerHTML = html;
-}
-
-function v2PickDefaultVar(order) {
-    if (!v2Meta || !v2Meta.valid_times || !order.length) return '';
-    var prefs = ['temperature_2m', 'precipitation', 'pressure_msl', 'cloud_cover'];
-    for (var p = 0; p < prefs.length; p++) {
-        if (order.indexOf(prefs[p]) >= 0 && v2VarInAllFrames(prefs[p])) return prefs[p];
-    }
-    for (var i = 0; i < order.length; i++) {
-        if (v2VarInAllFrames(order[i])) return order[i];
-    }
-    return order[0];
-}
-
-function v2VarInAllFrames(vname) {
-    if (!v2Meta.variables) return true;
-    for (var i = 0; i < v2Meta.valid_times.length; i++) {
-        var vt = v2Meta.valid_times[i];
-        var m = v2Meta.variables[vt];
-        if (m && m[vname] === undefined) return false;
-    }
-    return true;
-}
-
-function v2FrameHasVar(i, vname) {
-    if (!v2Meta || !v2Meta.valid_times || !v2Meta.valid_times[i]) return false;
-    var vt = v2Meta.valid_times[i];
-    var m = v2Meta.variables && v2Meta.variables[vt];
-    if (m && m[vname] === undefined) return false;
-    return true;
-}
-
-function v2PopulateTimes() {
-    var sl = v2El('v2-slider');
-    if (sl && v2Meta) {
-        sl.max = String(Math.max(0, v2Meta.valid_times.length - 1));
-        sl.value = String(Math.min(v2Idx, v2Meta.valid_times.length - 1));
-    }
-}
-
-function v2FileForIndex(i) {
-    if (v2Meta.frames && v2Meta.frames[i] && v2Meta.frames[i].file) return v2Meta.frames[i].file;
-    var vt = v2Meta.valid_times[i];
-    if (!vt) return null;
-    return vt.replace(':', '').replace('Z', '') + '.om';
-}
-
-function v2CurrentOmUrl() {
-    if (!v2Meta || !v2Meta.valid_times || !v2Meta.valid_times.length || !v2Variable) return null;
-    var valid = v2Meta.valid_times[v2Idx];
-    if (valid === undefined) return null;
-    var file = v2FileForIndex(v2Idx);
-    if (!file) return null;
-    return {
-        url: v2Base + file + '?variable=' + encodeURIComponent(v2Variable) + '&tile_size=512&interpolation=linear',
-        valid: valid
-    };
-}
-
-function v2GridBounds() {
-    if (!v2Grid) return null;
-    return [v2Grid.lonMin, v2Grid.latMin, v2Grid.lonMin + v2Grid.nx * v2Grid.dx, v2Grid.latMin + v2Grid.ny * v2Grid.dy];
-}
-
-function v2SetClipping() {
-    if (!fmModule || !fmModule.defaultOmProtocolSettings) return;
-    v2PrevClipping = fmModule.defaultOmProtocolSettings.clippingOptions;
-    try {
-        var b = v2GridBounds();
-        fmModule.defaultOmProtocolSettings.clippingOptions = b ? { bounds: b } : undefined;
-        if (fmModule.getCachedResolvedClipping) fmModule.getCachedResolvedClipping(fmModule.defaultOmProtocolSettings.clippingOptions);
-    } catch (e) { }
-}
-
-function v2RestoreClipping() {
-    if (!fmModule || !fmModule.defaultOmProtocolSettings) return;
-    try {
-        fmModule.defaultOmProtocolSettings.clippingOptions = v2PrevClipping;
-        if (fmModule.getCachedResolvedClipping) fmModule.getCachedResolvedClipping(fmModule.defaultOmProtocolSettings.clippingOptions);
-    } catch (e) { }
-    v2PrevClipping = null;
-}
-
-function v2SyncUI() {
-    v2PopulateTimes();
-    var t = v2El('v2-time-display');
-    if (t && v2Meta && v2Meta.valid_times[v2Idx] !== undefined) {
-        var hasVar = v2FrameHasVar(v2Idx, v2Variable);
-        t.textContent = (v2Idx + 1) + '/' + v2Meta.valid_times.length + ' · ' + v2FmtTime(v2Meta.valid_times[v2Idx]) +
-            (hasVar ? '' : ' (variabile assente nel frame)');
-    }
-    var pbtn = v2El('v2-play-btn');
-    if (pbtn) pbtn.textContent = v2Playing ? '⏸' : '▶';
-}
-
-function v2BuildLayer() {
-    if (!v2Active || !v2Ready || !fmAdapter || !v2Grid || !v2Variable) return;
-    if (!v2FrameHasVar(v2Idx, v2Variable)) {
-        v2RemoveLayer();
-        v2SyncUI();
-        v2SetStatus("Variabile non disponibile al frame corrente: scegli un'altra.");
-        return;
-    }
-    var cur = v2CurrentOmUrl();
-    if (!cur) return;
-    if (cur.url === v2LayerKey && v2LayerOnMap(v2Layer)) { v2SyncUI(); return; }
-    v2RemoveLayer();
-    var opts = { opacity: 0.8, pane: 'v2Pane' };
-    var b = v2GridBounds();
-    if (b) {
-        try { opts.bounds = L.latLngBounds([[b[1], b[0]], [b[3], b[2]]]); } catch (e) { }
-    }
-    try {
-        v2Layer = fmAdapter.createTileLayer('om://' + cur.url, opts);
-        v2AttachTileEvents(v2Layer);
-        v2Layer.addTo(map);
-        v2LayerKey = cur.url;
-        v2SyncUI();
-    } catch (e) {
-        v2Layer = null;
-        v2LayerKey = null;
-        v2SetStatus('Errore rendering overlay: ' + (e && e.message ? e.message : e));
-    }
-}
-
-function v2LayerOnMap(l) {
-    return !!(l && typeof map !== 'undefined' && map && map.hasLayer && map.hasLayer(l));
-}
-
-function v2RemoveLayer() {
-    if (v2Layer && typeof map !== 'undefined' && map && map.removeLayer) {
-        try { map.removeLayer(v2Layer); } catch (e) { }
-    }
-    v2Layer = null;
-    v2LayerKey = null;
-}
-
-function v2AttachTileEvents(layer) {
-    if (!layer || !layer.on) return;
-    layer.on('loading', function () { if (v2Active) v2SetStatus('Caricamento tile griglia...'); });
-    layer.on('load', function () {
-        if (!v2Meta || !v2Active) return;
-        v2SetStatus(v2Meta.valid_times.length + ' frame · run ' + v2FmtTime(v2Meta.reference_time) + ' · variabile ' + v2Variable);
-    });
-    layer.on('tileerror', function () { if (v2Active) v2SetStatus('Errore tile (variabile assente nel frame?).'); });
-}
-
-function v2Show() {
-    if (!v2Ready || !fmAdapter) return;
-    v2Active = true;
-    var panel = v2El('v2-panel');
-    if (panel) panel.classList.add('active');
-    var btn = v2El('btn-v2maps');
-    if (btn) btn.textContent = 'Prev. su griglia (ON)';
-    v2EnsurePane();
-    v2EnsureMoveHook();
-    v2SetClipping();
-    v2UpdateBounds();
-    updateMapColors();
-}
-
-function v2Hide() {
-    if (!v2Active) return;
-    v2Active = false;
-    var panel = v2El('v2-panel');
-    if (panel) panel.classList.remove('active');
-    var btn = v2El('btn-v2maps');
-    if (btn) btn.textContent = 'Prev. su griglia (OFF)';
-    v2StopPlay();
-    v2RemoveLayer();
-    v2RestoreClipping();
-    updateMapColors();
-    v2SyncUI();
-}
-
-function v2EnsurePane() {
-    if (typeof map === 'undefined' || !map || !map.getPane) return;
-    try {
-        if (!map.getPane('v2Pane')) {
-            var p = map.createPane('v2Pane');
-            p.style.zIndex = 365;
-            p.style.pointerEvents = 'none';
-        }
-    } catch (e) { }
-}
-
-function v2UpdateBounds() {
-    if (!fmModule || typeof map === 'undefined' || !map) return;
-    try {
-        var b = map.getBounds();
-        fmModule.updateCurrentBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
-    } catch (e) { }
-    v2BuildLayer();
-}
-
-function v2EnsureMoveHook() {
-    if (typeof map === 'undefined' || !map || v2MoveHooked) return;
-    v2MoveHooked = true;
-    map.on('moveend', v2UpdateBounds);
-}
-
-function v2SliderChange(val) {
-    v2Idx = parseInt(val, 10) || 0;
-    if (v2Idx < 0) v2Idx = 0;
-    if (v2Meta && v2Idx > v2Meta.valid_times.length - 1) v2Idx = v2Meta.valid_times.length - 1;
-    v2SyncUI();
-    v2BuildLayer();
-}
-
-function v2Prev() {
-    if (!v2Meta || !v2Meta.valid_times.length) return;
-    v2Idx = (v2Idx - 1 + v2Meta.valid_times.length) % v2Meta.valid_times.length;
-    v2SyncUI();
-    v2BuildLayer();
-}
-
-function v2Next() {
-    if (!v2Meta || !v2Meta.valid_times.length) return;
-    v2Idx = (v2Idx + 1) % v2Meta.valid_times.length;
-    v2SyncUI();
-    v2BuildLayer();
-}
-
-function v2TogglePlay() {
-    if (v2Playing) { v2StopPlay(); } else { v2StartPlay(); }
-}
-
-function v2StartPlay() {
-    if (!v2Meta || !v2Meta.valid_times.length || v2Playing) return;
-    v2Playing = true;
-    var pb = v2El('v2-play-btn');
-    if (pb) pb.textContent = '⏸';
-    v2PlayTimer = setInterval(v2Next, 900);
-}
-
-function v2StopPlay() {
-    v2Playing = false;
-    if (v2PlayTimer !== null) { clearInterval(v2PlayTimer); v2PlayTimer = null; }
-    var pb = v2El('v2-play-btn');
-    if (pb) pb.textContent = '▶';
-}
-
-function v2VariableChanged() {
-    var sel = v2El('v2-variable-select');
-    if (sel && sel.value) v2Variable = sel.value;
-    v2FrameKey = null;
-    v2FrameData = null;
-    v2FramePromise = null;
-    v2BuildLayer();
-}
-
-function v2SampleAt(lat, lng, variable) {
-    // Campiona la griglia del frame corrente con interpolazione bilineare.
-    // Rilegge il file .om reale tramite omFileReader (stesso modulo WML di FM).
-    // Restituisce una Promise<number> (NaN fuori griglia o in caso di errore).
-    var vname = variable || v2Variable;
-    if (!fmModule || !fmModule.getProtocolInstance || !v2Grid || !v2Meta
-        || !v2Meta.valid_times || !v2Meta.valid_times.length || !vname) {
-        return Promise.resolve(NaN);
-    }
-    if (!isFinite(lat) || !isFinite(lng)) return Promise.resolve(NaN);
-    var file = v2FileForIndex(v2Idx);
-    if (!file) return Promise.resolve(NaN);
-    var url = v2Base + file;
-    var key = url + '#' + vname;
-    if (key === v2FrameKey && v2FramePromise) {
-        return v2FramePromise.then(function (fd) { return v2Bilinear(fd, lat, lng); });
-    }
-    v2FrameKey = key;
-    v2FramePromise = fmModule.getProtocolInstance(fmModule.defaultOmProtocolSettings)
-        .omFileReader.readVariable(url, vname, null).then(function (data) {
-            var fd = {
-                nx: v2Grid.nx,
-                ny: v2Grid.ny,
-                lonMin: v2Grid.lonMin,
-                latMin: v2Grid.latMin,
-                dx: v2Grid.dx,
-                dy: v2Grid.dy,
-                values: data.values,
-                scaleFactor: data.scaleFactor
-            };
-            return v2Bilinear(fd, lat, lng);
-        })['catch'](function (err) {
-            v2FrameKey = null;
-            v2FramePromise = null;
-            return NaN;
-        });
-    return v2FramePromise;
-}
-
-function v2Bilinear(fd, lat, lng) {
-    if (!fd || !fd.values || !(fd.nx > 0) || !(fd.ny > 0) || !isFinite(lat) || !isFinite(lng)) return NaN;
-    var nx = fd.nx;
-    var ny = fd.ny;
-    var x = (lng - fd.lonMin) / fd.dx;
-    var y = (lat - fd.latMin) / fd.dy;
-    if (x < 0 || y < 0 || x > nx - 1 || y > ny - 1) return NaN;
-    var x0 = Math.floor(x);
-    var y0 = Math.floor(y);
-    var x1 = x0 + 1 < nx ? x0 + 1 : nx - 1;
-    var y1 = y0 + 1 < ny ? y0 + 1 : ny - 1;
-    var fx = x - x0;
-    var fy = y - y0;
-    var v00 = fd.values[y0 * nx + x0];
-    var v10 = fd.values[y0 * nx + x1];
-    var v01 = fd.values[y1 * nx + x0];
-    var v11 = fd.values[y1 * nx + x1];
-    return (v00 * (1 - fx) + v10 * fx) * (1 - fy) + (v01 * (1 - fx) + v11 * fx) * fy;
-}
-
-function toggleV2Maps() {
-    if (!isFeatureEnabled('forecastMaps')) return;
-    if (!v2Ready) {
-        v2SetStatus('Overlay non pronto: manifest previsioni non ancora caricato.');
-        return;
-    }
-    if (v2Active) { v2Hide(); } else { v2Show(); }
-}
 
     // --- Toggle Sviluppo: mostra/nasconde funzionalità sperimentali ---
     // Il toggle ora è uno switch compatto nel footer, accanto al badge versione.
@@ -13051,8 +12590,8 @@ function toggleV2Maps() {
             restyleBorderOverlay();
             return;
         }
-        if (forecastActive || v2Active) {
-            // Previsioni attive (FM o overlay V2 fm2): i fill sono nascosti, restano solo i bordi.
+        if (forecastActive) {
+            // Previsioni attive (FM): i fill sono nascosti, restano solo i bordi.
             restyleBorderOverlay();
             return;
         }
@@ -17583,8 +17122,8 @@ function renderContinuousOverlay() {
                 updateRiskBadges();
                 return;
             }
-            // Se le previsioni sono attive (FM o overlay V2 fm2), i poligoni restano nascosti
-            if (forecastActive || v2Active) {
+            // Se le previsioni sono attive (FM), i poligoni restano nascosti
+            if (forecastActive) {
                 provinceGeoJsonLayer.setStyle({ opacity: 0, fillOpacity: 0 });
                 hideContinuousOverlay();
                 restyleBorderOverlay();
@@ -20882,8 +20421,6 @@ syncSelect('lightning-source-select', [
             applyFeatureFlagConstraints();
 initMap();
             updateDayButtonLabels();
-            // Fase B V2: precarica il manifest fm2 e registra il dominio al primo toggle.
-            v2Init();
             renderLegend();
             buildBadgeLegendBar();
             // Stato iniziale: Sviluppo OFF → il selettore "Sfumatura" (V1/V2/V3) è nascosto.
