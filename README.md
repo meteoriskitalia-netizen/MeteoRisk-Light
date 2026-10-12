@@ -6,11 +6,14 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.5
+## Versione attiva: 1.2.4.6
 
-- File applicativo: `mri-light-1.2.4.5.html` (`APP_VERSION = '1.2.4.5'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.5', date: '2026-10-12' }`).
-- Contenuto della 1.2.4.5 (release sopra la 1.2.4.4):
+- File applicativo: `mri-light-1.2.4.6.html` (`APP_VERSION = '1.2.4.6'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.6', date: '2026-10-12' }`).
+- Contenuto della 1.2.4.6 (release sopra la 1.2.4.5):
+  - **Mappe previsionali - fix "schermata bianca"**: `fmRegisterDomain` ora registra/aggiorna
+    la grid Italia sul dominio attivo (`fmDomain`) oltre al fallback legacy `fm2`
+    (`applyGrid` in-place); le mappe previsionali tornano a visualizzarsi.
   - **Mappe previsionali - dominio rimosso**: rimosso il dominio CHMI ALADIN (2 km)
     (`chmi_aladin_central_europe_2km`) dall'elenco `FM_DOMAINS` delle Mappe previsionali
     (da 11 a 10 domini); nessun'altra modifica funzionale.
@@ -129,7 +132,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.5.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.6.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

@@ -1,3 +1,13 @@
+MeteoRisk Light - 1.2.4.6 - MAPPE PREVISIONALI: FIX "SCHERMATA BIANCA" (fmRegisterDomain registra la grid sul dominio attivo, non solo fm2) (bump da 1.2.4.5)
+MAJOR=1
+MINOR=2
+PATCH=4
+BUILD=6
+RELEASE_TYPE=release
+DATE=2026-10-12
+NOTE=Release 1.2.4.6 (bump da 1.2.4.5): fix Mappe previsionali "schermata bianca"; fmRegisterDomain ora registra/aggiorna la grid Italia sul dominio attivo (fmDomain) oltre al fallback legacy fm2; le mappe previsionali tornano a visualizzarsi. File e riferimenti rinominati a 1.2.4.6.
+APP_FILE=mri-light-1.2.4.6.html
+
 MeteoRisk Light - 1.2.4.5 - MAPPE PREVISIONALI: RIMOSSO IL DOMINIO CHMI ALADIN (2 km) DALL'ELENCO FM_DOMAINS (bump da 1.2.4.4)
 MAJOR=1
 MINOR=2
@@ -172,3 +182,4 @@ SCIAUDIT3=BUMP 1.0.0.13 � APPLICAZIONE DEI 14 MIGLIORAMENTI (bollettini GIALLI
 V2BUMP=BUMP 1.2.4.3 — MAPPE PREVISIONALI V2 (bump da 1.2.4.2): client V2 rimosso dal client; pannello "Mappe previsionali" su sorgente cache data/fm2 preferita con switch cache/S3 (fm-source-select) e registro domini (fmRegisterDomain) nel blocco FM; set variabili curate; motore scripts\forecast_v2\forecast_v2_engine.py a orizzonte INTERO (V2_MAX_FRAMES=0, --valid-frames 0) e workflow forecast-maps-v2.yml allineato (--valid-frames 0). La 1.2.4.2 nello storico ha doppio contenuto: stato pre-rimozione (con client V2, fase A+/B/C) e stato finale post-rimozione; la 1.2.4.3 è la versione ATTIVA.
 CACHEONLY=BUMP 1.2.4.4 — MAPPE PREVISIONALI CACHE-ONLY (bump da 1.2.4.3): rimossa la sorgente S3 (switch fm-source-select, fallback useS3, fmSourcePref, fmSourceChanged, FM_BASE); la cache data/fm2 e' l'unica fonte; errori di fmRegisterDomain/fm2FetchMeta e frame mancante resi visibili via fmSetStatus (prima muti, possibile causa "mappe bianche"); filtro variabili FM_CURATED_VARS applicato sempre. File e riferimenti rinominati a 1.2.4.4; la 1.2.4.3 resta storica.
 CHMI=BUMP 1.2.4.5 — MAPPE PREVISIONALI: rimosso il dominio CHMI ALADIN (2 km) dall'elenco FM_DOMAINS delle Mappe previsionali (da 11 a 10 domini); nessun'altra modifica. File e riferimenti rinominati a 1.2.4.5; la 1.2.4.4 resta storica.
+FMWHITE=BUMP 1.2.4.6 - MAPPE PREVISIONALI: fix "schermata bianca"; fmRegisterDomain registra/aggiorna la grid Italia sul dominio attivo (fmDomain) oltre al fallback legacy fm2; le mappe previsionali tornano a visualizzarsi. File e riferimenti rinominati a 1.2.4.6; la 1.2.4.5 resta storica.

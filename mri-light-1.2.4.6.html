@@ -1823,9 +1823,12 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.5';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_VERSION = '1.2.4.6';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
     const APP_RELEASE_DATE = '2026-10-12';
     const APP_CHANGELOG = [
+        { version: '1.2.4.6', date: '2026-10-12', changes: [
+            'FIX= Mappe previsionali: risolta la "schermata bianca" - fmRegisterDomain ora registra/aggiorna la grid Italia sul dominio attivo (fmDomain) oltre al fallback legacy fm2; le mappe previsionali tornano a visualizzarsi.',
+        ]},
         { version: '1.2.4.5', date: '2026-10-12', changes: [
             'MAPPE= Rimosso il dominio CHMI ALADIN (2 km) dalle Mappe previsionali: elenco FM_DOMAINS ridotto da 11 a 10 domini, nessun altro cambiamento.',
         ]},
@@ -11554,9 +11557,19 @@ function fmRegisterDomain() {
     var opts = fmModule.defaultOmProtocolSettings.domainOptions;
     if (!opts) { fmSetStatus('Errore registrazione dominio cache fm2: domainOptions assenti'); return false; }
     var grid = { type: 'regular', lonMin: g.lonMin, latMin: g.latMin, dx: g.dx, dy: g.dy, nx: g.nx, ny: g.ny };
-    var found = null;
-    for (var i = 0; i < opts.length; i++) { if (opts[i] && opts[i].value === 'fm2') { found = opts[i]; break; } }
-    if (found) { found.grid = grid; } else { opts.push({ value: 'fm2', label: 'Cache mappe previsionali V2 (Italia)', grid: grid }); }
+    function applyGrid(value) {
+        var found = null;
+        for (var i = 0; i < opts.length; i++) {
+            var o = opts[i];
+            if (o && o.value === value && !(typeof o.type === 'string' && o.type === 'seamless')) { found = o; break; }
+        }
+        var z = (found && found.grid && typeof found.grid.zoom === 'number') ? found.grid.zoom : Math.log2(360 / (grid.dx * 256));
+        var gg = { type: 'regular', lonMin: grid.lonMin, latMin: grid.latMin, dx: grid.dx, dy: grid.dy, nx: grid.nx, ny: grid.ny, zoom: z };
+        if (found) { found.grid = gg; } else { opts.push({ value: value, label: 'Cache mappe previsionali V2 (Italia)', grid: gg }); }
+    }
+    var key = fmDomain || 'fm2';
+    applyGrid(key);
+    if (key !== 'fm2') applyGrid('fm2');
     fmDomainRegistered = true;
     return true;
 }
