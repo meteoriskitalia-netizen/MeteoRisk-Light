@@ -1,6 +1,6 @@
 {
   "version": "fm2-1",
-  "generated_at": "2026-10-14T13:51:51Z",
+  "generated_at": "2026-10-14T17:56:46Z",
   "domain": "ukmo_global_deterministic_10km",
   "reference_time": "2026-10-14T06:00:00Z",
   "valid_times": [
@@ -53,26 +53,22 @@
     "2026-10-16T04:00Z",
     "2026-10-16T05:00Z",
     "2026-10-16T06:00Z",
-    "2026-10-16T07:00Z",
-    "2026-10-16T08:00Z",
     "2026-10-16T09:00Z",
-    "2026-10-16T10:00Z",
-    "2026-10-16T11:00Z",
     "2026-10-16T12:00Z",
     "2026-10-16T15:00Z",
     "2026-10-16T18:00Z"
   ],
   "bbox": {
-    "lat_min": 36.5,
-    "lon_min": 6.5,
-    "lat_max": 47.2,
-    "lon_max": 18.6
+    "lat_min": -90.0,
+    "lon_min": -180.0,
+    "lat_max": 89.90625,
+    "lon_max": 179.85938
   },
   "grid": {
-    "nx": 87,
-    "ny": 115,
-    "lonMin": 6.4687525909,
-    "latMin": 36.46875,
+    "nx": 2559,
+    "ny": 1920,
+    "lonMin": -180.0,
+    "latMin": -90.0,
     "dx": 0.14062500195388825,
     "dy": 0.09375
   },
@@ -91,14 +87,11 @@
     "temperature_500hPa",
     "relative_humidity_2m",
     "relative_humidity_850hPa",
-    "dew_point_2m",
     "pressure_msl",
     "geopotential_height_500hPa",
     "geopotential_height_850hPa",
     "geopotential_height_1000hPa",
     "surface_pressure",
-    "wind_speed_10m",
-    "wind_direction_10m",
     "wind_u_component_10m",
     "wind_v_component_10m",
     "wind_gusts_10m",
@@ -114,350 +107,326 @@
     "weather_code",
     "freezing_level_height"
   ],
-  "resampling": "per-domain nearest (crop Italia)",
+  "resampling": "per-domain nearest (per-domain crop)",
   "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
   "frames": [
     {
       "valid_time": "2026-10-14T06:00Z",
       "file": "2026-10-14T0600.om",
-      "bytes": 95168,
-      "variables": 18
+      "bytes": 19895688,
+      "variables": 15
     },
     {
       "valid_time": "2026-10-14T07:00Z",
       "file": "2026-10-14T0700.om",
-      "bytes": 94136,
-      "variables": 20
+      "bytes": 20051088,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T08:00Z",
       "file": "2026-10-14T0800.om",
-      "bytes": 92080,
-      "variables": 20
+      "bytes": 20106392,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T09:00Z",
       "file": "2026-10-14T0900.om",
-      "bytes": 90368,
-      "variables": 20
+      "bytes": 20149832,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T10:00Z",
       "file": "2026-10-14T1000.om",
-      "bytes": 88920,
-      "variables": 20
+      "bytes": 20161128,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T11:00Z",
       "file": "2026-10-14T1100.om",
-      "bytes": 88440,
-      "variables": 20
+      "bytes": 20181248,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T12:00Z",
       "file": "2026-10-14T1200.om",
-      "bytes": 87912,
-      "variables": 20
+      "bytes": 20176336,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T13:00Z",
       "file": "2026-10-14T1300.om",
-      "bytes": 87608,
-      "variables": 20
+      "bytes": 20181408,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T14:00Z",
       "file": "2026-10-14T1400.om",
-      "bytes": 86912,
-      "variables": 20
+      "bytes": 20181120,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T15:00Z",
       "file": "2026-10-14T1500.om",
-      "bytes": 86872,
-      "variables": 20
+      "bytes": 20158280,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T16:00Z",
       "file": "2026-10-14T1600.om",
-      "bytes": 87640,
-      "variables": 20
+      "bytes": 20151432,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T17:00Z",
       "file": "2026-10-14T1700.om",
-      "bytes": 86816,
-      "variables": 20
+      "bytes": 20158736,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T18:00Z",
       "file": "2026-10-14T1800.om",
-      "bytes": 86768,
-      "variables": 20
+      "bytes": 20145904,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T19:00Z",
       "file": "2026-10-14T1900.om",
-      "bytes": 86256,
-      "variables": 20
+      "bytes": 20108800,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T20:00Z",
       "file": "2026-10-14T2000.om",
-      "bytes": 86392,
-      "variables": 20
+      "bytes": 20057896,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T21:00Z",
       "file": "2026-10-14T2100.om",
-      "bytes": 86944,
-      "variables": 20
+      "bytes": 19972216,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T22:00Z",
       "file": "2026-10-14T2200.om",
-      "bytes": 86640,
-      "variables": 20
+      "bytes": 19893248,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-14T23:00Z",
       "file": "2026-10-14T2300.om",
-      "bytes": 86688,
-      "variables": 20
+      "bytes": 19822928,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T00:00Z",
       "file": "2026-10-15T0000.om",
-      "bytes": 87368,
-      "variables": 20
+      "bytes": 19776768,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T01:00Z",
       "file": "2026-10-15T0100.om",
-      "bytes": 87784,
-      "variables": 20
+      "bytes": 19763200,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T02:00Z",
       "file": "2026-10-15T0200.om",
-      "bytes": 88496,
-      "variables": 20
+      "bytes": 19775640,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T03:00Z",
       "file": "2026-10-15T0300.om",
-      "bytes": 89176,
-      "variables": 20
+      "bytes": 19784160,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T04:00Z",
       "file": "2026-10-15T0400.om",
-      "bytes": 89808,
-      "variables": 20
+      "bytes": 19794336,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T05:00Z",
       "file": "2026-10-15T0500.om",
-      "bytes": 90472,
-      "variables": 20
+      "bytes": 19840360,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T06:00Z",
       "file": "2026-10-15T0600.om",
-      "bytes": 90456,
-      "variables": 20
+      "bytes": 19880328,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T07:00Z",
       "file": "2026-10-15T0700.om",
-      "bytes": 90032,
-      "variables": 20
+      "bytes": 19910336,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T08:00Z",
       "file": "2026-10-15T0800.om",
-      "bytes": 89208,
-      "variables": 20
+      "bytes": 19983032,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T09:00Z",
       "file": "2026-10-15T0900.om",
-      "bytes": 89120,
-      "variables": 20
+      "bytes": 20044992,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T10:00Z",
       "file": "2026-10-15T1000.om",
-      "bytes": 89416,
-      "variables": 20
+      "bytes": 20058088,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T11:00Z",
       "file": "2026-10-15T1100.om",
-      "bytes": 89896,
-      "variables": 20
+      "bytes": 20058232,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T12:00Z",
       "file": "2026-10-15T1200.om",
-      "bytes": 90064,
-      "variables": 20
+      "bytes": 20048784,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T13:00Z",
       "file": "2026-10-15T1300.om",
-      "bytes": 90736,
-      "variables": 20
+      "bytes": 20061512,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T14:00Z",
       "file": "2026-10-15T1400.om",
-      "bytes": 90568,
-      "variables": 20
+      "bytes": 20061048,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T15:00Z",
       "file": "2026-10-15T1500.om",
-      "bytes": 90992,
-      "variables": 20
+      "bytes": 20043800,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T16:00Z",
       "file": "2026-10-15T1600.om",
-      "bytes": 91872,
-      "variables": 20
+      "bytes": 20026696,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T17:00Z",
       "file": "2026-10-15T1700.om",
-      "bytes": 90480,
-      "variables": 20
+      "bytes": 20003680,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T18:00Z",
       "file": "2026-10-15T1800.om",
-      "bytes": 90224,
-      "variables": 20
+      "bytes": 19986960,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T19:00Z",
       "file": "2026-10-15T1900.om",
-      "bytes": 90592,
-      "variables": 20
+      "bytes": 19955944,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T20:00Z",
       "file": "2026-10-15T2000.om",
-      "bytes": 91464,
-      "variables": 20
+      "bytes": 19896992,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T21:00Z",
       "file": "2026-10-15T2100.om",
-      "bytes": 92064,
-      "variables": 20
+      "bytes": 19806008,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T22:00Z",
       "file": "2026-10-15T2200.om",
-      "bytes": 92528,
-      "variables": 20
+      "bytes": 19731144,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-15T23:00Z",
       "file": "2026-10-15T2300.om",
-      "bytes": 93240,
-      "variables": 20
+      "bytes": 19674592,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T00:00Z",
       "file": "2026-10-16T0000.om",
-      "bytes": 93504,
-      "variables": 20
+      "bytes": 19640936,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T01:00Z",
       "file": "2026-10-16T0100.om",
-      "bytes": 94264,
-      "variables": 20
+      "bytes": 19632496,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T02:00Z",
       "file": "2026-10-16T0200.om",
-      "bytes": 95032,
-      "variables": 20
+      "bytes": 19656088,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T03:00Z",
       "file": "2026-10-16T0300.om",
-      "bytes": 95640,
-      "variables": 20
+      "bytes": 19697360,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T04:00Z",
       "file": "2026-10-16T0400.om",
-      "bytes": 96192,
-      "variables": 20
+      "bytes": 19736512,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T05:00Z",
       "file": "2026-10-16T0500.om",
-      "bytes": 96848,
-      "variables": 20
+      "bytes": 19777992,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T06:00Z",
       "file": "2026-10-16T0600.om",
-      "bytes": 96984,
-      "variables": 20
-    },
-    {
-      "valid_time": "2026-10-16T07:00Z",
-      "file": "2026-10-16T0700.om",
-      "bytes": 95952,
-      "variables": 20
-    },
-    {
-      "valid_time": "2026-10-16T08:00Z",
-      "file": "2026-10-16T0800.om",
-      "bytes": 94920,
-      "variables": 20
+      "bytes": 19825216,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T09:00Z",
       "file": "2026-10-16T0900.om",
-      "bytes": 95648,
-      "variables": 20
-    },
-    {
-      "valid_time": "2026-10-16T10:00Z",
-      "file": "2026-10-16T1000.om",
-      "bytes": 96536,
-      "variables": 20
-    },
-    {
-      "valid_time": "2026-10-16T11:00Z",
-      "file": "2026-10-16T1100.om",
-      "bytes": 97320,
-      "variables": 20
+      "bytes": 19984064,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T12:00Z",
       "file": "2026-10-16T1200.om",
-      "bytes": 98048,
-      "variables": 20
+      "bytes": 19992848,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T15:00Z",
       "file": "2026-10-16T1500.om",
-      "bytes": 96824,
-      "variables": 20
+      "bytes": 20073432,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-16T18:00Z",
       "file": "2026-10-16T1800.om",
-      "bytes": 95744,
-      "variables": 20
+      "bytes": 19993056,
+      "variables": 17
     }
   ],
   "variables": {
@@ -507,16 +476,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -546,11 +505,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "cape",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T07:00Z": {
@@ -599,16 +553,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -648,11 +592,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T08:00Z": {
@@ -701,16 +640,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -750,11 +679,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T09:00Z": {
@@ -803,16 +727,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -852,11 +766,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T10:00Z": {
@@ -905,16 +814,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -954,11 +853,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T11:00Z": {
@@ -1007,16 +901,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1056,11 +940,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T12:00Z": {
@@ -1109,16 +988,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1158,11 +1027,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T13:00Z": {
@@ -1211,16 +1075,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1260,11 +1114,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T14:00Z": {
@@ -1313,16 +1162,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1362,11 +1201,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T15:00Z": {
@@ -1415,16 +1249,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1464,11 +1288,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T16:00Z": {
@@ -1517,16 +1336,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1566,11 +1375,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T17:00Z": {
@@ -1619,16 +1423,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1668,11 +1462,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T18:00Z": {
@@ -1721,16 +1510,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1770,11 +1549,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T19:00Z": {
@@ -1823,16 +1597,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1872,11 +1636,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T20:00Z": {
@@ -1925,16 +1684,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -1974,11 +1723,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T21:00Z": {
@@ -2027,16 +1771,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2076,11 +1810,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T22:00Z": {
@@ -2129,16 +1858,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2178,11 +1897,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-14T23:00Z": {
@@ -2231,16 +1945,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2280,11 +1984,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T00:00Z": {
@@ -2333,16 +2032,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2382,11 +2071,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T01:00Z": {
@@ -2435,16 +2119,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2484,11 +2158,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T02:00Z": {
@@ -2537,16 +2206,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2586,11 +2245,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T03:00Z": {
@@ -2639,16 +2293,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2688,11 +2332,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T04:00Z": {
@@ -2741,16 +2380,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2790,11 +2419,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T05:00Z": {
@@ -2843,16 +2467,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2892,11 +2506,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T06:00Z": {
@@ -2945,16 +2554,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -2994,11 +2593,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T07:00Z": {
@@ -3047,16 +2641,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3096,11 +2680,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T08:00Z": {
@@ -3149,16 +2728,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3198,11 +2767,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T09:00Z": {
@@ -3251,16 +2815,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3300,11 +2854,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T10:00Z": {
@@ -3353,16 +2902,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3402,11 +2941,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T11:00Z": {
@@ -3455,16 +2989,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3504,11 +3028,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T12:00Z": {
@@ -3557,16 +3076,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3606,11 +3115,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T13:00Z": {
@@ -3659,16 +3163,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3708,11 +3202,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T14:00Z": {
@@ -3761,16 +3250,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3810,11 +3289,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T15:00Z": {
@@ -3863,16 +3337,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -3912,11 +3376,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T16:00Z": {
@@ -3965,16 +3424,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4014,11 +3463,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T17:00Z": {
@@ -4067,16 +3511,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4116,11 +3550,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T18:00Z": {
@@ -4169,16 +3598,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4218,11 +3637,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T19:00Z": {
@@ -4271,16 +3685,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4320,11 +3724,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T20:00Z": {
@@ -4373,16 +3772,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4422,11 +3811,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T21:00Z": {
@@ -4475,16 +3859,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4524,11 +3898,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T22:00Z": {
@@ -4577,16 +3946,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4626,11 +3985,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-15T23:00Z": {
@@ -4679,16 +4033,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4728,11 +4072,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T00:00Z": {
@@ -4781,16 +4120,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4830,11 +4159,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T01:00Z": {
@@ -4883,16 +4207,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -4932,11 +4246,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T02:00Z": {
@@ -4985,16 +4294,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5034,11 +4333,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T03:00Z": {
@@ -5087,16 +4381,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5136,11 +4420,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T04:00Z": {
@@ -5189,16 +4468,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5238,11 +4507,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T05:00Z": {
@@ -5291,16 +4555,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5340,11 +4594,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T06:00Z": {
@@ -5393,16 +4642,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5442,215 +4681,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
-      }
-    },
-    "2026-10-16T07:00Z": {
-      "temperature_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cape",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "rain",
-        "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
-      }
-    },
-    "2026-10-16T08:00Z": {
-      "temperature_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cape",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "rain",
-        "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T09:00Z": {
@@ -5699,16 +4729,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -5748,215 +4768,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
-      }
-    },
-    "2026-10-16T10:00Z": {
-      "temperature_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cape",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "rain",
-        "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
-      }
-    },
-    "2026-10-16T11:00Z": {
-      "temperature_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "cape",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "rain",
-        "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T12:00Z": {
@@ -6005,16 +4816,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -6054,11 +4855,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T15:00Z": {
@@ -6107,16 +4903,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -6156,11 +4942,6 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     },
     "2026-10-16T18:00Z": {
@@ -6209,16 +4990,6 @@
         "source_var": "geopotential_height_1000hPa",
         "derived": false
       },
-      "wind_speed_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_speed_10m",
-        "derived": false
-      },
-      "wind_direction_10m": {
-        "source_domain": "ukmo_global_deterministic_10km",
-        "source_var": "wind_direction_10m",
-        "derived": false
-      },
       "wind_gusts_10m": {
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "wind_gusts_10m",
@@ -6258,110 +5029,69 @@
         "source_domain": "ukmo_global_deterministic_10km",
         "source_var": "rain",
         "derived": false
-      },
-      "dew_point_2m": {
-        "source_domain": "derived",
-        "source_var": "temperature_2m+relative_humidity_2m",
-        "derived": true
       }
     }
   },
   "sizes": {
-    "2026-10-14T06:00Z": 95168,
-    "2026-10-14T07:00Z": 94136,
-    "2026-10-14T08:00Z": 92080,
-    "2026-10-14T09:00Z": 90368,
-    "2026-10-14T10:00Z": 88920,
-    "2026-10-14T11:00Z": 88440,
-    "2026-10-14T12:00Z": 87912,
-    "2026-10-14T13:00Z": 87608,
-    "2026-10-14T14:00Z": 86912,
-    "2026-10-14T15:00Z": 86872,
-    "2026-10-14T16:00Z": 87640,
-    "2026-10-14T17:00Z": 86816,
-    "2026-10-14T18:00Z": 86768,
-    "2026-10-14T19:00Z": 86256,
-    "2026-10-14T20:00Z": 86392,
-    "2026-10-14T21:00Z": 86944,
-    "2026-10-14T22:00Z": 86640,
-    "2026-10-14T23:00Z": 86688,
-    "2026-10-15T00:00Z": 87368,
-    "2026-10-15T01:00Z": 87784,
-    "2026-10-15T02:00Z": 88496,
-    "2026-10-15T03:00Z": 89176,
-    "2026-10-15T04:00Z": 89808,
-    "2026-10-15T05:00Z": 90472,
-    "2026-10-15T06:00Z": 90456,
-    "2026-10-15T07:00Z": 90032,
-    "2026-10-15T08:00Z": 89208,
-    "2026-10-15T09:00Z": 89120,
-    "2026-10-15T10:00Z": 89416,
-    "2026-10-15T11:00Z": 89896,
-    "2026-10-15T12:00Z": 90064,
-    "2026-10-15T13:00Z": 90736,
-    "2026-10-15T14:00Z": 90568,
-    "2026-10-15T15:00Z": 90992,
-    "2026-10-15T16:00Z": 91872,
-    "2026-10-15T17:00Z": 90480,
-    "2026-10-15T18:00Z": 90224,
-    "2026-10-15T19:00Z": 90592,
-    "2026-10-15T20:00Z": 91464,
-    "2026-10-15T21:00Z": 92064,
-    "2026-10-15T22:00Z": 92528,
-    "2026-10-15T23:00Z": 93240,
-    "2026-10-16T00:00Z": 93504,
-    "2026-10-16T01:00Z": 94264,
-    "2026-10-16T02:00Z": 95032,
-    "2026-10-16T03:00Z": 95640,
-    "2026-10-16T04:00Z": 96192,
-    "2026-10-16T05:00Z": 96848,
-    "2026-10-16T06:00Z": 96984,
-    "2026-10-16T07:00Z": 95952,
-    "2026-10-16T08:00Z": 94920,
-    "2026-10-16T09:00Z": 95648,
-    "2026-10-16T10:00Z": 96536,
-    "2026-10-16T11:00Z": 97320,
-    "2026-10-16T12:00Z": 98048,
-    "2026-10-16T15:00Z": 96824,
-    "2026-10-16T18:00Z": 95744
+    "2026-10-14T06:00Z": 19895688,
+    "2026-10-14T07:00Z": 20051088,
+    "2026-10-14T08:00Z": 20106392,
+    "2026-10-14T09:00Z": 20149832,
+    "2026-10-14T10:00Z": 20161128,
+    "2026-10-14T11:00Z": 20181248,
+    "2026-10-14T12:00Z": 20176336,
+    "2026-10-14T13:00Z": 20181408,
+    "2026-10-14T14:00Z": 20181120,
+    "2026-10-14T15:00Z": 20158280,
+    "2026-10-14T16:00Z": 20151432,
+    "2026-10-14T17:00Z": 20158736,
+    "2026-10-14T18:00Z": 20145904,
+    "2026-10-14T19:00Z": 20108800,
+    "2026-10-14T20:00Z": 20057896,
+    "2026-10-14T21:00Z": 19972216,
+    "2026-10-14T22:00Z": 19893248,
+    "2026-10-14T23:00Z": 19822928,
+    "2026-10-15T00:00Z": 19776768,
+    "2026-10-15T01:00Z": 19763200,
+    "2026-10-15T02:00Z": 19775640,
+    "2026-10-15T03:00Z": 19784160,
+    "2026-10-15T04:00Z": 19794336,
+    "2026-10-15T05:00Z": 19840360,
+    "2026-10-15T06:00Z": 19880328,
+    "2026-10-15T07:00Z": 19910336,
+    "2026-10-15T08:00Z": 19983032,
+    "2026-10-15T09:00Z": 20044992,
+    "2026-10-15T10:00Z": 20058088,
+    "2026-10-15T11:00Z": 20058232,
+    "2026-10-15T12:00Z": 20048784,
+    "2026-10-15T13:00Z": 20061512,
+    "2026-10-15T14:00Z": 20061048,
+    "2026-10-15T15:00Z": 20043800,
+    "2026-10-15T16:00Z": 20026696,
+    "2026-10-15T17:00Z": 20003680,
+    "2026-10-15T18:00Z": 19986960,
+    "2026-10-15T19:00Z": 19955944,
+    "2026-10-15T20:00Z": 19896992,
+    "2026-10-15T21:00Z": 19806008,
+    "2026-10-15T22:00Z": 19731144,
+    "2026-10-15T23:00Z": 19674592,
+    "2026-10-16T00:00Z": 19640936,
+    "2026-10-16T01:00Z": 19632496,
+    "2026-10-16T02:00Z": 19656088,
+    "2026-10-16T03:00Z": 19697360,
+    "2026-10-16T04:00Z": 19736512,
+    "2026-10-16T05:00Z": 19777992,
+    "2026-10-16T06:00Z": 19825216,
+    "2026-10-16T09:00Z": 19984064,
+    "2026-10-16T12:00Z": 19992848,
+    "2026-10-16T15:00Z": 20073432,
+    "2026-10-16T18:00Z": 19993056
   },
   "pruned": [
-    "2026-10-14T0000.om",
-    "2026-10-14T0100.om",
-    "2026-10-14T0200.om",
-    "2026-10-14T0300.om",
-    "2026-10-14T0400.om",
-    "2026-10-14T0500.om",
-    "2026-10-16T2100.om",
-    "2026-10-17T0000.om",
-    "2026-10-17T0300.om",
-    "2026-10-17T0600.om",
-    "2026-10-17T0900.om",
-    "2026-10-17T1200.om",
-    "2026-10-17T1500.om",
-    "2026-10-17T1800.om",
-    "2026-10-17T2100.om",
-    "2026-10-18T0000.om",
-    "2026-10-18T0300.om",
-    "2026-10-18T0600.om",
-    "2026-10-18T0900.om",
-    "2026-10-18T1200.om",
-    "2026-10-18T1500.om",
-    "2026-10-18T1800.om",
-    "2026-10-18T2100.om",
-    "2026-10-19T0000.om",
-    "2026-10-19T0300.om",
-    "2026-10-19T0600.om",
-    "2026-10-19T0900.om",
-    "2026-10-19T1200.om",
-    "2026-10-19T1500.om",
-    "2026-10-19T1800.om",
-    "2026-10-19T2100.om",
-    "2026-10-20T0000.om",
-    "2026-10-20T0600.om",
-    "2026-10-20T1200.om",
-    "2026-10-20T1800.om",
-    "2026-10-21T0000.om"
+    "2026-10-16T0700.om",
+    "2026-10-16T0800.om",
+    "2026-10-16T1000.om",
+    "2026-10-16T1100.om"
   ],
   "warnings": [
     "2026-10-14T06:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
@@ -6709,20 +5439,6 @@
     "2026-10-16T06:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
     "2026-10-16T06:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
     "2026-10-16T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
-    "2026-10-16T07:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
-    "2026-10-16T07:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
-    "2026-10-16T07:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
-    "2026-10-16T07:00Z: variabile 'snow_depth' assente nel dominio 'ukmo_global_deterministic_10km' (snow_depth): omessa",
-    "2026-10-16T07:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
-    "2026-10-16T07:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
-    "2026-10-16T07:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
-    "2026-10-16T08:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
-    "2026-10-16T08:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
-    "2026-10-16T08:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
-    "2026-10-16T08:00Z: variabile 'snow_depth' assente nel dominio 'ukmo_global_deterministic_10km' (snow_depth): omessa",
-    "2026-10-16T08:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
-    "2026-10-16T08:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
-    "2026-10-16T08:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
     "2026-10-16T09:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
     "2026-10-16T09:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
     "2026-10-16T09:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
@@ -6730,20 +5446,6 @@
     "2026-10-16T09:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
     "2026-10-16T09:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
     "2026-10-16T09:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
-    "2026-10-16T10:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
-    "2026-10-16T10:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
-    "2026-10-16T10:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
-    "2026-10-16T10:00Z: variabile 'snow_depth' assente nel dominio 'ukmo_global_deterministic_10km' (snow_depth): omessa",
-    "2026-10-16T10:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
-    "2026-10-16T10:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
-    "2026-10-16T10:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
-    "2026-10-16T11:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
-    "2026-10-16T11:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
-    "2026-10-16T11:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
-    "2026-10-16T11:00Z: variabile 'snow_depth' assente nel dominio 'ukmo_global_deterministic_10km' (snow_depth): omessa",
-    "2026-10-16T11:00Z: variabile 'showers' assente nel dominio 'ukmo_global_deterministic_10km' (showers): omessa",
-    "2026-10-16T11:00Z: variabile 'weather_code' assente nel dominio 'ukmo_global_deterministic_10km' (weather_code): omessa",
-    "2026-10-16T11:00Z: variabile 'freezing_level_height' assente nel dominio 'ukmo_global_deterministic_10km' (freezing_level_height): omessa",
     "2026-10-16T12:00Z: variabile 'surface_pressure' assente nel dominio 'ukmo_global_deterministic_10km' (surface_pressure): omessa",
     "2026-10-16T12:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_u_component_10m): omessa",
     "2026-10-16T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ukmo_global_deterministic_10km' (wind_v_component_10m): omessa",
