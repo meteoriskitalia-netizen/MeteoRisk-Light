@@ -1,15 +1,9 @@
 {
   "version": "fm2-1",
-  "generated_at": "2026-10-14T17:51:56Z",
+  "generated_at": "2026-10-14T18:20:57Z",
   "domain": "ncep_gfs025",
-  "reference_time": "2026-10-14T06:00:00Z",
+  "reference_time": "2026-10-14T12:00:00Z",
   "valid_times": [
-    "2026-10-14T06:00Z",
-    "2026-10-14T07:00Z",
-    "2026-10-14T08:00Z",
-    "2026-10-14T09:00Z",
-    "2026-10-14T10:00Z",
-    "2026-10-14T11:00Z",
     "2026-10-14T12:00Z",
     "2026-10-14T13:00Z",
     "2026-10-14T14:00Z",
@@ -53,7 +47,11 @@
     "2026-10-16T04:00Z",
     "2026-10-16T05:00Z",
     "2026-10-16T06:00Z",
+    "2026-10-16T07:00Z",
+    "2026-10-16T08:00Z",
     "2026-10-16T09:00Z",
+    "2026-10-16T10:00Z",
+    "2026-10-16T11:00Z",
     "2026-10-16T12:00Z",
     "2026-10-16T15:00Z",
     "2026-10-16T18:00Z",
@@ -77,6 +75,7 @@
     "2026-10-19T00:00Z",
     "2026-10-19T03:00Z",
     "2026-10-19T06:00Z",
+    "2026-10-19T09:00Z",
     "2026-10-19T12:00Z",
     "2026-10-19T18:00Z",
     "2026-10-20T00:00Z",
@@ -120,7 +119,8 @@
     "2026-10-29T12:00Z",
     "2026-10-29T18:00Z",
     "2026-10-30T00:00Z",
-    "2026-10-30T06:00Z"
+    "2026-10-30T06:00Z",
+    "2026-10-30T12:00Z"
   ],
   "bbox": {
     "lat_min": -90.0,
@@ -175,1021 +175,709 @@
   "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
   "frames": [
     {
-      "valid_time": "2026-10-14T06:00Z",
-      "file": "2026-10-14T0600.om",
-      "bytes": 2736296,
-      "variables": 10
-    },
-    {
-      "valid_time": "2026-10-14T07:00Z",
-      "file": "2026-10-14T0700.om",
-      "bytes": 2742176,
-      "variables": 10
-    },
-    {
-      "valid_time": "2026-10-14T08:00Z",
-      "file": "2026-10-14T0800.om",
-      "bytes": 2747136,
-      "variables": 10
-    },
-    {
-      "valid_time": "2026-10-14T09:00Z",
-      "file": "2026-10-14T0900.om",
-      "bytes": 2751880,
-      "variables": 10
-    },
-    {
-      "valid_time": "2026-10-14T10:00Z",
-      "file": "2026-10-14T1000.om",
-      "bytes": 2752888,
-      "variables": 10
-    },
-    {
-      "valid_time": "2026-10-14T11:00Z",
-      "file": "2026-10-14T1100.om",
-      "bytes": 2759864,
-      "variables": 10
-    },
-    {
       "valid_time": "2026-10-14T12:00Z",
       "file": "2026-10-14T1200.om",
-      "bytes": 2769368,
+      "bytes": 2766568,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T13:00Z",
       "file": "2026-10-14T1300.om",
-      "bytes": 2772592,
+      "bytes": 2770448,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T14:00Z",
       "file": "2026-10-14T1400.om",
-      "bytes": 2775240,
+      "bytes": 2774360,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T15:00Z",
       "file": "2026-10-14T1500.om",
-      "bytes": 2776000,
+      "bytes": 2778808,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T16:00Z",
       "file": "2026-10-14T1600.om",
-      "bytes": 2776848,
+      "bytes": 2775448,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T17:00Z",
       "file": "2026-10-14T1700.om",
-      "bytes": 2777016,
+      "bytes": 2777528,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T18:00Z",
       "file": "2026-10-14T1800.om",
-      "bytes": 2779680,
+      "bytes": 2778552,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T19:00Z",
       "file": "2026-10-14T1900.om",
-      "bytes": 2779680,
+      "bytes": 2780040,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T20:00Z",
       "file": "2026-10-14T2000.om",
-      "bytes": 2779808,
+      "bytes": 2779200,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T21:00Z",
       "file": "2026-10-14T2100.om",
-      "bytes": 2774632,
+      "bytes": 2773136,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T22:00Z",
       "file": "2026-10-14T2200.om",
-      "bytes": 2764584,
+      "bytes": 2764296,
       "variables": 10
     },
     {
       "valid_time": "2026-10-14T23:00Z",
       "file": "2026-10-14T2300.om",
-      "bytes": 2758368,
+      "bytes": 2755512,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T00:00Z",
       "file": "2026-10-15T0000.om",
-      "bytes": 2751984,
+      "bytes": 2748600,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T01:00Z",
       "file": "2026-10-15T0100.om",
-      "bytes": 2749608,
+      "bytes": 2745888,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T02:00Z",
       "file": "2026-10-15T0200.om",
-      "bytes": 2748384,
+      "bytes": 2745864,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T03:00Z",
       "file": "2026-10-15T0300.om",
-      "bytes": 2749504,
+      "bytes": 2747008,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T04:00Z",
       "file": "2026-10-15T0400.om",
-      "bytes": 2748664,
+      "bytes": 2746944,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T05:00Z",
       "file": "2026-10-15T0500.om",
-      "bytes": 2752576,
+      "bytes": 2749664,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T06:00Z",
       "file": "2026-10-15T0600.om",
-      "bytes": 2754616,
+      "bytes": 2753488,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T07:00Z",
       "file": "2026-10-15T0700.om",
-      "bytes": 2758160,
+      "bytes": 2755648,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T08:00Z",
       "file": "2026-10-15T0800.om",
-      "bytes": 2762232,
+      "bytes": 2762408,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T09:00Z",
       "file": "2026-10-15T0900.om",
-      "bytes": 2767832,
+      "bytes": 2767200,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T10:00Z",
       "file": "2026-10-15T1000.om",
-      "bytes": 2771352,
+      "bytes": 2770272,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T11:00Z",
       "file": "2026-10-15T1100.om",
-      "bytes": 2777136,
+      "bytes": 2777416,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T12:00Z",
       "file": "2026-10-15T1200.om",
-      "bytes": 2781688,
+      "bytes": 2782032,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T13:00Z",
       "file": "2026-10-15T1300.om",
-      "bytes": 2786960,
+      "bytes": 2786168,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T14:00Z",
       "file": "2026-10-15T1400.om",
-      "bytes": 2787888,
+      "bytes": 2787960,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T15:00Z",
       "file": "2026-10-15T1500.om",
-      "bytes": 2787168,
+      "bytes": 2786736,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T16:00Z",
       "file": "2026-10-15T1600.om",
-      "bytes": 2784888,
+      "bytes": 2785400,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T17:00Z",
       "file": "2026-10-15T1700.om",
-      "bytes": 2784528,
+      "bytes": 2783296,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T18:00Z",
       "file": "2026-10-15T1800.om",
-      "bytes": 2783896,
+      "bytes": 2783064,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T19:00Z",
       "file": "2026-10-15T1900.om",
-      "bytes": 2782104,
+      "bytes": 2780640,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T20:00Z",
       "file": "2026-10-15T2000.om",
-      "bytes": 2775848,
+      "bytes": 2776376,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T21:00Z",
       "file": "2026-10-15T2100.om",
-      "bytes": 2767120,
+      "bytes": 2765336,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T22:00Z",
       "file": "2026-10-15T2200.om",
-      "bytes": 2755768,
+      "bytes": 2755224,
       "variables": 10
     },
     {
       "valid_time": "2026-10-15T23:00Z",
       "file": "2026-10-15T2300.om",
-      "bytes": 2744752,
+      "bytes": 2747336,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T00:00Z",
       "file": "2026-10-16T0000.om",
-      "bytes": 2737480,
+      "bytes": 2739736,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T01:00Z",
       "file": "2026-10-16T0100.om",
-      "bytes": 2734984,
+      "bytes": 2737088,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T02:00Z",
       "file": "2026-10-16T0200.om",
-      "bytes": 2731880,
+      "bytes": 2733320,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T03:00Z",
       "file": "2026-10-16T0300.om",
-      "bytes": 2731944,
+      "bytes": 2735880,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T04:00Z",
       "file": "2026-10-16T0400.om",
-      "bytes": 2734864,
+      "bytes": 2736952,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T05:00Z",
       "file": "2026-10-16T0500.om",
-      "bytes": 2736584,
+      "bytes": 2737488,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T06:00Z",
       "file": "2026-10-16T0600.om",
-      "bytes": 2739168,
+      "bytes": 2740288,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-16T07:00Z",
+      "file": "2026-10-16T0700.om",
+      "bytes": 2743728,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-16T08:00Z",
+      "file": "2026-10-16T0800.om",
+      "bytes": 2749024,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T09:00Z",
       "file": "2026-10-16T0900.om",
-      "bytes": 2753608,
+      "bytes": 2753224,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-16T10:00Z",
+      "file": "2026-10-16T1000.om",
+      "bytes": 2756024,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-16T11:00Z",
+      "file": "2026-10-16T1100.om",
+      "bytes": 2759688,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T12:00Z",
       "file": "2026-10-16T1200.om",
-      "bytes": 2763512,
+      "bytes": 2764056,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T15:00Z",
       "file": "2026-10-16T1500.om",
-      "bytes": 2769552,
+      "bytes": 2771792,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T18:00Z",
       "file": "2026-10-16T1800.om",
-      "bytes": 2763728,
+      "bytes": 2762480,
       "variables": 10
     },
     {
       "valid_time": "2026-10-16T21:00Z",
       "file": "2026-10-16T2100.om",
-      "bytes": 2750656,
+      "bytes": 2747440,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T00:00Z",
       "file": "2026-10-17T0000.om",
-      "bytes": 2729424,
+      "bytes": 2723288,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T03:00Z",
       "file": "2026-10-17T0300.om",
-      "bytes": 2723968,
+      "bytes": 2722944,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T06:00Z",
       "file": "2026-10-17T0600.om",
-      "bytes": 2736280,
+      "bytes": 2736792,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T09:00Z",
       "file": "2026-10-17T0900.om",
-      "bytes": 2742976,
+      "bytes": 2739352,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T12:00Z",
       "file": "2026-10-17T1200.om",
-      "bytes": 2755912,
+      "bytes": 2751656,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T15:00Z",
       "file": "2026-10-17T1500.om",
-      "bytes": 2765664,
+      "bytes": 2763344,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T18:00Z",
       "file": "2026-10-17T1800.om",
-      "bytes": 2765992,
+      "bytes": 2764040,
       "variables": 10
     },
     {
       "valid_time": "2026-10-17T21:00Z",
       "file": "2026-10-17T2100.om",
-      "bytes": 2758184,
+      "bytes": 2753488,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T00:00Z",
       "file": "2026-10-18T0000.om",
-      "bytes": 2732008,
+      "bytes": 2729072,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T03:00Z",
       "file": "2026-10-18T0300.om",
-      "bytes": 2728416,
+      "bytes": 2725416,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T06:00Z",
       "file": "2026-10-18T0600.om",
-      "bytes": 2734408,
+      "bytes": 2734176,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T09:00Z",
       "file": "2026-10-18T0900.om",
-      "bytes": 2737400,
+      "bytes": 2738216,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T12:00Z",
       "file": "2026-10-18T1200.om",
-      "bytes": 2747456,
+      "bytes": 2743784,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T15:00Z",
       "file": "2026-10-18T1500.om",
-      "bytes": 2761096,
+      "bytes": 2753456,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T18:00Z",
       "file": "2026-10-18T1800.om",
-      "bytes": 2757872,
+      "bytes": 2754960,
       "variables": 10
     },
     {
       "valid_time": "2026-10-18T21:00Z",
       "file": "2026-10-18T2100.om",
-      "bytes": 2739496,
+      "bytes": 2732000,
       "variables": 10
     },
     {
       "valid_time": "2026-10-19T00:00Z",
       "file": "2026-10-19T0000.om",
-      "bytes": 2715184,
+      "bytes": 2707456,
       "variables": 10
     },
     {
       "valid_time": "2026-10-19T03:00Z",
       "file": "2026-10-19T0300.om",
-      "bytes": 2713648,
+      "bytes": 2705664,
       "variables": 10
     },
     {
       "valid_time": "2026-10-19T06:00Z",
       "file": "2026-10-19T0600.om",
-      "bytes": 2718392,
+      "bytes": 2707328,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-19T09:00Z",
+      "file": "2026-10-19T0900.om",
+      "bytes": 2707536,
       "variables": 10
     },
     {
       "valid_time": "2026-10-19T12:00Z",
       "file": "2026-10-19T1200.om",
-      "bytes": 2723984,
+      "bytes": 2714608,
       "variables": 10
     },
     {
       "valid_time": "2026-10-19T18:00Z",
       "file": "2026-10-19T1800.om",
-      "bytes": 2725608,
+      "bytes": 2721936,
       "variables": 10
     },
     {
       "valid_time": "2026-10-20T00:00Z",
       "file": "2026-10-20T0000.om",
-      "bytes": 2692208,
+      "bytes": 2682344,
       "variables": 10
     },
     {
       "valid_time": "2026-10-20T06:00Z",
       "file": "2026-10-20T0600.om",
-      "bytes": 2701728,
+      "bytes": 2688872,
       "variables": 10
     },
     {
       "valid_time": "2026-10-20T12:00Z",
       "file": "2026-10-20T1200.om",
-      "bytes": 2716208,
+      "bytes": 2709944,
       "variables": 10
     },
     {
       "valid_time": "2026-10-20T18:00Z",
       "file": "2026-10-20T1800.om",
-      "bytes": 2740296,
+      "bytes": 2734608,
       "variables": 10
     },
     {
       "valid_time": "2026-10-21T00:00Z",
       "file": "2026-10-21T0000.om",
-      "bytes": 2709584,
+      "bytes": 2709720,
       "variables": 10
     },
     {
       "valid_time": "2026-10-21T06:00Z",
       "file": "2026-10-21T0600.om",
-      "bytes": 2711800,
+      "bytes": 2712872,
       "variables": 10
     },
     {
       "valid_time": "2026-10-21T12:00Z",
       "file": "2026-10-21T1200.om",
-      "bytes": 2735392,
+      "bytes": 2734312,
       "variables": 10
     },
     {
       "valid_time": "2026-10-21T18:00Z",
       "file": "2026-10-21T1800.om",
-      "bytes": 2753696,
+      "bytes": 2754248,
       "variables": 10
     },
     {
       "valid_time": "2026-10-22T00:00Z",
       "file": "2026-10-22T0000.om",
-      "bytes": 2721944,
+      "bytes": 2725856,
       "variables": 10
     },
     {
       "valid_time": "2026-10-22T06:00Z",
       "file": "2026-10-22T0600.om",
-      "bytes": 2715504,
+      "bytes": 2718272,
       "variables": 10
     },
     {
       "valid_time": "2026-10-22T12:00Z",
       "file": "2026-10-22T1200.om",
-      "bytes": 2730536,
+      "bytes": 2729768,
       "variables": 10
     },
     {
       "valid_time": "2026-10-22T18:00Z",
       "file": "2026-10-22T1800.om",
-      "bytes": 2746816,
+      "bytes": 2743480,
       "variables": 10
     },
     {
       "valid_time": "2026-10-23T00:00Z",
       "file": "2026-10-23T0000.om",
-      "bytes": 2710048,
+      "bytes": 2707080,
       "variables": 10
     },
     {
       "valid_time": "2026-10-23T06:00Z",
       "file": "2026-10-23T0600.om",
-      "bytes": 2710216,
+      "bytes": 2708536,
       "variables": 10
     },
     {
       "valid_time": "2026-10-23T12:00Z",
       "file": "2026-10-23T1200.om",
-      "bytes": 2727072,
+      "bytes": 2725488,
       "variables": 10
     },
     {
       "valid_time": "2026-10-23T18:00Z",
       "file": "2026-10-23T1800.om",
-      "bytes": 2747648,
+      "bytes": 2727200,
       "variables": 10
     },
     {
       "valid_time": "2026-10-24T00:00Z",
       "file": "2026-10-24T0000.om",
-      "bytes": 2714968,
+      "bytes": 2686504,
       "variables": 10
     },
     {
       "valid_time": "2026-10-24T06:00Z",
       "file": "2026-10-24T0600.om",
-      "bytes": 2716616,
+      "bytes": 2700320,
       "variables": 10
     },
     {
       "valid_time": "2026-10-24T12:00Z",
       "file": "2026-10-24T1200.om",
-      "bytes": 2741656,
+      "bytes": 2712336,
       "variables": 10
     },
     {
       "valid_time": "2026-10-24T18:00Z",
       "file": "2026-10-24T1800.om",
-      "bytes": 2743584,
+      "bytes": 2715000,
       "variables": 10
     },
     {
       "valid_time": "2026-10-25T00:00Z",
       "file": "2026-10-25T0000.om",
-      "bytes": 2707072,
+      "bytes": 2686136,
       "variables": 10
     },
     {
       "valid_time": "2026-10-25T06:00Z",
       "file": "2026-10-25T0600.om",
-      "bytes": 2717312,
+      "bytes": 2697536,
       "variables": 10
     },
     {
       "valid_time": "2026-10-25T12:00Z",
       "file": "2026-10-25T1200.om",
-      "bytes": 2745440,
+      "bytes": 2718008,
       "variables": 10
     },
     {
       "valid_time": "2026-10-25T18:00Z",
       "file": "2026-10-25T1800.om",
-      "bytes": 2754424,
+      "bytes": 2725360,
       "variables": 10
     },
     {
       "valid_time": "2026-10-26T00:00Z",
       "file": "2026-10-26T0000.om",
-      "bytes": 2720064,
+      "bytes": 2692880,
       "variables": 10
     },
     {
       "valid_time": "2026-10-26T06:00Z",
       "file": "2026-10-26T0600.om",
-      "bytes": 2715224,
+      "bytes": 2691296,
       "variables": 10
     },
     {
       "valid_time": "2026-10-26T12:00Z",
       "file": "2026-10-26T1200.om",
-      "bytes": 2728656,
+      "bytes": 2702104,
       "variables": 10
     },
     {
       "valid_time": "2026-10-26T18:00Z",
       "file": "2026-10-26T1800.om",
-      "bytes": 2726552,
+      "bytes": 2712808,
       "variables": 10
     },
     {
       "valid_time": "2026-10-27T00:00Z",
       "file": "2026-10-27T0000.om",
-      "bytes": 2698872,
+      "bytes": 2681712,
       "variables": 10
     },
     {
       "valid_time": "2026-10-27T06:00Z",
       "file": "2026-10-27T0600.om",
-      "bytes": 2700144,
+      "bytes": 2679024,
       "variables": 10
     },
     {
       "valid_time": "2026-10-27T12:00Z",
       "file": "2026-10-27T1200.om",
-      "bytes": 2733000,
+      "bytes": 2699352,
       "variables": 10
     },
     {
       "valid_time": "2026-10-27T18:00Z",
       "file": "2026-10-27T1800.om",
-      "bytes": 2753640,
+      "bytes": 2719360,
       "variables": 10
     },
     {
       "valid_time": "2026-10-28T00:00Z",
       "file": "2026-10-28T0000.om",
-      "bytes": 2729840,
+      "bytes": 2686888,
       "variables": 10
     },
     {
       "valid_time": "2026-10-28T06:00Z",
       "file": "2026-10-28T0600.om",
-      "bytes": 2729904,
+      "bytes": 2675720,
       "variables": 10
     },
     {
       "valid_time": "2026-10-28T12:00Z",
       "file": "2026-10-28T1200.om",
-      "bytes": 2749512,
+      "bytes": 2695720,
       "variables": 10
     },
     {
       "valid_time": "2026-10-28T18:00Z",
       "file": "2026-10-28T1800.om",
-      "bytes": 2773168,
+      "bytes": 2717712,
       "variables": 10
     },
     {
       "valid_time": "2026-10-29T00:00Z",
       "file": "2026-10-29T0000.om",
-      "bytes": 2735328,
+      "bytes": 2690400,
       "variables": 10
     },
     {
       "valid_time": "2026-10-29T06:00Z",
       "file": "2026-10-29T0600.om",
-      "bytes": 2738616,
+      "bytes": 2673952,
       "variables": 10
     },
     {
       "valid_time": "2026-10-29T12:00Z",
       "file": "2026-10-29T1200.om",
-      "bytes": 2762824,
+      "bytes": 2690264,
       "variables": 10
     },
     {
       "valid_time": "2026-10-29T18:00Z",
       "file": "2026-10-29T1800.om",
-      "bytes": 2775000,
+      "bytes": 2711272,
       "variables": 10
     },
     {
       "valid_time": "2026-10-30T00:00Z",
       "file": "2026-10-30T0000.om",
-      "bytes": 2745080,
+      "bytes": 2682512,
       "variables": 10
     },
     {
       "valid_time": "2026-10-30T06:00Z",
       "file": "2026-10-30T0600.om",
-      "bytes": 2745496,
+      "bytes": 2679232,
+      "variables": 10
+    },
+    {
+      "valid_time": "2026-10-30T12:00Z",
+      "file": "2026-10-30T1200.om",
+      "bytes": 2698256,
       "variables": 10
     }
   ],
   "variables": {
-    "2026-10-14T06:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-14T07:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-14T08:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-14T09:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-14T10:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-14T11:00Z": {
-      "temperature_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "ncep_gfs025",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
     "2026-10-14T12:00Z": {
       "temperature_850hPa": {
         "source_domain": "ncep_gfs025",
@@ -3426,7 +3114,215 @@
         "derived": false
       }
     },
+    "2026-10-16T07:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-16T08:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
     "2026-10-16T09:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-16T10:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-16T11:00Z": {
       "temperature_850hPa": {
         "source_domain": "ncep_gfs025",
         "source_var": "temperature_850hPa",
@@ -4623,6 +4519,58 @@
       }
     },
     "2026-10-19T06:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T09:00Z": {
       "temperature_850hPa": {
         "source_domain": "ncep_gfs025",
         "source_var": "temperature_850hPa",
@@ -6961,306 +6909,188 @@
         "source_var": "freezing_level_height",
         "derived": false
       }
+    },
+    "2026-10-30T12:00Z": {
+      "temperature_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "ncep_gfs025",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
     }
   },
   "sizes": {
-    "2026-10-14T06:00Z": 2736296,
-    "2026-10-14T07:00Z": 2742176,
-    "2026-10-14T08:00Z": 2747136,
-    "2026-10-14T09:00Z": 2751880,
-    "2026-10-14T10:00Z": 2752888,
-    "2026-10-14T11:00Z": 2759864,
-    "2026-10-14T12:00Z": 2769368,
-    "2026-10-14T13:00Z": 2772592,
-    "2026-10-14T14:00Z": 2775240,
-    "2026-10-14T15:00Z": 2776000,
-    "2026-10-14T16:00Z": 2776848,
-    "2026-10-14T17:00Z": 2777016,
-    "2026-10-14T18:00Z": 2779680,
-    "2026-10-14T19:00Z": 2779680,
-    "2026-10-14T20:00Z": 2779808,
-    "2026-10-14T21:00Z": 2774632,
-    "2026-10-14T22:00Z": 2764584,
-    "2026-10-14T23:00Z": 2758368,
-    "2026-10-15T00:00Z": 2751984,
-    "2026-10-15T01:00Z": 2749608,
-    "2026-10-15T02:00Z": 2748384,
-    "2026-10-15T03:00Z": 2749504,
-    "2026-10-15T04:00Z": 2748664,
-    "2026-10-15T05:00Z": 2752576,
-    "2026-10-15T06:00Z": 2754616,
-    "2026-10-15T07:00Z": 2758160,
-    "2026-10-15T08:00Z": 2762232,
-    "2026-10-15T09:00Z": 2767832,
-    "2026-10-15T10:00Z": 2771352,
-    "2026-10-15T11:00Z": 2777136,
-    "2026-10-15T12:00Z": 2781688,
-    "2026-10-15T13:00Z": 2786960,
-    "2026-10-15T14:00Z": 2787888,
-    "2026-10-15T15:00Z": 2787168,
-    "2026-10-15T16:00Z": 2784888,
-    "2026-10-15T17:00Z": 2784528,
-    "2026-10-15T18:00Z": 2783896,
-    "2026-10-15T19:00Z": 2782104,
-    "2026-10-15T20:00Z": 2775848,
-    "2026-10-15T21:00Z": 2767120,
-    "2026-10-15T22:00Z": 2755768,
-    "2026-10-15T23:00Z": 2744752,
-    "2026-10-16T00:00Z": 2737480,
-    "2026-10-16T01:00Z": 2734984,
-    "2026-10-16T02:00Z": 2731880,
-    "2026-10-16T03:00Z": 2731944,
-    "2026-10-16T04:00Z": 2734864,
-    "2026-10-16T05:00Z": 2736584,
-    "2026-10-16T06:00Z": 2739168,
-    "2026-10-16T09:00Z": 2753608,
-    "2026-10-16T12:00Z": 2763512,
-    "2026-10-16T15:00Z": 2769552,
-    "2026-10-16T18:00Z": 2763728,
-    "2026-10-16T21:00Z": 2750656,
-    "2026-10-17T00:00Z": 2729424,
-    "2026-10-17T03:00Z": 2723968,
-    "2026-10-17T06:00Z": 2736280,
-    "2026-10-17T09:00Z": 2742976,
-    "2026-10-17T12:00Z": 2755912,
-    "2026-10-17T15:00Z": 2765664,
-    "2026-10-17T18:00Z": 2765992,
-    "2026-10-17T21:00Z": 2758184,
-    "2026-10-18T00:00Z": 2732008,
-    "2026-10-18T03:00Z": 2728416,
-    "2026-10-18T06:00Z": 2734408,
-    "2026-10-18T09:00Z": 2737400,
-    "2026-10-18T12:00Z": 2747456,
-    "2026-10-18T15:00Z": 2761096,
-    "2026-10-18T18:00Z": 2757872,
-    "2026-10-18T21:00Z": 2739496,
-    "2026-10-19T00:00Z": 2715184,
-    "2026-10-19T03:00Z": 2713648,
-    "2026-10-19T06:00Z": 2718392,
-    "2026-10-19T12:00Z": 2723984,
-    "2026-10-19T18:00Z": 2725608,
-    "2026-10-20T00:00Z": 2692208,
-    "2026-10-20T06:00Z": 2701728,
-    "2026-10-20T12:00Z": 2716208,
-    "2026-10-20T18:00Z": 2740296,
-    "2026-10-21T00:00Z": 2709584,
-    "2026-10-21T06:00Z": 2711800,
-    "2026-10-21T12:00Z": 2735392,
-    "2026-10-21T18:00Z": 2753696,
-    "2026-10-22T00:00Z": 2721944,
-    "2026-10-22T06:00Z": 2715504,
-    "2026-10-22T12:00Z": 2730536,
-    "2026-10-22T18:00Z": 2746816,
-    "2026-10-23T00:00Z": 2710048,
-    "2026-10-23T06:00Z": 2710216,
-    "2026-10-23T12:00Z": 2727072,
-    "2026-10-23T18:00Z": 2747648,
-    "2026-10-24T00:00Z": 2714968,
-    "2026-10-24T06:00Z": 2716616,
-    "2026-10-24T12:00Z": 2741656,
-    "2026-10-24T18:00Z": 2743584,
-    "2026-10-25T00:00Z": 2707072,
-    "2026-10-25T06:00Z": 2717312,
-    "2026-10-25T12:00Z": 2745440,
-    "2026-10-25T18:00Z": 2754424,
-    "2026-10-26T00:00Z": 2720064,
-    "2026-10-26T06:00Z": 2715224,
-    "2026-10-26T12:00Z": 2728656,
-    "2026-10-26T18:00Z": 2726552,
-    "2026-10-27T00:00Z": 2698872,
-    "2026-10-27T06:00Z": 2700144,
-    "2026-10-27T12:00Z": 2733000,
-    "2026-10-27T18:00Z": 2753640,
-    "2026-10-28T00:00Z": 2729840,
-    "2026-10-28T06:00Z": 2729904,
-    "2026-10-28T12:00Z": 2749512,
-    "2026-10-28T18:00Z": 2773168,
-    "2026-10-29T00:00Z": 2735328,
-    "2026-10-29T06:00Z": 2738616,
-    "2026-10-29T12:00Z": 2762824,
-    "2026-10-29T18:00Z": 2775000,
-    "2026-10-30T00:00Z": 2745080,
-    "2026-10-30T06:00Z": 2745496
+    "2026-10-14T12:00Z": 2766568,
+    "2026-10-14T13:00Z": 2770448,
+    "2026-10-14T14:00Z": 2774360,
+    "2026-10-14T15:00Z": 2778808,
+    "2026-10-14T16:00Z": 2775448,
+    "2026-10-14T17:00Z": 2777528,
+    "2026-10-14T18:00Z": 2778552,
+    "2026-10-14T19:00Z": 2780040,
+    "2026-10-14T20:00Z": 2779200,
+    "2026-10-14T21:00Z": 2773136,
+    "2026-10-14T22:00Z": 2764296,
+    "2026-10-14T23:00Z": 2755512,
+    "2026-10-15T00:00Z": 2748600,
+    "2026-10-15T01:00Z": 2745888,
+    "2026-10-15T02:00Z": 2745864,
+    "2026-10-15T03:00Z": 2747008,
+    "2026-10-15T04:00Z": 2746944,
+    "2026-10-15T05:00Z": 2749664,
+    "2026-10-15T06:00Z": 2753488,
+    "2026-10-15T07:00Z": 2755648,
+    "2026-10-15T08:00Z": 2762408,
+    "2026-10-15T09:00Z": 2767200,
+    "2026-10-15T10:00Z": 2770272,
+    "2026-10-15T11:00Z": 2777416,
+    "2026-10-15T12:00Z": 2782032,
+    "2026-10-15T13:00Z": 2786168,
+    "2026-10-15T14:00Z": 2787960,
+    "2026-10-15T15:00Z": 2786736,
+    "2026-10-15T16:00Z": 2785400,
+    "2026-10-15T17:00Z": 2783296,
+    "2026-10-15T18:00Z": 2783064,
+    "2026-10-15T19:00Z": 2780640,
+    "2026-10-15T20:00Z": 2776376,
+    "2026-10-15T21:00Z": 2765336,
+    "2026-10-15T22:00Z": 2755224,
+    "2026-10-15T23:00Z": 2747336,
+    "2026-10-16T00:00Z": 2739736,
+    "2026-10-16T01:00Z": 2737088,
+    "2026-10-16T02:00Z": 2733320,
+    "2026-10-16T03:00Z": 2735880,
+    "2026-10-16T04:00Z": 2736952,
+    "2026-10-16T05:00Z": 2737488,
+    "2026-10-16T06:00Z": 2740288,
+    "2026-10-16T07:00Z": 2743728,
+    "2026-10-16T08:00Z": 2749024,
+    "2026-10-16T09:00Z": 2753224,
+    "2026-10-16T10:00Z": 2756024,
+    "2026-10-16T11:00Z": 2759688,
+    "2026-10-16T12:00Z": 2764056,
+    "2026-10-16T15:00Z": 2771792,
+    "2026-10-16T18:00Z": 2762480,
+    "2026-10-16T21:00Z": 2747440,
+    "2026-10-17T00:00Z": 2723288,
+    "2026-10-17T03:00Z": 2722944,
+    "2026-10-17T06:00Z": 2736792,
+    "2026-10-17T09:00Z": 2739352,
+    "2026-10-17T12:00Z": 2751656,
+    "2026-10-17T15:00Z": 2763344,
+    "2026-10-17T18:00Z": 2764040,
+    "2026-10-17T21:00Z": 2753488,
+    "2026-10-18T00:00Z": 2729072,
+    "2026-10-18T03:00Z": 2725416,
+    "2026-10-18T06:00Z": 2734176,
+    "2026-10-18T09:00Z": 2738216,
+    "2026-10-18T12:00Z": 2743784,
+    "2026-10-18T15:00Z": 2753456,
+    "2026-10-18T18:00Z": 2754960,
+    "2026-10-18T21:00Z": 2732000,
+    "2026-10-19T00:00Z": 2707456,
+    "2026-10-19T03:00Z": 2705664,
+    "2026-10-19T06:00Z": 2707328,
+    "2026-10-19T09:00Z": 2707536,
+    "2026-10-19T12:00Z": 2714608,
+    "2026-10-19T18:00Z": 2721936,
+    "2026-10-20T00:00Z": 2682344,
+    "2026-10-20T06:00Z": 2688872,
+    "2026-10-20T12:00Z": 2709944,
+    "2026-10-20T18:00Z": 2734608,
+    "2026-10-21T00:00Z": 2709720,
+    "2026-10-21T06:00Z": 2712872,
+    "2026-10-21T12:00Z": 2734312,
+    "2026-10-21T18:00Z": 2754248,
+    "2026-10-22T00:00Z": 2725856,
+    "2026-10-22T06:00Z": 2718272,
+    "2026-10-22T12:00Z": 2729768,
+    "2026-10-22T18:00Z": 2743480,
+    "2026-10-23T00:00Z": 2707080,
+    "2026-10-23T06:00Z": 2708536,
+    "2026-10-23T12:00Z": 2725488,
+    "2026-10-23T18:00Z": 2727200,
+    "2026-10-24T00:00Z": 2686504,
+    "2026-10-24T06:00Z": 2700320,
+    "2026-10-24T12:00Z": 2712336,
+    "2026-10-24T18:00Z": 2715000,
+    "2026-10-25T00:00Z": 2686136,
+    "2026-10-25T06:00Z": 2697536,
+    "2026-10-25T12:00Z": 2718008,
+    "2026-10-25T18:00Z": 2725360,
+    "2026-10-26T00:00Z": 2692880,
+    "2026-10-26T06:00Z": 2691296,
+    "2026-10-26T12:00Z": 2702104,
+    "2026-10-26T18:00Z": 2712808,
+    "2026-10-27T00:00Z": 2681712,
+    "2026-10-27T06:00Z": 2679024,
+    "2026-10-27T12:00Z": 2699352,
+    "2026-10-27T18:00Z": 2719360,
+    "2026-10-28T00:00Z": 2686888,
+    "2026-10-28T06:00Z": 2675720,
+    "2026-10-28T12:00Z": 2695720,
+    "2026-10-28T18:00Z": 2717712,
+    "2026-10-29T00:00Z": 2690400,
+    "2026-10-29T06:00Z": 2673952,
+    "2026-10-29T12:00Z": 2690264,
+    "2026-10-29T18:00Z": 2711272,
+    "2026-10-30T00:00Z": 2682512,
+    "2026-10-30T06:00Z": 2679232,
+    "2026-10-30T12:00Z": 2698256
   },
   "pruned": [
-    "2026-10-16T0700.om",
-    "2026-10-16T0800.om",
-    "2026-10-16T1000.om",
-    "2026-10-16T1100.om",
-    "2026-10-16T1300.om",
-    "2026-10-16T1400.om",
-    "2026-10-16T1600.om",
-    "2026-10-16T1700.om",
-    "2026-10-16T1900.om",
-    "2026-10-16T2000.om",
-    "2026-10-16T2200.om",
-    "2026-10-16T2300.om",
-    "2026-10-17T0100.om",
-    "2026-10-17T0200.om",
-    "2026-10-17T0400.om",
-    "2026-10-17T0500.om",
-    "2026-10-17T0700.om",
-    "2026-10-17T0800.om",
-    "2026-10-17T1000.om",
-    "2026-10-17T1100.om",
-    "2026-10-17T1300.om",
-    "2026-10-17T1400.om",
-    "2026-10-17T1600.om",
-    "2026-10-17T1700.om",
-    "2026-10-17T1900.om",
-    "2026-10-17T2000.om",
-    "2026-10-17T2200.om",
-    "2026-10-17T2300.om",
-    "2026-10-18T0100.om",
-    "2026-10-18T0200.om",
-    "2026-10-18T0400.om",
-    "2026-10-18T0500.om",
-    "2026-10-18T0700.om",
-    "2026-10-18T0800.om",
-    "2026-10-18T1000.om",
-    "2026-10-18T1100.om",
-    "2026-10-18T1300.om",
-    "2026-10-18T1400.om",
-    "2026-10-18T1600.om",
-    "2026-10-18T1700.om",
-    "2026-10-18T1900.om",
-    "2026-10-18T2000.om",
-    "2026-10-18T2200.om",
-    "2026-10-18T2300.om",
-    "2026-10-19T0100.om",
-    "2026-10-19T0200.om",
-    "2026-10-19T0400.om",
-    "2026-10-19T0500.om",
-    "2026-10-19T0900.om",
-    "2026-10-19T1500.om",
-    "2026-10-19T2100.om",
-    "2026-10-20T0300.om",
-    "2026-10-20T0900.om",
-    "2026-10-20T1500.om",
-    "2026-10-20T2100.om",
-    "2026-10-21T0300.om",
-    "2026-10-21T0900.om",
-    "2026-10-21T1500.om",
-    "2026-10-21T2100.om",
-    "2026-10-22T0300.om",
-    "2026-10-22T0900.om",
-    "2026-10-22T1500.om",
-    "2026-10-22T2100.om",
-    "2026-10-23T0300.om",
-    "2026-10-23T0900.om",
-    "2026-10-23T1500.om",
-    "2026-10-23T2100.om",
-    "2026-10-24T0300.om",
-    "2026-10-24T0900.om",
-    "2026-10-24T1500.om",
-    "2026-10-24T2100.om",
-    "2026-10-25T0300.om",
-    "2026-10-25T0900.om",
-    "2026-10-25T1500.om",
-    "2026-10-25T2100.om",
-    "2026-10-26T0300.om",
-    "2026-10-26T0900.om",
-    "2026-10-26T1500.om",
-    "2026-10-26T2100.om",
-    "2026-10-27T0300.om",
-    "2026-10-27T0900.om",
-    "2026-10-27T1500.om",
-    "2026-10-27T2100.om",
-    "2026-10-28T0300.om",
-    "2026-10-28T0900.om",
-    "2026-10-28T1500.om",
-    "2026-10-28T2100.om",
-    "2026-10-29T0300.om",
-    "2026-10-29T0900.om",
-    "2026-10-29T1500.om",
-    "2026-10-29T2100.om",
-    "2026-10-30T0300.om"
+    "2026-10-14T0600.om",
+    "2026-10-14T0700.om",
+    "2026-10-14T0800.om",
+    "2026-10-14T0900.om",
+    "2026-10-14T1000.om",
+    "2026-10-14T1100.om"
   ],
   "warnings": [
-    "2026-10-14T06:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T06:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T06:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T06:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T06:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T06:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T06:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T06:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T06:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T06:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T06:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T06:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T06:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T06:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
-    "2026-10-14T07:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T07:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T07:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T07:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T07:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T07:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T07:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T07:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T07:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T07:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T07:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T07:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T07:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T07:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
-    "2026-10-14T08:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T08:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T08:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T08:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T08:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T08:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T08:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T08:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T08:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T08:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T08:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T08:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T08:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T08:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
-    "2026-10-14T09:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T09:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T09:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T09:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T09:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T09:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T09:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T09:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T09:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T09:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T09:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T09:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T09:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T09:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
-    "2026-10-14T10:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T10:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T10:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T10:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T10:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T10:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T10:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T10:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T10:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T10:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T10:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T10:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T10:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T10:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
-    "2026-10-14T11:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
-    "2026-10-14T11:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
-    "2026-10-14T11:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
-    "2026-10-14T11:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
-    "2026-10-14T11:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
-    "2026-10-14T11:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
-    "2026-10-14T11:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
-    "2026-10-14T11:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
-    "2026-10-14T11:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
-    "2026-10-14T11:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
-    "2026-10-14T11:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
-    "2026-10-14T11:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
-    "2026-10-14T11:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-14T11:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
     "2026-10-14T12:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
     "2026-10-14T12:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
     "2026-10-14T12:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
@@ -7863,6 +7693,34 @@
     "2026-10-16T06:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
     "2026-10-16T06:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
     "2026-10-16T06:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-16T07:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-16T07:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-16T07:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-16T07:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-16T07:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-16T07:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-16T07:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-16T07:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-16T07:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-16T07:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-16T07:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-16T07:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-16T07:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-16T07:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-16T08:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-16T08:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-16T08:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-16T08:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-16T08:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-16T08:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-16T08:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-16T08:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-16T08:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-16T08:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-16T08:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-16T08:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-16T08:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-16T08:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
     "2026-10-16T09:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
     "2026-10-16T09:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
     "2026-10-16T09:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
@@ -7877,6 +7735,34 @@
     "2026-10-16T09:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
     "2026-10-16T09:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
     "2026-10-16T09:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-16T10:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-16T10:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-16T10:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-16T10:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-16T10:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-16T10:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-16T10:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-16T10:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-16T10:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-16T10:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-16T10:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-16T10:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-16T10:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-16T10:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-16T11:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-16T11:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-16T11:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-16T11:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-16T11:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-16T11:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-16T11:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-16T11:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-16T11:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-16T11:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-16T11:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-16T11:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-16T11:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-16T11:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
     "2026-10-16T12:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
     "2026-10-16T12:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
     "2026-10-16T12:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
@@ -8199,6 +8085,20 @@
     "2026-10-19T06:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
     "2026-10-19T06:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
     "2026-10-19T06:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-19T09:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-19T09:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-19T09:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-19T09:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-19T09:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-19T09:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-19T09:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-19T09:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-19T09:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-19T09:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-19T09:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-19T09:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-19T09:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-19T09:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
     "2026-10-19T12:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
     "2026-10-19T12:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
     "2026-10-19T12:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
@@ -8814,6 +8714,20 @@
     "2026-10-30T06:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
     "2026-10-30T06:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
     "2026-10-30T06:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
-    "2026-10-30T06:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa"
+    "2026-10-30T06:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa",
+    "2026-10-30T12:00Z: variabile 'temperature_2m' assente nel dominio 'ncep_gfs025' (temperature_2m): omessa",
+    "2026-10-30T12:00Z: variabile 'relative_humidity_2m' assente nel dominio 'ncep_gfs025' (relative_humidity_2m): omessa",
+    "2026-10-30T12:00Z: variabile 'surface_pressure' assente nel dominio 'ncep_gfs025' (surface_pressure): omessa",
+    "2026-10-30T12:00Z: variabile 'wind_u_component_10m' assente nel dominio 'ncep_gfs025' (wind_u_component_10m): omessa",
+    "2026-10-30T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'ncep_gfs025' (wind_v_component_10m): omessa",
+    "2026-10-30T12:00Z: variabile 'cloud_cover' assente nel dominio 'ncep_gfs025' (cloud_cover): omessa",
+    "2026-10-30T12:00Z: variabile 'cloud_cover_low' assente nel dominio 'ncep_gfs025' (cloud_cover_low): omessa",
+    "2026-10-30T12:00Z: variabile 'cloud_cover_mid' assente nel dominio 'ncep_gfs025' (cloud_cover_mid): omessa",
+    "2026-10-30T12:00Z: variabile 'cloud_cover_high' assente nel dominio 'ncep_gfs025' (cloud_cover_high): omessa",
+    "2026-10-30T12:00Z: variabile 'snow_depth' assente nel dominio 'ncep_gfs025' (snow_depth): omessa",
+    "2026-10-30T12:00Z: variabile 'precipitation' assente nel dominio 'ncep_gfs025' (precipitation): omessa",
+    "2026-10-30T12:00Z: variabile 'rain' assente nel dominio 'ncep_gfs025' (rain): omessa",
+    "2026-10-30T12:00Z: variabile 'showers' assente nel dominio 'ncep_gfs025' (showers): omessa",
+    "2026-10-30T12:00Z: variabile 'weather_code' assente nel dominio 'ncep_gfs025' (weather_code): omessa"
   ]
 }
