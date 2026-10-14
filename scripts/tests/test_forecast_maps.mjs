@@ -19,7 +19,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.4.6.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.4.7.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -140,7 +140,7 @@ ctx.fmMeta = {
   variables: ['temperature_2m'],
 };
 
-const EXPECTED = 'data/fm2/2026-10-10T2300.om'
+const EXPECTED = (ctx.FM_CACHE_BASE || 'data/fm2/') + '2026-10-10T2300.om'
   + '?variable=temperature_2m&tile_size=512&interpolation=linear';
 const cur = ctx.fmCurrentOmUrl();
 ok('B3: fmCurrentOmUrl().url = URL cache atteso', cur && cur.url === EXPECTED, cur && cur.url);
@@ -345,6 +345,32 @@ ctx.fmIdx = 1; // cambio frame -> la chiave cambia -> rebuild reale
 ctx.fmRebuild();
 ok('C5d: cambio frame ricrea il raster (fmLayerKey aggiornata)',
   ctx.fmRasterLayer !== firstRaster && ctx.fmLayerKey !== firstKey);
+
+// C6 (1.2.4.6): il cambio/ricarica di dominio deve invalidare la cache-by-url
+// (fmLayerKey=null in fmLoadDomain). La URL cache e' INDIPENDENTE dal dominio,
+// quindi senza il reset la chiave resterebbe identica e il guard di fmRebuild
+// (key===fmLayerKey) skipperebbe il rebuild al ritorno su un dominio gia'
+// visitato, lasciando un tile trasparente (bug EU->d2->EU). C5 prova che
+// fmLayerKey=null -> rebuild reale; C6 fissa il reset nel path di cambio dominio.
+resetFmState();
+ctx.document.getElementById = function () { return null; };
+ctx.fmModule = { updateCurrentBounds() {}, getColorScale() { return null; } };
+ctx.fmActive = true;
+ctx.fmRebuild();
+const preSwitchRaster = ctx.fmRasterLayer;
+const preSwitchKey = ctx.fmLayerKey;
+ok('C6a: precondizione - fmRebuild popola fmLayerKey', !!preSwitchRaster && !!preSwitchKey);
+// Nel test fmRebuild produce sempre la stessa chiave: senza il reset in
+// fmLoadDomain resterebbe preSwitchKey e C6b/C6c fallirebbero (test discriminante).
+ctx.fetch = function () { return new Promise(function () { }); }; // fetch pendente: nessun fetch reale
+ctx.fmDomain = 'dwd_icon_d2';
+try { ctx.fmLoadDomain(); } catch (e) { /* eventuale throw dello stub: irrilevante */ }
+ok('C6b: fmLoadDomain azzera fmLayerKey ad ogni cambio/ricarica di dominio',
+  ctx.fmLayerKey === null, String(ctx.fmLayerKey));
+ctx.map.removed.length = 0;
+ctx.fmRebuild();
+ok('C6c: dopo il cambio dominio fmRebuild ricrea il raster (layer precedente rimosso)',
+  ctx.fmRasterLayer !== preSwitchRaster && ctx.map.removed.indexOf(preSwitchRaster) >= 0);
 
 console.log(`\nRESULT: ${failures === 0 ? 'PASS' : 'FAIL'} (${failures} errori)`);
 process.exit(failures === 0 ? 0 : 1);

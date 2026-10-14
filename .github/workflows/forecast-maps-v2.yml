@@ -4,7 +4,7 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #   - Fonti: file spaziali Open-Meteo su S3 anonimo
 #     (data_spatial/<dominio>/.../<valid_time>.om + latest.json come indice).
 #   - Motore: scripts/forecast_v2/forecast_v2_engine.py -> data/fm2/<dominio>/*.om
-#     + data/fm2/<dominio>/latest.json (crop Italia multi-variabile, NO-OP GUARD,
+#     + data/fm2/<dominio>/latest.json (per-domain crop multi-variabile, NO-OP GUARD,
 #     orizzonte INTERO del manifest del dominio: --valid-frames 0, nessun cap sul
 #     prune). Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
 #   - MULTI-DOMINIO = MATRIX (strategia scelta): UN JOB PER DOMINIO
@@ -59,11 +59,11 @@ jobs:
       matrix:
         domain:
           - dwd_icon_eu
-          - ecmwf_ifs025
-          - dwd_icon
           - dwd_icon_d2
           - italia_meteo_arpae_icon_2i
+          - ecmwf_ifs025
           - ncep_gfs025
+          - dwd_icon
           - meteofrance_arpege_world025
           - ukmo_global_deterministic_10km
           - jma_gsm
@@ -148,7 +148,7 @@ jobs:
             echo "[INFO] Nessuna modifica a data/fm2/${{ matrix.domain }} (NO-OP)."
             exit 0
           fi
-          git commit -m "chore(fm2): aggiornamento cache dominio ${{ matrix.domain }} (.om crop Italia)"
+          git commit -m "chore(fm2): aggiornamento cache dominio ${{ matrix.domain }} (.om per-domain crop)"
           # Retry: gli altri job matrix pushano sullo stesso main -> race possibile.
           # `git pull --rebase --autostash`: i path sono disgiunti per dominio, quindi
           # il rebase riallinea la history senza conflitti di contenuto; --autostash

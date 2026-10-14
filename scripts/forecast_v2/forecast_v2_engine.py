@@ -39,16 +39,15 @@ Disegno (V2 del motore, scelte DICHIARATE):
     FALLBACK (dry-run, dove il frame non si scarica) e come GUARDIA di coerenza:
     se i dx/dy derivati si scostano >1% dai valori noti (e il dominio e' in
     GRIDS) si logga un warning ma si USANO i valori derivati.
-  - CROP ITALIA: bbox (36.5, 6.5, 47.2, 18.6) applicato alla griglia del dominio
-    corrente tramite `bbox_to_indices`/`target_latlon` (generici).
+  - CROP PER-DOMINIO: ogni dominio e' croppato sul PROPRIO bbox via `bbox_for(domain)`/`DOMAIN_BBOX`
+    (default/fallback `V2_BBOX` = Italia (36.5, 6.5, 47.2, 18.6)), applicato alla griglia via `bbox_to_indices`/`target_latlon` (generici).
   - ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest del dominio
     (nessuna troncatura a un numero fisso di frame). --valid-frames 0/negativo
     (default) = intero orizzonte; N > 0 = primi N.
-  - VARIABILI: lista UNICA `V2_RISK_VARS` (27) per tutti i domini. Nessun set
+  - VARIABILI: lista UNICA `V2_RISK_VARS` (24) per tutti i domini. Nessun set
     per-dominio: la presenza reale e' decisa FILE-PER-FILE dai child del `.om`.
-    Le derivate (wind_speed_10m, wind_direction_10m, dew_point_2m) sono calcolate
-    solo se la sorgente diretta manca; `surface_pressure` non e' derivabile senza
-    quota e se assente viene OMESSA con warning.
+    Le variabili assenti nella sorgente sono OMESSE con warning (es.
+    `surface_pressure`, spesso non disponibile).
   - NO-OP GUARD PER-DOMINIO: se `data/fm2/<dominio>/latest.json` esiste con lo
     stesso `reference_time` e gli stessi `valid_times` (e non --force) il dominio
     viene saltato SENZA scaricare/riscrivere (evita commit inutili).
@@ -106,27 +105,41 @@ S3_BASE = "https://openmeteo.s3.amazonaws.com/data_spatial"
 # (lat_min, lon_min, lat_max, lon_max) — bbox Italia.
 V2_BBOX = (36.5, 6.5, 47.2, 18.6)
 
+# Per-domain crop window [lat_min, lon_min, lat_max, lon_max].
+# Each domain is cut to its own real area (prima: tutti tagliati sull'Italia).
+DOMAIN_BBOX = {
+    "dwd_icon_eu": (34.0, -15.0, 62.0, 40.0),
+    "dwd_icon_d2": (43.18, -3.94, 58.08, 20.34),
+    "italia_meteo_arpae_icon_2i": (36.5, 6.5, 47.2, 18.6),
+    "ecmwf_ifs025": (-90.0, -180.0, 90.0, 179.75),
+    "ncep_gfs025": (-90.0, -180.0, 90.0, 179.75),
+    "dwd_icon": (-90.0, -180.0, 90.0, 179.75),
+    "meteofrance_arpege_world025": (-90.0, -180.0, 90.0, 179.75),
+    "ukmo_global_deterministic_10km": (-90.0, -180.0, 89.90625, 179.85938),
+    "jma_gsm": (-90.0, -180.0, 90.0, 179.5),
+    "cma_grapes_global": (-89.9375, -180.0, 89.9375, 179.875),
+}
+
+def bbox_for(domain):
+    return DOMAIN_BBOX.get(domain, V2_BBOX)
+
 # Domini di default (MULTI-DOMINIO INDIPENDENTE: nessun ordine di priorita').
-V2_DOMAINS = ["dwd_icon_eu", "ecmwf_ifs025"]
+V2_DOMAINS = ["dwd_icon_eu", "dwd_icon_d2", "italia_meteo_arpae_icon_2i", "ecmwf_ifs025", "ncep_gfs025", "dwd_icon", "meteofrance_arpege_world025", "ukmo_global_deterministic_10km", "jma_gsm", "cma_grapes_global"]
 
 # Lista ORDINATA delle variabili di rischio desiderate, con sinonimi/forme.
 # name = nome pubblicato nel `.om`; sources = nomi candidati nel file sorgente
-# (il primo presente vince). La presenza reale e' determinata per-file; le
-# variabili derivate sono calcolate solo se la sorgente diretta manca.
+# (il primo presente vince). La presenza reale e' determinata per-file.
 V2_RISK_VARS = [
     {"name": "temperature_2m",       "sources": ["temperature_2m"]},
     {"name": "temperature_850hPa",   "sources": ["temperature_850hPa"]},      # FM_CACHE core
     {"name": "temperature_500hPa",   "sources": ["temperature_500hPa"]},      # FM_CACHE core
     {"name": "relative_humidity_2m", "sources": ["relative_humidity_2m"]},
     {"name": "relative_humidity_850hPa", "sources": ["relative_humidity_850hPa"]},  # FM_CACHE core
-    {"name": "dew_point_2m",         "sources": ["dew_point_2m"]},            # deriva da T+RH
     {"name": "pressure_msl",         "sources": ["pressure_msl", "msl_pressure"]},
     {"name": "geopotential_height_500hPa", "sources": ["geopotential_height_500hPa"]},   # FM_CACHE core
     {"name": "geopotential_height_850hPa", "sources": ["geopotential_height_850hPa"]},   # FM_CACHE core
     {"name": "geopotential_height_1000hPa", "sources": ["geopotential_height_1000hPa"]},  # FM_CACHE core
     {"name": "surface_pressure",     "sources": ["surface_pressure"]},        # spesso assente
-    {"name": "wind_speed_10m",       "sources": ["wind_speed_10m"]},          # deriva da u,v
-    {"name": "wind_direction_10m",   "sources": ["wind_direction_10m"]},      # deriva da u,v
     {"name": "wind_u_component_10m", "sources": ["wind_u_component_10m"]},
     {"name": "wind_v_component_10m", "sources": ["wind_v_component_10m"]},
     {"name": "wind_gusts_10m",       "sources": ["wind_gusts_10m"]},
@@ -150,15 +163,32 @@ V2_RISK_VARS = [
 V2_MAX_FRAMES = 0
 V2_OUT = "data/fm2"
 
-# Fattori di scala usati SOLO per le variabili derivate (le altre ereditano il
-# scale_factor originale del file sorgente). Convenzione Open-Meteo:
-#  - velocita' vento: 0.1 m/s -> scale 10
-#  - direzione vento: 1 grado -> scale 1
-#  - dew point: 0.05 degC -> scale 20 (come temperature_2m)
-DERIVED_SCALE = {
-    "wind_speed_10m": 10.0,
-    "wind_direction_10m": 1.0,
-    "dew_point_2m": 20.0,
+# Fattori di scala per variabile pubblicata (.om), convenzione Open-Meteo.
+VARIABLE_SCALE = {
+    "temperature_2m": 0.1,
+    "temperature_850hPa": 0.1,
+    "temperature_500hPa": 0.1,
+    "relative_humidity_2m": 1.0,
+    "relative_humidity_850hPa": 1.0,
+    "pressure_msl": 0.1,
+    "geopotential_height_500hPa": 1.0,
+    "geopotential_height_850hPa": 1.0,
+    "geopotential_height_1000hPa": 1.0,
+    "surface_pressure": 0.1,
+    "wind_u_component_10m": 0.1,
+    "wind_v_component_10m": 0.1,
+    "wind_gusts_10m": 0.1,
+    "cloud_cover": 1.0,
+    "cloud_cover_low": 1.0,
+    "cloud_cover_mid": 1.0,
+    "cloud_cover_high": 1.0,
+    "cape": 10.0,
+    "snow_depth": 0.1,
+    "precipitation": 0.1,
+    "rain": 0.1,
+    "showers": 0.1,
+    "weather_code": 1.0,
+    "freezing_level_height": 10.0,
 }
 DEFAULT_SCALE = 1.0
 DEFAULT_CHUNKS = [32, 32]
@@ -443,7 +473,7 @@ def read_and_resample(reader, name, src_grid, tgt_lats, tgt_lons):
     """Legge `name` dal reader e lo porta sulla griglia target (nearest).
 
     Nel multi-dominio indipendente la griglia target E' la griglia del dominio
-    stesso (crop Italia): nearest = identita' perche' i centri-cella del target
+    stesso (per-domain crop): nearest = identita' perche' i centri-cella del target
     coincidono con quelli della sorgente, quindi il risultato e' il crop esatto.
     """
     jj, ii = nearest_indices(src_grid, tgt_lats, tgt_lons)
@@ -457,15 +487,6 @@ def read_and_resample(reader, name, src_grid, tgt_lats, tgt_lons):
     return np.ascontiguousarray(window[np.ix_(jj - jmin, ii - imin)]).astype(np.float32)
 
 
-def child_meta(reader, name):
-    c = reader.get_child_by_name(name)
-    if c is None:
-        return None
-    sf = c.scale_factor if c.scale_factor else DEFAULT_SCALE
-    off = c.add_offset if c.add_offset is not None else 0.0
-    return {"scale": float(sf), "offset": float(off)}
-
-
 def array_child_names(reader):
     names = []
     for i in range(reader.num_children):
@@ -473,29 +494,6 @@ def array_child_names(reader):
         if not c.is_scalar:
             names.append(c.name)
     return set(names)
-
-
-# ---------------------------------------------------------------------------
-# Derivate
-# ---------------------------------------------------------------------------
-def derive_wind_speed(u, v):
-    return np.sqrt(u.astype(np.float32) ** 2 + v.astype(np.float32) ** 2).astype(np.float32)
-
-
-def derive_wind_direction(u, v):
-    # Direzione METEOROLOGICA "da cui" soffia il vento (0=N, 90=E), 0..360.
-    ang = np.degrees(np.arctan2(-u.astype(np.float64), -v.astype(np.float64)))
-    return ((ang + 360.0) % 360.0).astype(np.float32)
-
-
-def derive_dew_point(t2m, rh):
-    # Magnus: gamma = ln(RH/100) + a*T/(b+T); Td = b*gamma/(a-gamma).
-    a, b = 17.62, 243.12
-    rh = np.clip(rh.astype(np.float64), 1e-3, 100.0)
-    t = t2m.astype(np.float64)
-    gamma = np.log(rh / 100.0) + (a * t) / (b + t)
-    td = (b * gamma) / (a - gamma)
-    return td.astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -532,32 +530,6 @@ def resolve_domain_frame(reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domai
         meta[rv["name"]] = {"source_domain": domain, "source_var": src,
                             "derived": False}
 
-    # 2) derivate: vento
-    u = arrays.get("wind_u_component_10m")
-    v = arrays.get("wind_v_component_10m")
-    if u is not None and v is not None:
-        if "wind_speed_10m" not in arrays:
-            arrays["wind_speed_10m"] = derive_wind_speed(u, v)
-            meta["wind_speed_10m"] = {
-                "source_domain": "derived",
-                "source_var": "wind_u_component_10m+wind_v_component_10m",
-                "derived": True}
-        if "wind_direction_10m" not in arrays:
-            arrays["wind_direction_10m"] = derive_wind_direction(u, v)
-            meta["wind_direction_10m"] = {
-                "source_domain": "derived",
-                "source_var": "wind_u_component_10m+wind_v_component_10m",
-                "derived": True}
-
-    # 2b) derivate: dew point
-    t2m = arrays.get("temperature_2m")
-    rh = arrays.get("relative_humidity_2m")
-    if "dew_point_2m" not in arrays and t2m is not None and rh is not None:
-        arrays["dew_point_2m"] = derive_dew_point(t2m, rh)
-        meta["dew_point_2m"] = {"source_domain": "derived",
-                                "source_var": "temperature_2m+relative_humidity_2m",
-                                "derived": True}
-
     # 3) variabili richieste ma irrisolte -> warning
     for rv in risk_vars:
         if rv["name"] not in arrays:
@@ -570,7 +542,7 @@ def resolve_domain_frame(reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domai
 # ---------------------------------------------------------------------------
 # Scrittura frame + manifest
 # ---------------------------------------------------------------------------
-def write_frame_om(path, ordered, arrays, scales, crs_wkt, coordinates,
+def write_frame_om(path, ordered, arrays, crs_wkt, coordinates,
                    valid_unix, ref_unix):
     """Scrive il `.om` multi-variabile (atomico). Ritorna (bytes, n_vars)."""
     tmp = path + ".tmp"
@@ -586,7 +558,7 @@ def write_frame_om(path, ordered, arrays, scales, crs_wkt, coordinates,
         chunks = [min(DEFAULT_CHUNKS[0], int(arr.shape[0])),
                   min(DEFAULT_CHUNKS[1], int(arr.shape[1]))]
         c = w.write_array(arr, chunks=chunks,
-                          scale_factor=float(scales.get(name, DEFAULT_SCALE)),
+                          scale_factor=float(VARIABLE_SCALE.get(name, DEFAULT_SCALE)),
                           add_offset=0.0, compression=DEFAULT_COMPRESSION, name=name)
         children.append(c)
     children.append(w.write_scalar(str(crs_wkt), name="crs_wkt"))
@@ -672,6 +644,25 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
     crs_wkt = m.get("crs_wkt", "") or ""
     ref_time = m.get("reference_time")
     valid_times = sorted(set(m.get("valid_times", [])))
+
+    # THINNING: entro 48h passo 1, fino a 120h passo 3, oltre passo 6.
+    if ref_time:
+        try:
+            ref_epoch = parse_iso(ref_time).timestamp()
+        except (ValueError, TypeError):
+            ref_epoch = None
+        if ref_epoch is not None:
+            thinned = []
+            for vt in valid_times:
+                try:
+                    h = int(round((parse_iso(vt).timestamp() - ref_epoch) / 3600.0))
+                except (ValueError, TypeError):
+                    thinned.append(vt)
+                    continue
+                if h <= 48 or (h <= 120 and h % 3 == 0) or (h % 6 == 0):
+                    thinned.append(vt)
+            valid_times = thinned
+
     res["reference_time"] = ref_time
     res["completed"] = m.get("completed")
     res["n_valid_times"] = len(valid_times)
@@ -710,7 +701,7 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
         res["grid"] = grid
         res["grid_source"] = "fallback(GRIDS)" if grid else "unknown"
         if grid:
-            idx = bbox_to_indices(grid, V2_BBOX)
+            idx = bbox_to_indices(grid, bbox_for(domain))
             res["crop"] = idx["out_grid"]
         res["status"] = "ok"
         nx = grid["nx"] if grid else "?"
@@ -732,13 +723,17 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
                 old = json.load(fh)
         except (OSError, ValueError):
             old = None
+        bb_cur = bbox_for(domain)
+        old_bb = old.get("bbox") if old else None
+        bb_same = (old_bb and abs(old_bb.get("lat_min",1e18)-bb_cur[0])<1e-6 and abs(old_bb.get("lon_min",1e18)-bb_cur[1])<1e-6 and abs(old_bb.get("lat_max",-1e18)-bb_cur[2])<1e-6 and abs(old_bb.get("lon_max",-1e18)-bb_cur[3])<1e-6)
         if (old and old.get("reference_time") == ref_time
-                and list(old.get("valid_times", [])) == list(anchors)):
+                and list(old.get("valid_times", [])) == list(anchors)
+                and bb_same):
             res["status"] = "ok"
             res["noop"] = True
             res["reason"] = "manifest invariato"
             print("%s NO-OP dominio '%s': manifest invariato "
-                  "(reference_time/valid_times identici). Salto." % (LOG, domain))
+                  "(reference_time/valid_times/bbox identici). Salto." % (LOG, domain))
             return res
 
     # --- Griglia derivata dal PRIMO frame (cache per-run) ---
@@ -769,7 +764,7 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
 
     res["grid"] = grid
     res["grid_source"] = "crs_wkt+frame"
-    idx = bbox_to_indices(grid, V2_BBOX)
+    idx = bbox_to_indices(grid, bbox_for(domain))
     tgt_lats, tgt_lons = target_latlon(grid, idx)
     out_grid = idx["out_grid"]
     res["crop"] = out_grid
@@ -810,21 +805,12 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
             arrays, vmeta, warns = resolve_domain_frame(
                 reader, grid, V2_RISK_VARS, tgt_lats, tgt_lons, idx, domain)
 
-            # scale factor: originale per i passthrough, default per le derivate
-            scales = {}
-            for name, mm in vmeta.items():
-                if mm["derived"]:
-                    scales[name] = DERIVED_SCALE.get(name, DEFAULT_SCALE)
-                else:
-                    cm = child_meta(reader, mm["source_var"])
-                    scales[name] = cm["scale"] if cm else DEFAULT_SCALE
-
             vt_dt = parse_iso(anchor)
             ref_dt = parse_iso(ref_time)
             fname = valid_time_to_filename(anchor) + ".om"
             fpath_out = os.path.join(out_dir, fname)
             size, nvars = write_frame_om(
-                fpath_out, ordered_names, arrays, scales, crs_frame, coordinates,
+                fpath_out, ordered_names, arrays, crs_frame, coordinates,
                 int(vt_dt.timestamp()), int(ref_dt.timestamp()))
             frames.append({"valid_time": anchor, "file": fname, "bytes": size,
                            "variables": nvars})
@@ -845,19 +831,20 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
         keep_files = [valid_time_to_filename(a) + ".om" for a in anchors]
         removed = prune_frames(out_dir, keep_files, args.valid_frames)
 
+    bb = bbox_for(domain)
     manifest = {
         "version": "fm2-1",
         "generated_at": _now_iso(),
         "domain": domain,
         "reference_time": ref_time,
         "valid_times": anchors,
-        "bbox": {"lat_min": V2_BBOX[0], "lon_min": V2_BBOX[1],
-                 "lat_max": V2_BBOX[2], "lon_max": V2_BBOX[3]},
+        "bbox": {"lat_min": bb[0], "lon_min": bb[1],
+                 "lat_max": bb[2], "lon_max": bb[3]},
         "grid": out_grid,
         "source_grid": {k: grid[k] for k in ("nx", "ny", "lonMin", "latMin", "dx", "dy")},
         "grid_source": "crs_wkt+frame",
         "var_order": ordered_names,
-        "resampling": "per-domain nearest (crop Italia)",
+        "resampling": "per-domain nearest (per-domain crop)",
         "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
         "frames": frames,
         "variables": variables_map,

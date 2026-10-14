@@ -1823,11 +1823,18 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.6';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-12';
+    const APP_VERSION = '1.2.4.7';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-13';
     const APP_CHANGELOG = [
+        { version: '1.2.4.7', date: '2026-10-13', changes: [
+            'V2= Motore V2: set ridotto a 24 variabili (17 risk + 7 core); rimosse le derivate lato server dew_point_2m, wind_speed_10m, wind_direction_10m.',
+            'MAPPE= Mappe previsionali: 10 domini GEOGCRS attivi.',
+            'FIX= Mappe previsionali: fix race sul cambio dominio (allineamento tile/overlay durante il passaggio tra domini).',
+            'DOC= Pulizia e allineamento documentazione (README e note di release).',
+        ]},
         { version: '1.2.4.6', date: '2026-10-12', changes: [
             'FIX= Mappe previsionali: risolta la "schermata bianca" - fmRegisterDomain ora registra/aggiorna la grid Italia sul dominio attivo (fmDomain) oltre al fallback legacy fm2; le mappe previsionali tornano a visualizzarsi.',
+            'FIX= Mappe previsionali: tile trasparente al ritorno su un dominio (es. EU->d2->EU) - fmLoadDomain azzera fmLayerKey a ogni cambio/ricarica di dominio, forzando la ricreazione del raster senza toccare il guard cache-by-url di fmRebuild.',
         ]},
         { version: '1.2.4.5', date: '2026-10-12', changes: [
             'MAPPE= Rimosso il dominio CHMI ALADIN (2 km) dalle Mappe previsionali: elenco FM_DOMAINS ridotto da 11 a 10 domini, nessun altro cambiamento.',
@@ -11212,6 +11219,7 @@ stopSyncPlay();
 // Sostituisce il vecchio modulo Meteociel (meteociel.fr, dismesso).
 // Fonte dati: Open-Meteo Weather Map Layer (maps.open-meteo.com), licenza CC BY 4.0.
 // Scopo: SOLO visualizzazione sinottica; nessun impatto sui calcoli dell'app.
+var FM_CACHE_BASE = 'https://raw.githubusercontent.com/meteoriskitalia-netizen/MeteoRisk-Light/main/data/fm2/';
 
 var FM_WML_URLS = [
     'https://unpkg.com/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs',
@@ -11248,11 +11256,10 @@ var FM_REGIONS = [
 // in fmPopulateVariables dopo il raggruppamento per categoria.
 var FM_SYNTH_PRESSURE_GEOPOT = '__pressure_geopot';
 var FM_CAT_ORDER = ['Pressione', 'Livelli di pressione', 'Temperatura', 'Umidita', 'Precipitazione e neve', 'Nuvolosita', 'Vento', 'Instabilita', 'Quote termiche', 'Radiazione', 'Codice meteo', 'Altro'];
-var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','dew_point_2m','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_speed_10m','wind_direction_10m','wind_u_component_10m','wind_v_component_10m','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height'];
+var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_u_component_10m','wind_v_component_10m','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height'];
 var FM_VAR_LABELS = {
     temperature_2m: 'Temperatura 2 m',
     apparent_temperature: 'Temperatura percepita',
-    dew_point_2m: 'Punto di rugiada 2 m',
     relative_humidity_2m: 'Umidita relativa 2 m',
     precipitation: 'Precipitazione totale',
     rain: 'Pioggia',
@@ -11265,8 +11272,6 @@ var FM_VAR_LABELS = {
     cloud_cover_high: 'Nuvolosita alta',
     pressure_msl: 'Pressione al livello del mare',
     surface_pressure: 'Pressione al suolo',
-    wind_speed_10m: 'Velocita vento 10 m',
-    wind_direction_10m: 'Direzione vento 10 m',
     wind_gusts_10m: 'Raffiche 10 m',
     wind_u_component_10m: 'Vento U 10 m',
     wind_v_component_10m: 'Vento V 10 m',
@@ -11403,7 +11408,7 @@ function fmDomainBounds() {
     try {
         var opts = fmModule.domainOptions;
         // MODIFICA A: in cache mode la griglia reale dei frame e' quella pubblicata dal motore
-        // per il dominio corrente (crop Italia), registrata sull'entry sintetica 'fm2'.
+        // per il dominio corrente (per-domain crop), registrata sull'entry sintetica 'fm2'.
         if (fmSrcCache) {
             for (var j = 0; j < opts.length; j++) {
                 if (opts[j] && opts[j].value === 'fm2') {
@@ -11424,15 +11429,27 @@ function fmIsGlobalDomain() {
     if (!b) return false;
     return (b[2] - b[0]) > 300 || (b[3] - b[1]) > 120;
 }
+// Regioni mostrate per dominio: i modelli globali espongono tutte le aree,
+// i modelli a copertura europea solo Europa/Mediterraneo/Italia, e il modello
+// a copertura italiana solo l'Italia ('domain' e' sempre disponibile).
+function fmDomainRegionIds(d) {
+    if (d === 'italia_meteo_arpae_icon_2i') return ['domain', 'italy'];
+    if (d === 'dwd_icon_eu' || d === 'dwd_icon_d2') return ['domain', 'europe', 'italy'];
+    return ['domain', 'europe', 'italy', 'natl', 'namerica', 'samerica', 'africa', 'asia', 'oceania', 'arctic'];
+}
 function fmPopulateRegions() {
     var sel = fmEl('fm-region-select');
     if (!sel) return;
+    var allowed = fmDomainRegionIds(fmDomain);
+    if (allowed.indexOf(fmRegion) < 0) fmRegion = allowed[0] || 'domain';
     var html = '';
     for (var i = 0; i < FM_REGIONS.length; i++) {
         var r = FM_REGIONS[i];
+        if (allowed.indexOf(r.id) < 0) continue;
         html += '<option value="' + r.id + '"' + (r.id === fmRegion ? ' selected' : '') + '>' + r.label + '</option>';
     }
     sel.innerHTML = html;
+    if (sel) try { sel.value = fmRegion; } catch (e) {}
 }
 function fmRegionChanged() {
     var s = fmEl('fm-region-select');
@@ -11574,8 +11591,8 @@ function fmRegisterDomain() {
     return true;
 }
 function fm2FetchMeta(domain, cb) {
-    var legacyUrl = 'data/fm2/latest.json';
-    var perDomain = domain ? ('data/fm2/' + encodeURIComponent(domain) + '/latest.json') : legacyUrl;
+    var legacyUrl = FM_CACHE_BASE + 'latest.json';
+    var perDomain = domain ? (FM_CACHE_BASE + encodeURIComponent(domain) + '/latest.json') : legacyUrl;
     var allowFallback = (!domain || domain === 'fm2') && (perDomain !== legacyUrl);
     function fetchManifest(url, canFallback, usedLegacy) {
         fetch(url, { cache: 'no-store' }).then(function (r) {
@@ -11738,7 +11755,7 @@ function fmOmUrlForIndexVar(idx, variableName) {
     // dopo il load del manifest) la base e' data/fm2/<dominio>/<file>; in assenza di cache
     // (es. stato di test con fmMeta impostato a mano) resta la base storica data/fm2/<file>.
     var dir = (fmSrcCache && fmDomain) ? (encodeURIComponent(fmDomain) + '/') : '';
-    var cbase = 'data/fm2/' + dir + ffile;
+    var cbase = FM_CACHE_BASE + dir + ffile;
     var vName = variableName || fmVariable;
     var q = 'variable=' + encodeURIComponent(vName) + '&tile_size=512&interpolation=linear';
     if (fmOpts.dark) q += '&dark=true';
@@ -11753,7 +11770,7 @@ function fmCurrentOmUrl() {
 }
 function fmContourInterval(v) {
     var base = 2;
-    if (/temperature_2m|apparent_temperature|dew_point_2m|wet_bulb_temperature_2m/.test(v)) base = 1;
+    if (/temperature_2m|apparent_temperature|wet_bulb_temperature_2m/.test(v)) base = 1;
     else if (/geopotential_height_/.test(v)) base = 40;
     else if (/cloud_cover/.test(v)) base = 10;
     else if (/snow_depth/.test(v)) base = 3;
@@ -11919,19 +11936,57 @@ function fmUpdateLegend() {
     if (!cs || !cs.colors || !cs.colors.length) { el.innerHTML = ''; return; }
     var colors = cs.colors;
     var n = colors.length;
-    var stops = [];
-    for (var i = 0; i < n; i++) {
-        var c = colors[i];
-        var p = n === 1 ? 0 : Math.round(i * 100 / (n - 1));
+    var rgba = function (c) {
         var a = (c[3] === null || c[3] === undefined) ? 1 : c[3];
-        stops.push('rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ') ' + p + '%');
+        return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+    };
+    // Soglie interne (boundaries) in unita' della variabile + range di visualizzazione [lo, hi].
+    var boundaries = null;
+    var lo = null;
+    var hi = null;
+    if (cs.type === 'breakpoint' && cs.breakpoints && cs.breakpoints.length === n) {
+        // Scala breakpoint: la banda i copre [breakpoints[i], breakpoints[i+1]) come nel raster.
+        boundaries = cs.breakpoints.slice(1);
+        lo = cs.breakpoints[0];
+        hi = cs.breakpoints[cs.breakpoints.length - 1];
+    } else if (cs.min !== null && cs.min !== undefined && cs.max !== null && cs.max !== undefined && cs.max > cs.min) {
+        // Scala rgba: n bande di uguale ampiezza su [min, max].
+        boundaries = [];
+        for (var i = 1; i < n; i++) boundaries.push(cs.min + i * (cs.max - cs.min) / n);
+        lo = cs.min;
+        hi = cs.max;
     }
-    var lo = '';
-    var hi = '';
-    if (cs.type === 'breakpoint' && cs.breakpoints && cs.breakpoints.length) { lo = cs.breakpoints[0]; hi = cs.breakpoints[cs.breakpoints.length - 1]; }
-    else { lo = (cs.min === null || cs.min === undefined ? '' : cs.min); hi = (cs.max === null || cs.max === undefined ? '' : cs.max); }
-    el.innerHTML = '<div class="fm-legend-bar" style="background:linear-gradient(90deg,' + stops.join(',') + ')"></div>'
-        + '<div class="fm-legend-labels"><span>' + fmFmtNum(lo) + '</span><span>' + (cs.unit || '') + '</span><span>' + fmFmtNum(hi) + '</span></div>';
+    var bar;
+    if (boundaries && boundaries.length === n - 1 && hi > lo) {
+        // Gradiente a spigoli vivi (stops duplicati) allineato alle soglie reali della scala.
+        var pts = [0];
+        for (var j = 0; j < boundaries.length; j++) {
+            var pct = 100 * (boundaries[j] - lo) / (hi - lo);
+            pts.push(pct < 0 ? 0 : (pct > 100 ? 100 : pct));
+        }
+        pts.push(100);
+        var segs = [];
+        for (var k = 0; k < n; k++) {
+            var col = rgba(colors[k]);
+            segs.push(col + ' ' + pts[k] + '%');
+            segs.push(col + ' ' + pts[k + 1] + '%');
+        }
+        bar = 'linear-gradient(90deg,' + segs.join(',') + ')';
+    } else {
+        // Fallback: spread uniforme dei colori (comportamento precedente).
+        var stops = [];
+        for (var m = 0; m < n; m++) {
+            var p = n === 1 ? 0 : Math.round(m * 100 / (n - 1));
+            stops.push(rgba(colors[m]) + ' ' + p + '%');
+        }
+        bar = 'linear-gradient(90deg,' + stops.join(',') + ')';
+    }
+    var loTxt = '';
+    var hiTxt = '';
+    if (cs.type === 'breakpoint' && cs.breakpoints && cs.breakpoints.length) { loTxt = cs.breakpoints[0]; hiTxt = cs.breakpoints[cs.breakpoints.length - 1]; }
+    else { loTxt = (cs.min === null || cs.min === undefined ? '' : cs.min); hiTxt = (cs.max === null || cs.max === undefined ? '' : cs.max); }
+    el.innerHTML = '<div class="fm-legend-bar" style="background:' + bar + '"></div>'
+        + '<div class="fm-legend-labels"><span>' + fmFmtNum(loTxt) + '</span><span>' + (cs.unit || '') + '</span><span>' + fmFmtNum(hiTxt) + '</span></div>';
     // MODIFICA B: con overlay attivo aggiunge l'etichetta delle isobare MSL. La scala raster
     // (geopotential_height_500hPa) resta invariata e la semantica alpha resta 0..1.
     if (fmOverlayVariable === 'pressure_msl') {
@@ -11973,6 +12028,10 @@ function fmDensityChanged() {
     fmRebuild();
 }
 function fmLoadDomain(dom) {
+    // 1.2.4.6 FIX: invalida la cache-by-url del raster a ogni cambio/ricarica di dominio,
+    // altrimenti il guard di fmRebuild (key===fmLayerKey) salta il rebuild al ritorno su un
+    // dominio gia' visitato e lascia un tile trasparente (EU->d2->EU).
+    fmLayerKey = null;
     if (dom) fmDomain = dom;
     fmStopPlay();
         fmStopPreload();
