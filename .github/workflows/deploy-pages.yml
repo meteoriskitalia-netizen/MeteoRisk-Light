@@ -40,7 +40,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
       # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.
