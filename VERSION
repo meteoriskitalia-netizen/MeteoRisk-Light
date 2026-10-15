@@ -1,3 +1,13 @@
+MeteoRisk Light - 1.2.4.8 - MAPPE PREVISIONALI: FAST-PATH RASTER WebP PRE-RENDERIZZATI (imageOverlay) DA CACHE GITHUB PER LE REGIONI EUROPA E ITALIA (bump da 1.2.4.7)
+MAJOR=1
+MINOR=2
+PATCH=4
+BUILD=8
+RELEASE_TYPE=release
+DATE=2026-10-15
+NOTE=Release 1.2.4.8 (bump da 1.2.4.7): Mappe previsionali servite come FAST-PATH RASTER WebP pre-renderizzati (client usa L.imageOverlay su data/fm2-rendered, NON piu' i frame .om scaricati per il layer raster); regioni di rendering Europa e Italia (per ogni coppia regione/dominio il ritaglio e' l'intersezione tra il bbox del dominio e il bbox della regione); 10 domini GEOGCRS; orizzonte completo del manifest; motore V2 invariato (24 variabili); nuovo renderer server-side scripts/forecast_v2/render_fm_webp.py (Pillow) con indice per-regione (index.json) e color_scales.json pubblicato in cache; workflow forecast-maps-v2.yml renderizza i WebP dopo il motore e li pubblica in data/fm2-rendered; i 3 workflow che copiano data/fm2 in _site copiano anche data/fm2-rendered. File e riferimenti rinominati a 1.2.4.8.
+APP_FILE=mri-light-1.2.4.8.html
+
 MeteoRisk Light - 1.2.4.7 - MAPPE PREVISIONALI: MOTORE V2 A 24 VARIABILI, 10 DOMINI ATTIVI, FIX RACE CAMBIO DOMINIO (bump da 1.2.4.6)
 MAJOR=1
 MINOR=2

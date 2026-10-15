@@ -1823,9 +1823,13 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.7';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-13';
+    const APP_VERSION = '1.2.4.8';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-15';
     const APP_CHANGELOG = [
+        { version: '1.2.4.8', date: '2026-10-15', changes: [
+            'MAPPE= Mappe previsionali: fast-path raster WebP lato client (L.imageOverlay su data/fm2-rendered per regione europa/italia, indice index.json, fallback .om/WML invariato).',
+            'DOC= Bump versione 1.2.4.8.',
+        ]},
         { version: '1.2.4.7', date: '2026-10-13', changes: [
             'V2= Motore V2: set ridotto a 24 variabili (17 risk + 7 core); rimosse le derivate lato server dew_point_2m, wind_speed_10m, wind_direction_10m.',
             'MAPPE= Mappe previsionali: 10 domini GEOGCRS attivi.',
@@ -11220,6 +11224,11 @@ stopSyncPlay();
 // Fonte dati: Open-Meteo Weather Map Layer (maps.open-meteo.com), licenza CC BY 4.0.
 // Scopo: SOLO visualizzazione sinottica; nessun impatto sui calcoli dell'app.
 var FM_CACHE_BASE = 'https://raw.githubusercontent.com/meteoriskitalia-netizen/MeteoRisk-Light/main/data/fm2/';
+// Cache raster WebP pre-renderizzate (server: scripts/forecast_v2/render_fm_webp.py).
+// Layout: <base>/<region>/index.json + <base>/<region>/<dominio>/<variabile>/<VALID>.webp
+var FM_RENDERED_BASE = 'https://raw.githubusercontent.com/meteoriskitalia-netizen/MeteoRisk-Light/main/data/fm2-rendered/';
+// Id regioni servite dal renderer WebP (europa/italia) -> id regione UI FM.
+var FM_RENDER_REGION_MAP = { 'europe': 'europa', 'italy': 'italia' };
 
 var FM_WML_URLS = [
     'https://unpkg.com/@openmeteo/weather-map-layer@0.2.2/dist/index.mjs',
@@ -11349,6 +11358,10 @@ var fmLoaderTimer = null;
     var fmSrcCache = false;
     var fm2MetaCache = null;
     var fmDomainRegistered = false;
+    var fmWebpLayer = null; // fast-path raster WebP pre-renderizzato (L.imageOverlay su data/fm2-rendered)
+    var fmWebpIndex = null; // contenuto di index.json della regione corrente (renderer WebP)
+    var fmWebpIndexRegion = null; // id regione server a cui appartiene fmWebpIndex
+    var fmWebpIndexLoading = null; // id regione server la cui index.json e' in caricamento
 
 function fmEl(id) { return document.getElementById(id); }
 function fmSetStatus(text) { var el = fmEl('fm-status'); if (el) el.textContent = text; }
@@ -11471,6 +11484,8 @@ function fmApplyRegion(refit) {
         clip = domB;
     }
     fmClipBounds = clip;
+    var rr0 = fmRenderRegionId();
+    if (rr0) fmFetchRenderedIndex(rr0);
     try {
         if (fmModule && fmModule.defaultOmProtocolSettings) {
             fmModule.defaultOmProtocolSettings.clippingOptions = clip ? { bounds: clip } : undefined;
@@ -11861,17 +11876,101 @@ function fmLayerOnMap(l) {
     if (!l) return false;
     try { return typeof map !== 'undefined' && !!map && (!map.hasLayer || map.hasLayer(l)); } catch (e) { return false; }
 }
+function fmRenderRegionId() {
+    // Id regione servita dal renderer WebP (europa/italia) per la regione UI corrente, o null.
+    if (!fmRegion) return null;
+    var ids = fmDomainRegionIds(fmDomain);
+    if (ids.indexOf(fmRegion) < 0) return null;
+    return FM_RENDER_REGION_MAP[fmRegion] || null;
+}
+function fmWebpTheme() { return fmOpts && fmOpts.dark ? 'dark' : 'light'; }
+function fmFetchRenderedIndex(serverRegion, cb) {
+    // Carica <FM_RENDERED_BASE>/<serverRegion>/index.json in fmWebpIndex (una volta per regione).
+    if (!serverRegion) return;
+    if (fmWebpIndex && fmWebpIndexRegion === serverRegion) { if (cb) cb(null, fmWebpIndex); return; }
+    if (fmWebpIndexLoading === serverRegion) return;
+    fmWebpIndexLoading = serverRegion;
+    var url = FM_RENDERED_BASE + serverRegion + '/index.json';
+    var done = function (err, idx) {
+        if (fmWebpIndexLoading === serverRegion) fmWebpIndexLoading = null;
+        if (err) { if (cb) cb(err); return; }
+        fmWebpIndex = idx;
+        fmWebpIndexRegion = serverRegion;
+        if (fmActive && fmRenderRegionId() === serverRegion) { fmLayerKey = null; fmRebuild(); }
+        if (cb) cb(null, idx);
+    };
+    try {
+        fetch(url, { cache: 'no-cache' }).then(function (r) {
+            if (!r || !r.ok) throw new Error('HTTP ' + (r ? r.status : '?'));
+            return r.json();
+        }).then(function (j) { done(null, j); }).catch(function (e) { done(e); });
+    } catch (e) { done(e); }
+}
+function fmWebpFrameUrl(idx) {
+    // { url, bounds } del frame WebP pre-renderizzato per l'indice richiesto, o null.
+    if (!fmWebpIndex || !fmWebpIndexRegion) return null;
+    if (fmWebpIndexRegion !== fmRenderRegionId()) return null;
+    if (fmWebpIndex.theme && fmWebpIndex.theme !== fmWebpTheme()) return null;
+    var dom = fmWebpIndex.domains && fmWebpIndex.domains[fmDomain];
+    if (!dom || !dom.variables || !dom.bounds) return null;
+    var varEntry = dom.variables[fmVariable];
+    if (!varEntry || !varEntry.dir) return null;
+    var i = (idx === undefined || idx === null) ? fmIdx : idx;
+    if (!fmMeta || !fmMeta.valid_times || fmMeta.valid_times[i] === undefined) return null;
+    var valid = fmMeta.valid_times[i];
+    if (varEntry.valid_times && varEntry.valid_times.indexOf(valid) < 0) return null;
+    var token = String(valid).replace(/:/g, '').replace('Z', '');
+    var url = FM_RENDERED_BASE + fmWebpIndexRegion + '/' + varEntry.dir + '/' + token + '.webp';
+    return { url: url, bounds: dom.bounds };
+}
+function fmWarmWebpNext() {
+    // Preload del frame WebP successivo (solo se presente nella index).
+    if (!fmMeta || !fmMeta.valid_times || fmMeta.valid_times.length < 2) return;
+    var n = (fmIdx + 1) % fmMeta.valid_times.length;
+    var f = fmWebpFrameUrl(n);
+    if (!f) return;
+    try { var im = new Image(); im.src = f.url; } catch (e) { }
+}
 function fmRemoveLayers() {
     if (fmRasterLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmRasterLayer); } catch (e) { } }
     if (fmVectorLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmVectorLayer); } catch (e) { } }
+    if (fmWebpLayer && typeof map !== 'undefined' && map) { try { map.removeLayer(fmWebpLayer); } catch (e) { } }
     fmRasterLayer = null;
     fmVectorLayer = null;
+    fmWebpLayer = null;
 }
 function fmRebuild() {
     if (!fmModule || !fmAdapter || typeof map === 'undefined' || !map || !fmMeta || !fmActive) return;
     if (fmSrcCache && !fmDomainRegistered) { fmRegisterDomain(); fmLayerKey = null; }
     var cur = fmCurrentOmUrl();
     if (!cur) return;
+    var wantWebp = !fmOverlayVariable && !fmOpts.contours && !fmOpts.arrows && !fmOpts.grid;
+    var webp = wantWebp ? fmWebpFrameUrl() : null;
+    if (wantWebp && !webp) {
+        var rr = fmRenderRegionId();
+        if (rr) fmFetchRenderedIndex(rr);
+    }
+    if (webp) {
+        var wb = null;
+        try { wb = L.latLngBounds([[webp.bounds[0][0], webp.bounds[0][1]], [webp.bounds[1][0], webp.bounds[1][1]]]); } catch (e) { wb = null; }
+        if (wb) {
+            var wkey = 'webp|' + fmWebpTheme() + '|' + webp.url + '|' + webp.bounds[0][0] + ',' + webp.bounds[0][1] + ',' + webp.bounds[1][0] + ',' + webp.bounds[1][1];
+            if (wkey === fmLayerKey && fmLayerOnMap(fmWebpLayer)) return;
+            fmRemoveLayers();
+            fmTilePending = 0;
+            try {
+                fmWebpLayer = L.imageOverlay(webp.url, wb, { opacity: 0.8, pane: 'forecastMapsPane' });
+                fmWebpLayer.addTo(map);
+            } catch (e) {
+                fmSetStatus('Errore rendering: ' + (e && e.message ? e.message : e));
+            }
+            fmLayerKey = wkey;
+            fmUpdateTimeDisplay(fmMeta.valid_times[fmIdx]);
+            fmUpdateLegend();
+            fmWarmWebpNext();
+            return;
+        }
+    }
     var overlayActive = !!fmOverlayVariable;
     var vurl;
     if (overlayActive) {

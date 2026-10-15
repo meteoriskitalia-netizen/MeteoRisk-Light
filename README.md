@@ -6,10 +6,21 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.6
+## Versione attiva: 1.2.4.8
 
-- File applicativo: `mri-light-1.2.4.7.html` (`APP_VERSION = '1.2.4.6'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.6', date: '2026-10-12' }`).
+- File applicativo: `mri-light-1.2.4.8.html` (`APP_VERSION = '1.2.4.8'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.8', date: '2026-10-15' }`).
+- Contenuto della 1.2.4.8 (release sopra la 1.2.4.7):
+  - **Mappe previsionali - fast-path raster WebP pre-renderizzati**: il client serve le
+    mappe come raster via `L.imageOverlay` dalla cache `data/fm2-rendered` (non piu' i frame
+    `.om` scaricati per il layer raster).
+  - **Renderer server-side**: nuovo `scripts/forecast_v2/render_fm_webp.py` (Pillow) che
+    renderizza i WebP per regione, con indice per-regione `index.json` e `color_scales.json`.
+  - **Regioni di rendering**: Europa e Italia; per ogni coppia regione/dominio il ritaglio
+    e' l'intersezione tra il bbox del dominio e il bbox della regione.
+  - **Workflow**: `forecast-maps-v2.yml` renderizza i WebP dopo il motore e li pubblica in
+    `data/fm2-rendered`; i 3 workflow che copiano `data/fm2` in `_site` copiano anche
+    `data/fm2-rendered`.
 - Contenuto della 1.2.4.6 (release sopra la 1.2.4.5):
   - **Mappe previsionali - fix "schermata bianca"**: `fmRegisterDomain` ora registra/aggiorna
     la grid Italia sul dominio attivo (`fmDomain`) oltre al fallback legacy `fm2`
@@ -132,7 +143,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.7.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.8.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

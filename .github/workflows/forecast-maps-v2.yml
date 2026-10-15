@@ -26,10 +26,20 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     --frames-cache: si scaricano solo i frame nuovi. Cache PER-DOMINIO
 #     (key fm2-frames-<dominio>-<run_number> + restore-keys fm2-frames-<dominio>-).
 #   - Commit SOLO se data/fm2/<dominio> cambia (nessun churn a manifest invariato).
-#   - Il deploy Pages NON e' toccato qui: data/fm2 arriva su Pages tramite la
-#     build _site di deploy-pages / update-weather-data / radar-engine
-#     (cp -R data/fm2: ricorsivo, copre la struttura per-dominio), come per
-#     data/phenomena.
+#   - RENDERER (fast-path raster): il job `render` (needs: engine), ORA PRESENTE
+#     in questo workflow come job REALE (non solo descritto), gira UNA VOLTA
+#     dopo il matrix e produce i WebP pre-renderizzati per le regioni europa/italia,
+#     entrambi i temi (light/dark), orizzonte INTERO:
+#       data/fm2-rendered/<regione>/<dominio>/<var>/<VALID>.webp (+ dark/ per il tema scuro)
+#       data/fm2-rendered/<regione>/<dominio>/<var>/latest.json (per tema)
+#       data/fm2-rendered/<regione>/index.json (domini {europa,italia}) + color_scales.json
+#     UN solo scrittore (concurrency forecast-maps-v2-render): l'index.json aggrega
+#     TUTTI i domini presenti, quindi il renderer NON va eseguito dentro il matrix
+#     per-dominio (l'ultimo scrittore clobbererebbe l'indice degli altri).
+#   - Il deploy Pages NON e' toccato qui: data/fm2 e data/fm2-rendered arrivano su
+#     Pages tramite la build _site di deploy-pages / update-weather-data / radar-engine
+#     (cp -R data/fm2 e cp -R data/fm2-rendered: ricorsivi, coprono la struttura
+#     per-dominio e per-regione), come per data/phenomena.
 
 on:
   schedule:
@@ -153,6 +163,94 @@ jobs:
           # `git pull --rebase --autostash`: i path sono disgiunti per dominio, quindi
           # il rebase riallinea la history senza conflitti di contenuto; --autostash
           # protegge eventuali modifiche non committate durante il pull.
+          push_ok=0
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then
+              push_ok=1
+              break
+            fi
+            echo "[WARN] Push rifiutato (race su main) - tentativo $i/5"
+            if [ "$i" -lt 5 ]; then sleep 5; fi
+          done
+          if [ "$push_ok" -ne 1 ]; then
+            echo "[ERROR] Push non riuscito dopo 5 tentativi."
+            exit 1
+          fi
+
+  render:
+    # Dipende dal matrix `engine`: gira UNA VOLTA, DOPO che tutti i domini hanno
+    # scritto data/fm2/<dominio>/latest.json. L'index.json per regione aggrega TUTTI
+    # i domini presenti, quindi NON va eseguito per-dominio (l'ultimo scrittore
+    # clobbererebbe l'indice degli altri): UN solo scrittore.
+    needs: engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      # Group DEDICATO e disgiunto da `forecast-maps-v2-<dominio>` del matrix:
+      # serializza solo le run del renderer tra loro, senza toccare l'engine.
+      group: forecast-maps-v2-render
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/forecast_v2/requirements.txt
+
+      - name: Build WebP pre-renderizzati (regioni europa/italia, light+dark)
+        id: render
+        run: |
+          # Orizzonte INTERO: --limit-frames 0 = nessun cap (il renderer usa la
+          # stessa convenzione del motore per l'orizzonte completo del manifest).
+          python scripts/forecast_v2/render_fm_webp.py \
+            --in data/fm2 \
+            --out data/fm2-rendered \
+            --limit-frames 0
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## MeteoRisk — Forecast Maps V2 (renderer)"
+            echo ""
+            if [ -f data/fm2-rendered/italia/index.json ]; then
+              python -c "import json; d=json.load(open('data/fm2-rendered/italia/index.json')); doms=d.get('domains',{}); print('regione:', d.get('region')); print('themes:', ','.join(d.get('themes',[]))); print('generated_at:', d.get('generated_at')); print('domini:', len(doms), '->', ', '.join(sorted(doms)))"
+            else
+              echo "data/fm2-rendered/italia/index.json non disponibile."
+            fi
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit WebP pre-renderizzati (only if changed)
+        if: success()
+        run: |
+          git config user.name "meteorisk-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ ! -d "data/fm2-rendered" ]; then
+            echo "[INFO] Nessun output renderizzato: niente da committare."
+            exit 0
+          fi
+          git add -A "data/fm2-rendered"
+          if git diff --cached --quiet; then
+            echo "[INFO] Nessuna modifica a data/fm2-rendered (NO-OP)."
+            exit 0
+          fi
+          git commit -m "chore(fm2): aggiornamento WebP pre-renderizzati (regioni europa/italia, light+dark)"
+          # Retry: altre run (engine matrix) possono pushare su main in parallelo,
+          # quindi il render esegue lo stesso pattern `git pull --rebase --autostash`
+          # dell'engine. I path sono disgiunti engine (data/fm2/<dominio>) vs render
+          # (data/fm2-rendered): il rebase riallinea solo la history, senza conflitti.
           push_ok=0
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin main && git push origin main; then

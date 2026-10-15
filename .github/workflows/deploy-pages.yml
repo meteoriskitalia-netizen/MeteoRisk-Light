@@ -5,9 +5,10 @@ name: Deploy Pages (manuale / consolidamento)
 # radar/phenomena/satellite nell'artefatto. Questo file ricostruisce _site in
 # modo GENUINO replicando il deploy inline di radar-engine.yml e di
 # update-weather-data.yml (stesso ordine, stesse guardie e stessi path):
-#   - cp mri-light-1.2.4.7.html _site/index.html
+#   - cp mri-light-1.2.4.8.html _site/index.html
 #   - data/latest, data/geography, data/radar (con restore dell'archivio
 #     rolling radar-history), data/phenomena, data/fm2 (cache mappe
+#     previsionali V2), data/fm2-rendered (WebP pre-renderizzati delle mappe
 #     previsionali V2) e satellite (con restore della finestra satellite-cache).
 # Senza questi restore un deploy manuale DROPPEREBBE da Pages i dati che
 # vivono solo sui branch dedicati (radar-history / satellite-cache).
@@ -43,10 +44,10 @@ jobs:
 
       # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
       # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + satellite)
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + data/fm2-rendered + satellite)
         run: |
           mkdir -p _site/data
-          cp mri-light-1.2.4.7.html _site/index.html
+          cp mri-light-1.2.4.8.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if git fetch --depth 1 origin "+radar-history:refs/heads/radar-history-base" 2>/dev/null && git restore --source radar-history-base --worktree -- data/radar/history 2>/dev/null; then
@@ -55,6 +56,7 @@ jobs:
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
           if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
           if [ -d data/fm2 ]; then cp -R data/fm2 _site/data/fm2; fi
+          if [ -d data/fm2-rendered ]; then cp -R data/fm2-rendered _site/data/fm2-rendered; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi
