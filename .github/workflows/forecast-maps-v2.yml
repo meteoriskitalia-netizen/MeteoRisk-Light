@@ -90,7 +90,7 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             scripts/forecast_v2
-            data/fm2
+            data/fm2/${{ matrix.domain }}
           sparse-checkout-cone-mode: true
 
       - name: Setup Python
