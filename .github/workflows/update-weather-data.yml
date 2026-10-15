@@ -33,8 +33,6 @@ name: Update Weather Data (Centralized Data Pipeline — Production Hardened)
 #     check riuscito; dopo i retry -> CHECK FAILED con summary esplicito (H5).
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       force_update:

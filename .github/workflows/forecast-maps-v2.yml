@@ -42,8 +42,6 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     per-dominio e per-regione), come per data/phenomena.
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       force_update:

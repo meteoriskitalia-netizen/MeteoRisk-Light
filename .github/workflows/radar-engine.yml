@@ -17,9 +17,6 @@ name: Radar Engine (Fase 1 — Storm Detection & Tracking)
 #     "Supercelle Radar" dell'app).
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
-    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [ci-run]

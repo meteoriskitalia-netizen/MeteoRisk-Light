@@ -33,8 +33,6 @@ name: Satellite Engine — download rolling (6 sorgenti, niente deploy Pages)
 #     solo loggati: non cambiano l'exit code.
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [ci-run]
