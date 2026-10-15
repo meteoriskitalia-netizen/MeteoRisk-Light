@@ -214,9 +214,16 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             scripts/forecast_v2
-            data/fm2
             data/fm2-rendered
           sparse-checkout-cone-mode: true
+      - name: Download fm2 artifacts (A2)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fm2-*
+          path: /tmp/fm2arts
+      - name: Assemble fm2 domains (A2)
+        run: |
+          for d in /tmp/fm2arts/fm2-*/; do dom="${d%/}"; dom="${dom##*fm2-}"; mkdir -p "data/fm2/$dom"; cp -a "$d." "data/fm2/$dom/"; done
 
       - name: Setup Python
         uses: actions/setup-python@v5
