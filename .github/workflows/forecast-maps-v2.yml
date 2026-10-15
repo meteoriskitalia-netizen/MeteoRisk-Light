@@ -197,7 +197,7 @@ jobs:
     # clobbererebbe l'indice degli altri): UN solo scrittore.
     needs: engine
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
     concurrency:
       queue: max
       # Group DEDICATO e disgiunto da `forecast-maps-v2-<dominio>` del matrix:
