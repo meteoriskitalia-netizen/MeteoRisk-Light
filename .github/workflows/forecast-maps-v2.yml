@@ -77,6 +77,7 @@ jobs:
           - jma_gsm
           - cma_grapes_global
     concurrency:
+      queue: max
       # Group PER-DOMINIO: le run dello stesso dominio si serializzano tra loro,
       # ma domini diversi procedono in parallelo senza degradare i deploy Pages.
       group: forecast-maps-v2-${{ matrix.domain }}
@@ -189,6 +190,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
+      queue: max
       # Group DEDICATO e disgiunto da `forecast-maps-v2-<dominio>` del matrix:
       # serializza solo le run del renderer tra loro, senza toccare l'engine.
       group: forecast-maps-v2-render

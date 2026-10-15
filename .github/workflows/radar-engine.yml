@@ -53,6 +53,7 @@ jobs:
     # cancel-in-progress: false -> la run in coda prosegue, non viene
     # cancellata. Gruppo PROPRIO: non entra in coda con i deploy del meteo.
     concurrency:
+      queue: max
       group: radar-history
       cancel-in-progress: false
     steps:
@@ -126,7 +127,7 @@ jobs:
             echo "[INFO] Nessuna modifica ai dati radar derivati."
           else
             git commit -m "chore(radar): aggiornamento rilevamento celle convettive + candidati supercelle (Radar-DPC VMI)"
-            git push
+            ok=0; for i in 1 2 3 4 5; do if git pull --rebase --autostash origin main && git push origin main; then ok=1; break; fi; echo "[retry] push $i"; sleep $((i*5)); done; if [ "$ok" != "1" ]; then echo "[ERRORE] push radar fallito"; exit 1; fi
           fi
 
       # ARCHIVIO ROLLING 2h su branch ORPHAN radar-history (clone dello step
@@ -221,6 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
+      queue: max
       group: pages-deploy
       cancel-in-progress: false
     steps:

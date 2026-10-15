@@ -41,6 +41,7 @@ permissions:
   contents: write
 
 concurrency:
+  queue: max
   group: satellite-cache
   cancel-in-progress: false
 
