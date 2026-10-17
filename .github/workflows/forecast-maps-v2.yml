@@ -386,7 +386,6 @@ jobs:
         with:
           pattern: fm2r-*
           path: /tmp/fm2r
-        if-no-files-found: warn
 
       - name: Assemble shard + lista domini renderizzati
         id: shards
