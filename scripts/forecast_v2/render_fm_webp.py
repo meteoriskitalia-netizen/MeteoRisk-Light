@@ -32,7 +32,11 @@ Design notes (empirically confirmed against the live engine output):
     ``colors[max(0, last_index_with_breakpoint <= value)]`` with raster alpha
     scaled to 0..255 and NaN forced transparent.
 
-This script is standalone: it only needs ``numpy``, ``omfiles`` and ``Pillow``.
+This script is standalone: the RENDER path only needs ``numpy``, ``omfiles`` and
+``Pillow``. The heavy deps are captured lazily at import time (the ImportError is
+stored, not raised) so the ``--index-only`` mode (pure JSON/filesystem) works even
+in a bare Python env; the render path re-FATALS them on first use via
+``_require_render_deps()`` with the same messages as before.
 """
 
 from __future__ import annotations
@@ -44,21 +48,45 @@ import math
 import os
 import shutil
 import sys
+import time
 import traceback
 
-import numpy as np
+# Heavy deps (numpy/PIL/omfiles): capture ImportError at import time WITHOUT
+# raising, so `--index-only` (no rendering) imports cleanly in a bare env.
+# The render path calls _require_render_deps() and gets the original FATAL.
+_IMPORT_ERRORS: dict = {}
+
+try:
+    import numpy as np
+except Exception as exc:  # pragma: no cover
+    np = None
+    _IMPORT_ERRORS["numpy"] = exc
 
 try:
     from PIL import Image
 except Exception as exc:  # pragma: no cover
-    print("FATAL: Pillow (PIL) is required: %s" % exc, file=sys.stderr)
-    raise
+    Image = None
+    _IMPORT_ERRORS["PIL"] = exc
 
 try:
     from omfiles import OmFileReader
 except Exception as exc:  # pragma: no cover
-    print("FATAL: omfiles is required: %s" % exc, file=sys.stderr)
-    raise
+    OmFileReader = None
+    _IMPORT_ERRORS["omfiles"] = exc
+
+
+def _require_render_deps() -> None:
+    """FATAL (same messages as the old eager import) if a render dep is missing."""
+    if not _IMPORT_ERRORS:
+        return
+    for name, exc in _IMPORT_ERRORS.items():
+        if name == "PIL":
+            print("FATAL: Pillow (PIL) is required: %s" % exc, file=sys.stderr)
+        elif name == "omfiles":
+            print("FATAL: omfiles is required: %s" % exc, file=sys.stderr)
+        else:
+            print("FATAL: %s is required: %s" % (name, exc), file=sys.stderr)
+    raise next(iter(_IMPORT_ERRORS.values()))
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -314,9 +342,11 @@ def write_json(path: str, obj: dict) -> None:
     os.replace(tmp, path)
 
 
-def save_webp(rgba: np.ndarray, path: str, quality: int, lossless: bool) -> int:
+def save_webp(rgba: np.ndarray, path: str, quality: int, lossless: bool,
+              method: int = 6) -> int:
     img = Image.fromarray(rgba, mode="RGBA")
-    kwargs = {"format": "WEBP", "method": 6}
+    # method=6 (default) keeps the historical output byte-compatible; CI passes 4.
+    kwargs = {"format": "WEBP", "method": int(method)}
     if lossless:
         kwargs["lossless"] = True
     else:
@@ -374,27 +404,30 @@ def _theme_var_dir(out_root: str, region: str, domain: str, var: str, theme: str
 def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: dict) -> tuple:
     """Render one domain into every intersecting region, for every requested theme.
 
-    Returns ``(ok_frames, skipped, err, contrib)`` where ``contrib`` is a dict
+    Returns ``(ok_frames, skipped, err, contrib, frames_done, bytes_written)``
+    where ``contrib`` is a dict
     ``{region: {"bbox":..., "grid":..., "bounds":..., "variables": {...}}}``
-    used by the caller to assemble each region ``index.json``.
+    used by the caller to assemble each region ``index.json``, ``frames_done``
+    is the number of ``.om`` frames actually opened/processed and
+    ``bytes_written`` the total size of the WebP files produced (observability).
     """
     manifest_path = os.path.join(domain_dir, "latest.json")
     if not os.path.isfile(manifest_path):
-        return 0, 0, "no latest.json", {}
+        return 0, 0, "no latest.json", {}, 0, 0
 
     manifest = read_manifest(manifest_path)
     grid = manifest.get("grid")
     bbox = manifest.get("bbox")
     frames = manifest.get("frames") or []
     if not isinstance(grid, dict) or not isinstance(bbox, dict) or not frames:
-        return 0, 0, "manifest missing grid/bbox/frames", {}
+        return 0, 0, "manifest missing grid/bbox/frames", {}, 0, 0
 
     if args.limit_frames and args.limit_frames > 0:
         frames = frames[:args.limit_frames]
 
     domain = os.path.basename(os.path.normpath(domain_dir))
     if args.domains and domain not in args.domains:
-        return 0, 0, None, {}
+        return 0, 0, None, {}, 0, 0
 
     # Pre-compute the per-region crop + Mercator resampler for this domain.
     crops = {}
@@ -409,7 +442,7 @@ def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: d
             "resample": build_row_resampler(cgrid),
         }
     if not crops:
-        return 0, 0, "no region intersection", {}
+        return 0, 0, "no region intersection", {}, 0, 0
 
     # Decide variable set: CLI filter, else manifest var_order print-safe.
     var_order = [v for v in (manifest.get("var_order") or []) if isinstance(v, str)]
@@ -417,6 +450,8 @@ def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: d
 
     rendered = 0
     skipped = 0
+    frames_done = 0
+    bytes_written = 0
     themes = args.themes
     # rname -> var -> theme -> [frame records]
     var_frames = {rname: {} for rname in crops}
@@ -480,8 +515,10 @@ def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: d
                         vdir = _theme_var_dir(out_root, rname, domain, var, t)
                         os.makedirs(vdir, exist_ok=True)
                         wpath = os.path.join(vdir, base_name + ".webp")
-                        size = save_webp(rgba, wpath, args.quality, args.lossless)
+                        size = save_webp(rgba, wpath, args.quality, args.lossless,
+                                         args.method)
                         rendered += 1
+                        bytes_written += size
 
                         var_frames[rname].setdefault(var, {}).setdefault(t, []).append({
                             "file": base_name + ".webp",
@@ -493,9 +530,10 @@ def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: d
                 reader.close()
             except Exception:
                 pass
+        frames_done += 1
 
     if not any(var_frames[r] for r in var_frames):
-        return rendered, skipped, "nothing rendered", {}
+        return rendered, skipped, "nothing rendered", {}, frames_done, bytes_written
 
     generated_at = _utcnow_iso()
 
@@ -552,7 +590,7 @@ def render_domain(domain_dir: str, out_root: str, scales: dict, args, regions: d
             "variables": variables,
         }
 
-    return rendered, skipped, None, contrib
+    return rendered, skipped, None, contrib, frames_done, bytes_written
 
 
 def write_region_index(out_root: str, region_name: str, region_bbox, domains: dict,
@@ -576,6 +614,152 @@ def write_region_index(out_root: str, region_name: str, region_bbox, domains: di
     rdir = os.path.join(out_root, region_name)
     os.makedirs(rdir, exist_ok=True)
     write_json(os.path.join(rdir, "index.json"), index)
+
+
+def copy_color_scales(out_dir: str) -> None:
+    """Publish the exact color scales the renderer used (single source of truth).
+
+    Shared by the render path and the ``--index-only`` path so both publish the
+    identical file with the identical code.
+    """
+    if os.path.isfile(COLOR_SCALES_PATH):
+        try:
+            shutil.copyfile(COLOR_SCALES_PATH, os.path.join(out_dir, "color_scales.json"))
+        except OSError as exc:
+            print("  ! could not copy color_scales.json: %s" % exc, file=sys.stderr)
+
+
+# --------------------------------------------------------------------------- #
+# --index-only: rebuild region indexes from the existing per-var manifests
+# --------------------------------------------------------------------------- #
+def _valid_var_manifest(obj) -> bool:
+    """Structural validation of a per-var WebP ``latest.json`` (index-only)."""
+    if not isinstance(obj, dict):
+        return False
+    valid_times = obj.get("valid_times")
+    frames = obj.get("frames")
+    if not isinstance(valid_times, list) or not valid_times:
+        return False
+    if not isinstance(frames, list) or not frames:
+        return False
+    if not all(isinstance(f, dict) and f.get("file") for f in frames):
+        return False
+    if obj.get("bounds") is None or obj.get("grid") is None:
+        return False
+    return True
+
+
+def rebuild_index(in_dir: str, out_dir: str, domain_list, region_names, themes) -> int:
+    """Rebuild ``<out>/<region>/index.json`` from the existing per-var manifests.
+
+    ``--index-only`` mode (single-writer merge job): NO rendering, pure
+    JSON/filesystem (works without numpy/Pillow/omfiles). ``domain_list`` is the
+    EXPLICIT list of successfully rendered shard domains. For every region only
+    the domains that (a) are present under ``in_dir`` (engine tree:
+    ``<in>/<domain>/latest.json``) and (b) have at least ONE structurally valid
+    var manifest are indexed; every valid theme dir is PRUNED against the
+    keep-set of its OWN manifest (only ``*.webp``, by file name). Invalid var
+    manifests are skipped ENTIRELY (NO prune, NO index entry). The index schema
+    and writer are the render path's ones (``write_region_index``) to avoid any
+    schema drift. Returns the number of region indexes written (0 = publish
+    nothing).
+    """
+    written = 0
+    for rname in region_names:
+        region_bbox = REGIONS[rname]
+        index_domains = {}
+        region_themes = set()
+        for domain in domain_list:
+            if not os.path.isfile(os.path.join(in_dir, domain, "latest.json")):
+                print("[index] %s/%s: escluso: non presente in --in" % (rname, domain))
+                continue
+            region_var_root = os.path.join(out_dir, rname, domain)
+            if not os.path.isdir(region_var_root):
+                print("[index] %s/%s: escluso: nessun output renderizzato"
+                      % (rname, domain))
+                continue
+
+            variables = {}
+            dom_bbox = dom_bounds = dom_grid = None
+            for var in sorted(os.listdir(region_var_root)):
+                var_dir = os.path.join(region_var_root, var)
+                if not os.path.isdir(var_dir):
+                    continue
+                theme_manifests = {}          # theme -> (theme_dir, manifest)
+                invalid = False
+                for theme in themes:
+                    tdir = _theme_var_dir(out_dir, rname, domain, var, theme)
+                    mpath = os.path.join(tdir, "latest.json")
+                    if not os.path.isfile(mpath):
+                        continue              # theme not rendered for this var
+                    try:
+                        vman = read_manifest(mpath)
+                    except Exception as exc:
+                        print("  ! %s/%s/%s/%s: manifest illeggibile (%s): "
+                              "variabile saltata (nessun prune)"
+                              % (rname, domain, var, theme, exc), file=sys.stderr)
+                        invalid = True
+                        break
+                    if not _valid_var_manifest(vman):
+                        print("  ! %s/%s/%s/%s: manifest non valido: variabile "
+                              "saltata (nessun prune)"
+                              % (rname, domain, var, theme), file=sys.stderr)
+                        invalid = True
+                        break
+                    theme_manifests[theme] = (tdir, vman)
+                if invalid:
+                    continue                  # NO prune, NO index entry
+                if not theme_manifests:
+                    print("  ~ %s/%s/%s: nessun latest.json per alcun tema (skip)"
+                          % (rname, domain, var), file=sys.stderr)
+                    continue
+
+                entry = {"unit": None, "dir": "%s/%s" % (domain, var), "themes": {}}
+                for theme, (tdir, vman) in sorted(theme_manifests.items()):
+                    keep = {f["file"] for f in vman["frames"]}
+                    prune_dir(tdir, keep)
+                    sub = "%s/%s" % (domain, var)
+                    if theme == "dark":
+                        sub = "%s/dark" % sub
+                    # Same theme-entry shape as the render path's writer.
+                    entry["themes"][theme] = {
+                        "count": len(vman["valid_times"]),
+                        "valid_times": list(vman["valid_times"]),
+                        "dir": sub,
+                        "manifest": "%s/latest.json" % sub,
+                    }
+                    region_themes.add(theme)
+                    if entry["unit"] is None:
+                        entry["unit"] = vman.get("unit")
+                    # bbox/bounds/grid: first valid var manifest of this domain in
+                    # this region (identical across vars by construction).
+                    if dom_bbox is None:
+                        dom_bbox = vman.get("bbox")
+                        dom_bounds = vman.get("bounds")
+                        dom_grid = vman.get("grid")
+                variables[var] = entry
+
+            if not variables:
+                print("[index] %s/%s: escluso: nessun manifest variabile valido"
+                      % (rname, domain), file=sys.stderr)
+                continue
+            index_domains[domain] = {
+                "bbox": dom_bbox,
+                "bounds": dom_bounds,
+                "grid": dom_grid,
+                "variables": variables,
+            }
+
+        if not index_domains:
+            print("[index] %s: NESSUN dominio valido -> index.json NON scritto"
+                  % rname)
+            continue
+        theme_list = [t for t in themes if t in region_themes]
+        write_region_index(out_dir, rname, region_bbox, index_domains, theme_list)
+        print("[index] %s: index.json scritto (%d domini: %s)"
+              % (rname, len(index_domains), ", ".join(sorted(index_domains))))
+        written += 1
+    return written
 
 
 # --------------------------------------------------------------------------- #
@@ -609,6 +793,11 @@ def parse_args(argv=None):
     ap.add_argument("--lossless", action="store_true", help="write lossless WebP")
     ap.add_argument("--limit-frames", type=int, default=0,
                     help="render at most N frames per domain (debug)")
+    ap.add_argument("--method", type=int, default=6,
+                    help="Pillow WebP encode method (0-6; 6=max compression/slowest)")
+    ap.add_argument("--index-only", action="store_true",
+                    help="rebuild region index.json from existing per-var latest.json "
+                         "manifests; no rendering (works without numpy/Pillow/omfiles)")
     return ap.parse_args(argv)
 
 
@@ -641,17 +830,44 @@ def main(argv=None) -> int:
         print("FATAL: --in not a directory: %s" % in_dir, file=sys.stderr)
         return 2
 
+    # Domain dirs carrying an engine manifest (the --in gate, both modes).
+    in_domains = []
+    for name in sorted(os.listdir(in_dir)):
+        ddir = os.path.join(in_dir, name)
+        if os.path.isdir(ddir) and os.path.isfile(os.path.join(ddir, "latest.json")):
+            in_domains.append(name)
+
+    if args.index_only:
+        # --index-only: rebuild the region indexes ONLY (no rendering, no heavy
+        # deps). --domains is the EXPLICIT list of successfully rendered shard
+        # domains; an empty list publishes nothing (exit 1).
+        if not in_domains:
+            print("FATAL: no domain dirs with latest.json under %s" % in_dir,
+                  file=sys.stderr)
+            return 2
+        if not args.domains:
+            print("FATAL: --index-only requires a non-empty --domains "
+                  "(comma-separated rendered shard domains)", file=sys.stderr)
+            return 2
+        os.makedirs(out_dir, exist_ok=True)
+        written = rebuild_index(in_dir, out_dir, args.domains, region_names, themes)
+        if not written:
+            print("[index] nessuna regione ha un dominio valido: nulla pubblicato.",
+                  file=sys.stderr)
+            return 1
+        copy_color_scales(out_dir)
+        print("[done] region index written: %d -> %s" % (written, out_dir))
+        return 0
+
+    _require_render_deps()
+
     try:
         scales = load_color_scales()
     except Exception as exc:
         print("FATAL: cannot load color scales: %s" % exc, file=sys.stderr)
         return 2
 
-    domains = []
-    for name in sorted(os.listdir(in_dir)):
-        ddir = os.path.join(in_dir, name)
-        if os.path.isdir(ddir) and os.path.isfile(os.path.join(ddir, "latest.json")):
-            domains.append(ddir)
+    domains = [os.path.join(in_dir, name) for name in in_domains]
     if args.domains:
         domains = [d for d in domains if os.path.basename(os.path.normpath(d)) in args.domains]
     if not domains:
@@ -667,12 +883,17 @@ def main(argv=None) -> int:
     for ddir in domains:
         domain = os.path.basename(os.path.normpath(ddir))
         print("[domain] %s" % domain)
+        t0 = time.perf_counter()
         try:
-            ok, skipped, err, contrib = render_domain(ddir, out_dir, scales, args, regions)
+            ok, skipped, err, contrib, nframes, nbytes = render_domain(
+                ddir, out_dir, scales, args, regions)
         except Exception:
             print("  ! domain %s crashed:" % domain, file=sys.stderr)
             traceback.print_exc()
             continue
+        # Observability: per-domain timing/size (no frame caps anywhere).
+        print("[render] %s: %d frame, %d webp, %d bytes, %.1fs"
+              % (domain, nframes, ok, nbytes, time.perf_counter() - t0))
         if ok:
             any_domain_ok = True
             total_ok += ok
@@ -688,11 +909,7 @@ def main(argv=None) -> int:
 
     # Publish the exact color scales the renderer used so the client legend and
     # the raster agree (single source of truth in the cache root).
-    if os.path.isfile(COLOR_SCALES_PATH):
-        try:
-            shutil.copyfile(COLOR_SCALES_PATH, os.path.join(out_dir, "color_scales.json"))
-        except OSError as exc:
-            print("  ! could not copy color_scales.json: %s" % exc, file=sys.stderr)
+    copy_color_scales(out_dir)
 
     print("[done] frames written: %d -> %s" % (total_ok, out_dir))
     return 0 if any_domain_ok else 1
