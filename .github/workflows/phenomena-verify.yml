@@ -36,13 +36,20 @@ jobs:
     # concorrenti su data/phenomena) senza entrare in coda con i deploy
     # Pages (group "pages-deploy") o con l'archivio radar-history.
     concurrency:
+      queue: max
       group: phenomena
       cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            data/radar
+            data/phenomena
+          sparse-checkout-cone-mode: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -104,7 +111,7 @@ jobs:
           # Retry: altri workflow (radar-engine / update-weather-data)
           # pushano sullo stesso main -> race possibile.
           for attempt in 1 2 3 4 5; do
-            if git push; then
+            if git pull --rebase --autostash origin main && git push origin main; then
               echo "[INFO] Push phenomena riuscito."
               exit 0
             fi

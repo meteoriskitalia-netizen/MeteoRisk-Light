@@ -34,13 +34,14 @@ jobs:
     # deploy dei workflow che pubblicano su Pages si serializzano tra loro
     # (cancel-in-progress: false -> le run in coda proseguono).
     concurrency:
+      queue: max
       group: pages-deploy
       cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
       # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.

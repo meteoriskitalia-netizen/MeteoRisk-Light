@@ -26,16 +26,35 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     --frames-cache: si scaricano solo i frame nuovi. Cache PER-DOMINIO
 #     (key fm2-frames-<dominio>-<run_number> + restore-keys fm2-frames-<dominio>-).
 #   - Commit SOLO se data/fm2/<dominio> cambia (nessun churn a manifest invariato).
-#   - RENDERER (fast-path raster): il job `render` (needs: engine), ORA PRESENTE
-#     in questo workflow come job REALE (non solo descritto), gira UNA VOLTA
-#     dopo il matrix e produce i WebP pre-renderizzati per le regioni europa/italia,
-#     entrambi i temi (light/dark), orizzonte INTERO:
-#       data/fm2-rendered/<regione>/<dominio>/<var>/<VALID>.webp (+ dark/ per il tema scuro)
-#       data/fm2-rendered/<regione>/<dominio>/<var>/latest.json (per tema)
-#       data/fm2-rendered/<regione>/index.json (domini {europa,italia}) + color_scales.json
-#     UN solo scrittore (concurrency forecast-maps-v2-render): l'index.json aggrega
-#     TUTTI i domini presenti, quindi il renderer NON va eseguito dentro il matrix
-#     per-dominio (l'ultimo scrittore clobbererebbe l'indice degli altri).
+#   - RENDERER (fast-path raster) — HOTFIX 1.2.4.8.1: SHARD PER-DOMINIO + MERGE
+#     SINGLE-WRITER. Il vecchio job `render` monolitico (tutti i domini x 2 regioni
+#     x 2 temi ~55k encode WebP, Pillow method=6) moriva SEMPRE a timeout-minutes:90
+#     (4/4 run uccise) e data/fm2-rendered non veniva mai pubblicato: la fast-path
+#     WebP del client non si attivava mai. Architettura nuova (entrambi i temi
+#     light/dark conservati, nessun cap sugli frame):
+#     1) `render` = MATRICE per-dominio (stessa lista dei 10 domini dell'engine,
+#        fail-fast:false, concurrency forecast-maps-v2-render-<dominio>,
+#        timeout-minutes:150): ogni shard scarica l'artifact engine ESATTO del
+#        proprio dominio (fm2-<dominio>), renderizza SOLO quel dominio
+#        (`--domains <dominio> --limit-frames 0 --method 4`, method=4 =
+#        bilanciamento velocita'/size approvato) in un albero vuoto e carica
+#        l'artifact `fm2r-<dominio>` (prefisso fm2r-: il download engine `fm2-*`
+#        del merge non aggancia gli shard; le due path caricate sono solo
+#        italia/<dominio> e europa/<dominio>, quindi gli shard NON pubblicano mai
+#        index.json ne' color_scales.json, che vivono fuori dalle directory
+#        dominio). Un dominio engine fallito fa fallire il solo shard corrispondente
+#        (download artifact per nome ESATTO): quel dominio manchera' dal merge.
+#     2) `render-merge` = UNO scrittore (concurrency forecast-maps-v2-render,
+#        timeout-minutes:30): riscarica gli artifact engine (fm2-*) + tutti gli
+#        shard (fm2r-*), sostituisce ogni data/fm2-rendered/<regione>/<dominio>
+#        con la versione autorevole dello shard (rm -rf + cp -a: le variabili
+#        droppate vengono pulite), ricostruisce gli index.json per regione con
+#        `render_fm_webp.py --index-only --domains <shard riusciti>` (i domini
+#        senza latest.json engine o senza manifest variabili validi vengono
+#        esclusi dalla gate) e fa UN SOLO commit di webp + index.json insieme
+#        (nessuna finestra in cui l'indice punta a file non ancora pubblicati).
+#        Zero shard validi => l'indice non viene scritto, il passo fallisce e
+#        nulla viene committato.
 #   - Il deploy Pages NON e' toccato qui: data/fm2 e data/fm2-rendered arrivano su
 #     Pages tramite la build _site di deploy-pages / update-weather-data / radar-engine
 #     (cp -R data/fm2 e cp -R data/fm2-rendered: ricorsivi, coprono la struttura
@@ -77,6 +96,7 @@ jobs:
           - jma_gsm
           - cma_grapes_global
     concurrency:
+      queue: max
       # Group PER-DOMINIO: le run dello stesso dominio si serializzano tra loro,
       # ma domini diversi procedono in parallelo senza degradare i deploy Pages.
       group: forecast-maps-v2-${{ matrix.domain }}
@@ -85,7 +105,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            scripts/forecast_v2
+            data/fm2/${{ matrix.domain }}
+          sparse-checkout-cone-mode: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -142,6 +167,15 @@ jobs:
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Upload artifact fm2-${{ matrix.domain }}
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fm2-${{ matrix.domain }}
+          path: data/fm2/${{ matrix.domain }}
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Commit cache aggiornata (only if changed)
         if: success()
         run: |
@@ -176,25 +210,54 @@ jobs:
           fi
 
   render:
-    # Dipende dal matrix `engine`: gira UNA VOLTA, DOPO che tutti i domini hanno
-    # scritto data/fm2/<dominio>/latest.json. L'index.json per regione aggrega TUTTI
-    # i domini presenti, quindi NON va eseguito per-dominio (l'ultimo scrittore
-    # clobbererebbe l'indice degli altri): UN solo scrittore.
+    # SHARD PER-DOMINIO (hotfix 1.2.4.8.1): un job per dominio, ciascuno renderizza
+    # SOLO il proprio dominio (--domains ${{ matrix.domain }}, entrambe le regioni,
+    # entrambi i temi) in un albero vuoto e carica l'artifact fm2r-<dominio>.
+    # Gli shard NON possono scrivere gli index.json (ognuno vedrebbe solo se stesso):
+    # li ricostruisce il single-writer render-merge.
+    name: render (${{ matrix.domain }})
     needs: engine
+    # !cancelled(): un dominio engine fallito non blocca gli altri 9 shard — quel
+    # dominio manchera' dal --in del merge e verra' escluso dalla gate.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Il vecchio render monolitico (tutti i domini, method=6) moriva a 90': uno
+    # shard singolo con --method 4 sta largamente entro 150'.
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        domain:
+          - dwd_icon_eu
+          - dwd_icon_d2
+          - italia_meteo_arpae_icon_2i
+          - ecmwf_ifs025
+          - ncep_gfs025
+          - dwd_icon
+          - meteofrance_arpege_world025
+          - ukmo_global_deterministic_10km
+          - jma_gsm
+          - cma_grapes_global
     concurrency:
-      # Group DEDICATO e disgiunto da `forecast-maps-v2-<dominio>` del matrix:
-      # serializza solo le run del renderer tra loro, senza toccare l'engine.
-      group: forecast-maps-v2-render
+      queue: max
+      # Group PER-DOMINIO: gli shard si serializzano solo tra run dello stesso
+      # dominio; i 10 domini procedono in parallelo tra loro e rispetto all'engine.
+      group: forecast-maps-v2-render-${{ matrix.domain }}
       cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: main
-          fetch-depth: 0
-          persist-credentials: true
+          fetch-depth: 1
+          # Shard senza credenziali persistite: non pushano (nessun commit qui).
+          persist-credentials: false
+          filter: blob:none
+          # Solo il renderer: lo shard deve renderizzare in un albero VUOTO
+          # (data/fm2-rendered esistente non serve: il merge fa il continuity).
+          sparse-checkout: |
+            scripts/forecast_v2
+          sparse-checkout-cone-mode: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -206,27 +269,187 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r scripts/forecast_v2/requirements.txt
 
-      - name: Build WebP pre-renderizzati (regioni europa/italia, light+dark)
-        id: render
+      - name: Download artifact engine fm2-${{ matrix.domain }}
+        uses: actions/download-artifact@v4
+        with:
+          # Nome ESATTO (non pattern): se l'engine del dominio e' fallito questo
+          # step fallisce e lo shard viene escluso (intenzionale).
+          name: fm2-${{ matrix.domain }}
+          path: /tmp/fm2art
+
+      - name: Assemble dominio engine
         run: |
-          # Orizzonte INTERO: --limit-frames 0 = nessun cap (il renderer usa la
-          # stessa convenzione del motore per l'orizzonte completo del manifest).
+          mkdir -p "data/fm2/${{ matrix.domain }}"
+          cp -a /tmp/fm2art/. "data/fm2/${{ matrix.domain }}/"
+
+      - name: Build WebP shard ${{ matrix.domain }} (europa/italia, light+dark)
+        run: |
+          # --method 4 = bilanciamento velocita'/size approvato (6 = massima
+          # compressione ma troppo lento: il render monolitico a method=6 moriva
+          # sempre a 90'). --limit-frames 0 = orizzonte INTERO del manifest.
           python scripts/forecast_v2/render_fm_webp.py \
             --in data/fm2 \
             --out data/fm2-rendered \
-            --limit-frames 0
+            --domains ${{ matrix.domain }} \
+            --limit-frames 0 \
+            --method 4
 
       - name: Summary
         if: always()
         run: |
           {
-            echo "## MeteoRisk — Forecast Maps V2 (renderer)"
+            echo "## MeteoRisk — Forecast Maps V2 (shard render ${{ matrix.domain }})"
+            echo ""
+            echo "WebP prodotti: $(find data/fm2-rendered -name '*.webp' 2>/dev/null | wc -l)"
+            if [ -d data/fm2-rendered ]; then
+              echo "Byte totali: $(du -sb data/fm2-rendered | cut -f1)"
+            else
+              echo "Byte totali: 0 (nessun output)"
+            fi
+            echo ""
+            echo "Manifest per-var (latest.json -> generated_at / variable / theme):"
+            find data/fm2-rendered -name latest.json 2>/dev/null | sort | while read -r m; do
+              python -c "import json,sys; d=json.load(open(sys.argv[1])); print(sys.argv[1], '->', d.get('generated_at'), d.get('variable'), d.get('theme'))" "$m"
+            done
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artifact fm2r-${{ matrix.domain }}
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          # Prefisso fm2r- (NON fm2-): il download engine `fm2-*` del merge non
+          # deve agganciare gli artifact degli shard. Solo le directory dominio:
+          # index.json e color_scales.json vivono fuori da queste path e NON
+          # vengono caricati dagli shard (single-writer li riscrive).
+          name: fm2r-${{ matrix.domain }}
+          path: |
+            data/fm2-rendered/italia/${{ matrix.domain }}
+            data/fm2-rendered/europa/${{ matrix.domain }}
+          if-no-files-found: warn
+          retention-days: 1
+
+  render-merge:
+    # SINGLE-WRITER (hotfix 1.2.4.8.1): riscarica gli artifact engine + tutti gli
+    # shard fm2r-*, sostituisce le directory dominio con la versione autorevole
+    # dello shard, ricostruisce gli index.json per regione (--index-only) escludendo
+    # i domini senza shard riuscito o senza manifest validi, e fa UN solo commit di
+    # webp + index.json (nessuna finestra in cui l'indice punta a file mancanti).
+    name: render-merge (indice + commit)
+    needs: render
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      queue: max
+      # Lock del single-writer: serializza SOLO il merge (disgiunto dal matrix
+      # engine forecast-maps-v2-<dominio> e dagli shard forecast-maps-v2-render-<dominio>).
+      group: forecast-maps-v2-render
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: true
+          filter: blob:none
+          # L'albero data/fm2-rendered esistente serve per la continuita' del
+          # prune/indice (i domini senza shard riuscito restano come sono).
+          sparse-checkout: |
+            scripts/forecast_v2
+            data/fm2-rendered
+          sparse-checkout-cone-mode: true
+
+      - name: Download fm2 artifacts (engine)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fm2-*
+          path: /tmp/fm2arts
+
+      - name: Assemble fm2 domains (engine)
+        run: |
+          for d in /tmp/fm2arts/fm2-*/; do dom="${d%/}"; dom="${dom##*fm2-}"; mkdir -p "data/fm2/$dom"; cp -a "$d." "data/fm2/$dom/"; done
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r scripts/forecast_v2/requirements.txt
+
+      - name: Download render shard artifacts (fm2r-*)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fm2r-*
+          path: /tmp/fm2r
+
+      - name: Assemble shard + lista domini renderizzati
+        id: shards
+        run: |
+          # Per ogni shard: sostituisci data/fm2-rendered/<regione>/<dominio> con la
+          # versione dello shard (rm PRIMA: l'albero dello shard e' autorevole per quel
+          # dominio, le variabili droppate vanno pulite). Raccogli i domini con almeno
+          # una regione -> output `domains` (CSV) per il passo --index-only.
+          domains=""
+          for d in /tmp/fm2r/fm2r-*/; do
+            [ -d "$d" ] || continue
+            dom="${d%/}"; dom="${dom##*fm2r-}"
+            got=0
+            for region in italia europa; do
+              src="$d$region/$dom"
+              if [ -d "$src" ]; then
+                rm -rf "data/fm2-rendered/$region/$dom"
+                mkdir -p "data/fm2-rendered/$region"
+                cp -a "$src" "data/fm2-rendered/$region/$dom"
+                got=1
+              fi
+            done
+            if [ "$got" -eq 1 ]; then
+              if [ -z "$domains" ]; then domains="$dom"; else domains="$domains,$dom"; fi
+            else
+              echo "[WARN] shard $dom: nessuna regione presente, escluso dal merge"
+            fi
+          done
+          echo "domains=$domains" >> "$GITHUB_OUTPUT"
+          echo "[shard] domini renderizzati: ${domains:-NESSUNO}"
+
+      - name: Rebuild index.json per regione (--index-only)
+        id: index
+        run: |
+          # Se la lista e' vuota il renderer esce con errore (nessun dominio
+          # valido: nessuna pubblicazione, step FAIL visibile) — zero shard validi
+          # => nessun commit, nessun prune. Gli index.json e i webp vengono
+          # committati INSIEME nel passo successivo (single-writer).
+          python scripts/forecast_v2/render_fm_webp.py \
+            --in data/fm2 \
+            --out data/fm2-rendered \
+            --index-only \
+            --domains "${{ steps.shards.outputs.domains }}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## MeteoRisk — Forecast Maps V2 (render-merge)"
+            echo ""
+            echo "Shard merge (steps.shards.outputs.domains): \`${{ steps.shards.outputs.domains }}\`"
             echo ""
             if [ -f data/fm2-rendered/italia/index.json ]; then
-              python -c "import json; d=json.load(open('data/fm2-rendered/italia/index.json')); doms=d.get('domains',{}); print('regione:', d.get('region')); print('themes:', ','.join(d.get('themes',[]))); print('generated_at:', d.get('generated_at')); print('domini:', len(doms), '->', ', '.join(sorted(doms)))"
+              python -c "import json; d=json.load(open('data/fm2-rendered/italia/index.json')); doms=d.get('domains',{}); print('italia — themes:', ','.join(d.get('themes',[]))); print('italia — generated_at:', d.get('generated_at')); print('italia — domini:', len(doms), '->', ', '.join(sorted(doms)))"
             else
-              echo "data/fm2-rendered/italia/index.json non disponibile."
+              echo "italia — index.json non disponibile."
             fi
+            if [ -f data/fm2-rendered/europa/index.json ]; then
+              python -c "import json; d=json.load(open('data/fm2-rendered/europa/index.json')); doms=d.get('domains',{}); print('europa — themes:', ','.join(d.get('themes',[]))); print('europa — generated_at:', d.get('generated_at')); print('europa — domini:', len(doms), '->', ', '.join(sorted(doms)))"
+            else
+              echo "europa — index.json non disponibile."
+            fi
+            echo ""
+            echo "WebP totali in cache: $(find data/fm2-rendered -name '*.webp' 2>/dev/null | wc -l)"
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -239,6 +462,9 @@ jobs:
             echo "[INFO] Nessun output renderizzato: niente da committare."
             exit 0
           fi
+          # webp + index.json + color_scales.json vengono committati INSIEME in
+          # questo unico commit (single-writer): non esiste una finestra in cui
+          # l'indice punta a file non ancora pubblicati.
           git add -A "data/fm2-rendered"
           if git diff --cached --quiet; then
             echo "[INFO] Nessuna modifica a data/fm2-rendered (NO-OP)."
@@ -246,7 +472,7 @@ jobs:
           fi
           git commit -m "chore(fm2): aggiornamento WebP pre-renderizzati (regioni europa/italia, light+dark)"
           # Retry: altre run (engine matrix) possono pushare su main in parallelo,
-          # quindi il render esegue lo stesso pattern `git pull --rebase --autostash`
+          # quindi il merge esegue lo stesso pattern `git pull --rebase --autostash`
           # dell'engine. I path sono disgiunti engine (data/fm2/<dominio>) vs render
           # (data/fm2-rendered): il rebase riallinea solo la history, senza conflitti.
           push_ok=0
