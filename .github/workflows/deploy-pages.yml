@@ -48,7 +48,7 @@ jobs:
       - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + data/fm2-rendered + satellite)
         run: |
           mkdir -p _site/data
-          cp mri-light-1.2.4.8.html _site/index.html
+          cp mri-light-1.2.4.9.html _site/index.html
           if [ -d data/latest ]; then cp -R data/latest _site/data/latest; fi
           if [ -d data/geography ]; then cp -R data/geography _site/data/geography; fi
           if git fetch --depth 1 origin "+radar-history:refs/heads/radar-history-base" 2>/dev/null && git restore --source radar-history-base --worktree -- data/radar/history 2>/dev/null; then
