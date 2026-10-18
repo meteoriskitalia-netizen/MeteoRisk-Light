@@ -643,25 +643,11 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
 
     crs_wkt = m.get("crs_wkt", "") or ""
     ref_time = m.get("reference_time")
+    # ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest, cosi'
+    # come arrivano dalla sorgente (nessuna decimazione). Il vecchio THINNING
+    # (entro 48h passo 1h, fino a 120h passo 3h, oltre passo 6h) e' stato
+    # RIMOSSO in 1.2.4.9: la cadenza dei frame e' quella nativa del manifest.
     valid_times = sorted(set(m.get("valid_times", [])))
-
-    # THINNING: entro 48h passo 1, fino a 120h passo 3, oltre passo 6.
-    if ref_time:
-        try:
-            ref_epoch = parse_iso(ref_time).timestamp()
-        except (ValueError, TypeError):
-            ref_epoch = None
-        if ref_epoch is not None:
-            thinned = []
-            for vt in valid_times:
-                try:
-                    h = int(round((parse_iso(vt).timestamp() - ref_epoch) / 3600.0))
-                except (ValueError, TypeError):
-                    thinned.append(vt)
-                    continue
-                if h <= 48 or (h <= 120 and h % 3 == 0) or (h % 6 == 0):
-                    thinned.append(vt)
-            valid_times = thinned
 
     res["reference_time"] = ref_time
     res["completed"] = m.get("completed")

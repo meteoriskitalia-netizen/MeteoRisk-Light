@@ -1,3 +1,13 @@
+MeteoRisk Light - 1.2.4.9 - MAPPE PREVISIONALI: NUOVA REGIONE DI RENDERING WebP 'domain' (INTERO DOMINIO) NEL WORKFLOW forecast-maps-v2.yml (bump da 1.2.4.8)
+MAJOR=1
+MINOR=2
+PATCH=4
+BUILD=9
+RELEASE_TYPE=release
+DATE=2026-10-18
+NOTE=Release 1.2.4.9 (bump da 1.2.4.8): il workflow CI forecast-maps-v2.yml viene esteso con la regione di rendering WebP 'domain' (intero dominio) accanto a europa/italia: il job shard render carica anche data/fm2-rendered/domain/<dominio>, il loop di copia del single-writer render-merge include 'domain' e il Summary verifica domain/index.json. Il renderer render_fm_webp.py aggiunge l'upsampling BILINEARE DEI VALORI (--upsample auto (default) porta il lato corto del crop a ~512 px, cap --upsample-max default 8; --upsample 1 = output storico senza upsampling; i colori restano le bande DISCRETE della scala, nessun blending; un NaN non acquisisce mai colore) e la regione 'domain' (ritaglio sull'intero bbox del dominio, saltata per i domini globali via DOMAIN_REGION_SKIP_GLOBAL). Il motore V2 forecast_v2_engine.py RIMUOVE il thinning dei frame (prima: h<=48h passo 1h, 48h<h<=120h passo 3h, h>120h passo 6h) e pubblica l'orizzonte INTERO del manifest (nessuna decimazione; --valid-frames 0). Il client in-app NON e' piu' invariato: l'APP_FILE mri-light-1.2.4.9.html ha APP_VERSION in-app '1.2.4.9' con il blocco changelog 1.2.4.9 (legenda a segmenti con tick, preload con pool a concorrenza e fast-path WebP, fix gate tema scuro/race/leak). Bump di versione e allineamento dei riferimenti (VERSION, README, workflow che copiano l'html, percorsi dei test).
+APP_FILE=mri-light-1.2.4.9.html
+
 MeteoRisk Light - 1.2.4.8 - MAPPE PREVISIONALI: FAST-PATH RASTER WebP PRE-RENDERIZZATI (imageOverlay) DA CACHE GITHUB PER LE REGIONI EUROPA E ITALIA (bump da 1.2.4.7)
 MAJOR=1
 MINOR=2
