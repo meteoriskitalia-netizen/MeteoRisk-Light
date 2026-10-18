@@ -1,11 +1,9 @@
 {
   "version": "fm2-1",
-  "generated_at": "2026-10-18T12:13:01Z",
+  "generated_at": "2026-10-18T18:11:59Z",
   "domain": "ecmwf_ifs025",
-  "reference_time": "2026-10-18T00:00:00Z",
+  "reference_time": "2026-10-18T06:00:00Z",
   "valid_times": [
-    "2026-10-18T00:00Z",
-    "2026-10-18T03:00Z",
     "2026-10-18T06:00Z",
     "2026-10-18T09:00Z",
     "2026-10-18T12:00Z",
@@ -45,46 +43,16 @@
     "2026-10-22T18:00Z",
     "2026-10-22T21:00Z",
     "2026-10-23T00:00Z",
+    "2026-10-23T03:00Z",
     "2026-10-23T06:00Z",
+    "2026-10-23T09:00Z",
     "2026-10-23T12:00Z",
+    "2026-10-23T15:00Z",
     "2026-10-23T18:00Z",
+    "2026-10-23T21:00Z",
     "2026-10-24T00:00Z",
-    "2026-10-24T06:00Z",
-    "2026-10-24T12:00Z",
-    "2026-10-24T18:00Z",
-    "2026-10-25T00:00Z",
-    "2026-10-25T06:00Z",
-    "2026-10-25T12:00Z",
-    "2026-10-25T18:00Z",
-    "2026-10-26T00:00Z",
-    "2026-10-26T06:00Z",
-    "2026-10-26T12:00Z",
-    "2026-10-26T18:00Z",
-    "2026-10-27T00:00Z",
-    "2026-10-27T06:00Z",
-    "2026-10-27T12:00Z",
-    "2026-10-27T18:00Z",
-    "2026-10-28T00:00Z",
-    "2026-10-28T06:00Z",
-    "2026-10-28T12:00Z",
-    "2026-10-28T18:00Z",
-    "2026-10-29T00:00Z",
-    "2026-10-29T06:00Z",
-    "2026-10-29T12:00Z",
-    "2026-10-29T18:00Z",
-    "2026-10-30T00:00Z",
-    "2026-10-30T06:00Z",
-    "2026-10-30T12:00Z",
-    "2026-10-30T18:00Z",
-    "2026-10-31T00:00Z",
-    "2026-10-31T06:00Z",
-    "2026-10-31T12:00Z",
-    "2026-10-31T18:00Z",
-    "2026-11-01T00:00Z",
-    "2026-11-01T06:00Z",
-    "2026-11-01T12:00Z",
-    "2026-11-01T18:00Z",
-    "2026-11-02T00:00Z"
+    "2026-10-24T03:00Z",
+    "2026-10-24T06:00Z"
   ],
   "bbox": {
     "lat_min": -90.0,
@@ -139,677 +107,301 @@
   "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
   "frames": [
     {
-      "valid_time": "2026-10-18T00:00Z",
-      "file": "2026-10-18T0000.om",
-      "bytes": 4969952,
-      "variables": 17
-    },
-    {
-      "valid_time": "2026-10-18T03:00Z",
-      "file": "2026-10-18T0300.om",
-      "bytes": 5141760,
-      "variables": 19
-    },
-    {
       "valid_time": "2026-10-18T06:00Z",
       "file": "2026-10-18T0600.om",
-      "bytes": 5140232,
-      "variables": 19
+      "bytes": 4969224,
+      "variables": 17
     },
     {
       "valid_time": "2026-10-18T09:00Z",
       "file": "2026-10-18T0900.om",
-      "bytes": 5159048,
+      "bytes": 5133896,
       "variables": 19
     },
     {
       "valid_time": "2026-10-18T12:00Z",
       "file": "2026-10-18T1200.om",
-      "bytes": 5162584,
+      "bytes": 5171600,
       "variables": 19
     },
     {
       "valid_time": "2026-10-18T15:00Z",
       "file": "2026-10-18T1500.om",
-      "bytes": 5178528,
+      "bytes": 5179664,
       "variables": 19
     },
     {
       "valid_time": "2026-10-18T18:00Z",
       "file": "2026-10-18T1800.om",
-      "bytes": 5173864,
+      "bytes": 5175512,
       "variables": 19
     },
     {
       "valid_time": "2026-10-18T21:00Z",
       "file": "2026-10-18T2100.om",
-      "bytes": 5162816,
+      "bytes": 5159664,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T00:00Z",
       "file": "2026-10-19T0000.om",
-      "bytes": 5176176,
+      "bytes": 5151200,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T03:00Z",
       "file": "2026-10-19T0300.om",
-      "bytes": 5172624,
+      "bytes": 5158472,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T06:00Z",
       "file": "2026-10-19T0600.om",
-      "bytes": 5170664,
+      "bytes": 5166672,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T09:00Z",
       "file": "2026-10-19T0900.om",
-      "bytes": 5185424,
+      "bytes": 5193400,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T12:00Z",
       "file": "2026-10-19T1200.om",
-      "bytes": 5187192,
+      "bytes": 5203696,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T15:00Z",
       "file": "2026-10-19T1500.om",
-      "bytes": 5212896,
+      "bytes": 5217360,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T18:00Z",
       "file": "2026-10-19T1800.om",
-      "bytes": 5201040,
+      "bytes": 5201536,
       "variables": 19
     },
     {
       "valid_time": "2026-10-19T21:00Z",
       "file": "2026-10-19T2100.om",
-      "bytes": 5179496,
+      "bytes": 5181480,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T00:00Z",
       "file": "2026-10-20T0000.om",
-      "bytes": 5167456,
+      "bytes": 5175808,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T03:00Z",
       "file": "2026-10-20T0300.om",
-      "bytes": 5163392,
+      "bytes": 5163816,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T06:00Z",
       "file": "2026-10-20T0600.om",
-      "bytes": 5166528,
+      "bytes": 5161336,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T09:00Z",
       "file": "2026-10-20T0900.om",
-      "bytes": 5190368,
+      "bytes": 5189016,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T12:00Z",
       "file": "2026-10-20T1200.om",
-      "bytes": 5199840,
+      "bytes": 5197672,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T15:00Z",
       "file": "2026-10-20T1500.om",
-      "bytes": 5215720,
+      "bytes": 5206232,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T18:00Z",
       "file": "2026-10-20T1800.om",
-      "bytes": 5197328,
+      "bytes": 5214080,
       "variables": 19
     },
     {
       "valid_time": "2026-10-20T21:00Z",
       "file": "2026-10-20T2100.om",
-      "bytes": 5196416,
+      "bytes": 5200624,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T00:00Z",
       "file": "2026-10-21T0000.om",
-      "bytes": 5187632,
+      "bytes": 5190096,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T03:00Z",
       "file": "2026-10-21T0300.om",
-      "bytes": 5180224,
+      "bytes": 5184312,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T06:00Z",
       "file": "2026-10-21T0600.om",
-      "bytes": 5187920,
+      "bytes": 5200936,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T09:00Z",
       "file": "2026-10-21T0900.om",
-      "bytes": 5213504,
+      "bytes": 5209784,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T12:00Z",
       "file": "2026-10-21T1200.om",
-      "bytes": 5219504,
+      "bytes": 5216480,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T15:00Z",
       "file": "2026-10-21T1500.om",
-      "bytes": 5204304,
+      "bytes": 5205544,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T18:00Z",
       "file": "2026-10-21T1800.om",
-      "bytes": 5204128,
+      "bytes": 5198968,
       "variables": 19
     },
     {
       "valid_time": "2026-10-21T21:00Z",
       "file": "2026-10-21T2100.om",
-      "bytes": 5083104,
-      "variables": 18
+      "bytes": 5196256,
+      "variables": 19
     },
     {
       "valid_time": "2026-10-22T00:00Z",
       "file": "2026-10-22T0000.om",
-      "bytes": 5067184,
-      "variables": 18
+      "bytes": 5188016,
+      "variables": 19
     },
     {
       "valid_time": "2026-10-22T03:00Z",
       "file": "2026-10-22T0300.om",
-      "bytes": 5061880,
+      "bytes": 5058976,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T06:00Z",
       "file": "2026-10-22T0600.om",
-      "bytes": 5091360,
+      "bytes": 5072968,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T09:00Z",
       "file": "2026-10-22T0900.om",
-      "bytes": 5107720,
+      "bytes": 5092968,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T12:00Z",
       "file": "2026-10-22T1200.om",
-      "bytes": 5107632,
+      "bytes": 5103728,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T15:00Z",
       "file": "2026-10-22T1500.om",
-      "bytes": 5103576,
+      "bytes": 5108328,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T18:00Z",
       "file": "2026-10-22T1800.om",
-      "bytes": 5095360,
+      "bytes": 5088080,
       "variables": 18
     },
     {
       "valid_time": "2026-10-22T21:00Z",
       "file": "2026-10-22T2100.om",
-      "bytes": 5082840,
+      "bytes": 5083032,
       "variables": 18
     },
     {
       "valid_time": "2026-10-23T00:00Z",
       "file": "2026-10-23T0000.om",
-      "bytes": 5068160,
+      "bytes": 5062112,
+      "variables": 18
+    },
+    {
+      "valid_time": "2026-10-23T03:00Z",
+      "file": "2026-10-23T0300.om",
+      "bytes": 5053920,
       "variables": 18
     },
     {
       "valid_time": "2026-10-23T06:00Z",
       "file": "2026-10-23T0600.om",
-      "bytes": 5055088,
+      "bytes": 5065496,
+      "variables": 18
+    },
+    {
+      "valid_time": "2026-10-23T09:00Z",
+      "file": "2026-10-23T0900.om",
+      "bytes": 5080232,
       "variables": 18
     },
     {
       "valid_time": "2026-10-23T12:00Z",
       "file": "2026-10-23T1200.om",
-      "bytes": 5061424,
+      "bytes": 5080536,
+      "variables": 18
+    },
+    {
+      "valid_time": "2026-10-23T15:00Z",
+      "file": "2026-10-23T1500.om",
+      "bytes": 5077768,
       "variables": 18
     },
     {
       "valid_time": "2026-10-23T18:00Z",
       "file": "2026-10-23T1800.om",
-      "bytes": 5055952,
+      "bytes": 5072072,
+      "variables": 18
+    },
+    {
+      "valid_time": "2026-10-23T21:00Z",
+      "file": "2026-10-23T2100.om",
+      "bytes": 5054032,
       "variables": 18
     },
     {
       "valid_time": "2026-10-24T00:00Z",
       "file": "2026-10-24T0000.om",
-      "bytes": 5022296,
+      "bytes": 5042664,
+      "variables": 18
+    },
+    {
+      "valid_time": "2026-10-24T03:00Z",
+      "file": "2026-10-24T0300.om",
+      "bytes": 5034472,
       "variables": 18
     },
     {
       "valid_time": "2026-10-24T06:00Z",
       "file": "2026-10-24T0600.om",
-      "bytes": 5164792,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-24T12:00Z",
-      "file": "2026-10-24T1200.om",
-      "bytes": 5170176,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-24T18:00Z",
-      "file": "2026-10-24T1800.om",
-      "bytes": 5144328,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-25T00:00Z",
-      "file": "2026-10-25T0000.om",
-      "bytes": 5134280,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-25T06:00Z",
-      "file": "2026-10-25T0600.om",
-      "bytes": 5168592,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-25T12:00Z",
-      "file": "2026-10-25T1200.om",
-      "bytes": 5180984,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-25T18:00Z",
-      "file": "2026-10-25T1800.om",
-      "bytes": 5157344,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-26T00:00Z",
-      "file": "2026-10-26T0000.om",
-      "bytes": 5114024,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-26T06:00Z",
-      "file": "2026-10-26T0600.om",
-      "bytes": 5119216,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-26T12:00Z",
-      "file": "2026-10-26T1200.om",
-      "bytes": 5149432,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-26T18:00Z",
-      "file": "2026-10-26T1800.om",
-      "bytes": 5137192,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-27T00:00Z",
-      "file": "2026-10-27T0000.om",
-      "bytes": 5122000,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-27T06:00Z",
-      "file": "2026-10-27T0600.om",
-      "bytes": 5146352,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-27T12:00Z",
-      "file": "2026-10-27T1200.om",
-      "bytes": 5155360,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-27T18:00Z",
-      "file": "2026-10-27T1800.om",
-      "bytes": 5154440,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-28T00:00Z",
-      "file": "2026-10-28T0000.om",
-      "bytes": 5121216,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-28T06:00Z",
-      "file": "2026-10-28T0600.om",
-      "bytes": 5119184,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-28T12:00Z",
-      "file": "2026-10-28T1200.om",
-      "bytes": 5117248,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-28T18:00Z",
-      "file": "2026-10-28T1800.om",
-      "bytes": 5126848,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-29T00:00Z",
-      "file": "2026-10-29T0000.om",
-      "bytes": 5110008,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-29T06:00Z",
-      "file": "2026-10-29T0600.om",
-      "bytes": 5098368,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-29T12:00Z",
-      "file": "2026-10-29T1200.om",
-      "bytes": 5131376,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-29T18:00Z",
-      "file": "2026-10-29T1800.om",
-      "bytes": 5138176,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-30T00:00Z",
-      "file": "2026-10-30T0000.om",
-      "bytes": 5133944,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-30T06:00Z",
-      "file": "2026-10-30T0600.om",
-      "bytes": 5145104,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-30T12:00Z",
-      "file": "2026-10-30T1200.om",
-      "bytes": 5176280,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-30T18:00Z",
-      "file": "2026-10-30T1800.om",
-      "bytes": 5196656,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-31T00:00Z",
-      "file": "2026-10-31T0000.om",
-      "bytes": 5161544,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-31T06:00Z",
-      "file": "2026-10-31T0600.om",
-      "bytes": 5174256,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-31T12:00Z",
-      "file": "2026-10-31T1200.om",
-      "bytes": 5205552,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-10-31T18:00Z",
-      "file": "2026-10-31T1800.om",
-      "bytes": 5194992,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-11-01T00:00Z",
-      "file": "2026-11-01T0000.om",
-      "bytes": 5179032,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-11-01T06:00Z",
-      "file": "2026-11-01T0600.om",
-      "bytes": 5174464,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-11-01T12:00Z",
-      "file": "2026-11-01T1200.om",
-      "bytes": 5198040,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-11-01T18:00Z",
-      "file": "2026-11-01T1800.om",
-      "bytes": 5212944,
-      "variables": 19
-    },
-    {
-      "valid_time": "2026-11-02T00:00Z",
-      "file": "2026-11-02T0000.om",
-      "bytes": 5169312,
-      "variables": 19
+      "bytes": 5040192,
+      "variables": 18
     }
   ],
   "variables": {
-    "2026-10-18T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      }
-    },
-    "2026-10-18T03:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
     "2026-10-18T06:00Z": {
       "temperature_2m": {
         "source_domain": "ecmwf_ifs025",
@@ -866,11 +458,6 @@
         "source_var": "wind_v_component_10m",
         "derived": false
       },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
       "cloud_cover": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "cloud_cover",
@@ -899,11 +486,6 @@
       "snow_depth": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
         "derived": false
       }
     },
@@ -3679,6 +3261,11 @@
         "source_var": "wind_v_component_10m",
         "derived": false
       },
+      "wind_gusts_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
       "cloud_cover": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "cloud_cover",
@@ -3769,6 +3356,11 @@
       "wind_v_component_10m": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_gusts_10m",
         "derived": false
       },
       "cloud_cover": {
@@ -4543,7 +4135,191 @@
         "derived": false
       }
     },
+    "2026-10-23T03:00Z": {
+      "temperature_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_u_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_u_component_10m",
+        "derived": false
+      },
+      "wind_v_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "precipitation",
+        "derived": false
+      }
+    },
     "2026-10-23T06:00Z": {
+      "temperature_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_u_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_u_component_10m",
+        "derived": false
+      },
+      "wind_v_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "precipitation",
+        "derived": false
+      }
+    },
+    "2026-10-23T09:00Z": {
       "temperature_2m": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "temperature_2m",
@@ -4727,7 +4503,191 @@
         "derived": false
       }
     },
+    "2026-10-23T15:00Z": {
+      "temperature_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_u_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_u_component_10m",
+        "derived": false
+      },
+      "wind_v_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "precipitation",
+        "derived": false
+      }
+    },
     "2026-10-23T18:00Z": {
+      "temperature_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_u_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_u_component_10m",
+        "derived": false
+      },
+      "wind_v_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "precipitation",
+        "derived": false
+      }
+    },
+    "2026-10-23T21:00Z": {
       "temperature_2m": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "temperature_2m",
@@ -4911,6 +4871,98 @@
         "derived": false
       }
     },
+    "2026-10-24T03:00Z": {
+      "temperature_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_u_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_u_component_10m",
+        "derived": false
+      },
+      "wind_v_component_10m": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "wind_v_component_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "ecmwf_ifs025",
+        "source_var": "precipitation",
+        "derived": false
+      }
+    },
     "2026-10-24T06:00Z": {
       "temperature_2m": {
         "source_domain": "ecmwf_ifs025",
@@ -4967,3406 +5019,6 @@
         "source_var": "wind_v_component_10m",
         "derived": false
       },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-24T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-24T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-25T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-25T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-25T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-25T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-26T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-26T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-26T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-26T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-27T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-27T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-27T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-27T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-28T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-28T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-28T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-28T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-29T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-29T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-29T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-29T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-30T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-30T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-30T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-30T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-31T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-31T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-31T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-10-31T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-11-01T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-11-01T06:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-11-01T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-11-01T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "precipitation",
-        "derived": false
-      }
-    },
-    "2026-11-02T00:00Z": {
-      "temperature_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_u_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_u_component_10m",
-        "derived": false
-      },
-      "wind_v_component_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_v_component_10m",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "ecmwf_ifs025",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
       "cloud_cover": {
         "source_domain": "ecmwf_ifs025",
         "source_var": "cloud_cover",
@@ -8405,106 +5057,99 @@
     }
   },
   "sizes": {
-    "2026-10-18T00:00Z": 4969952,
-    "2026-10-18T03:00Z": 5141760,
-    "2026-10-18T06:00Z": 5140232,
-    "2026-10-18T09:00Z": 5159048,
-    "2026-10-18T12:00Z": 5162584,
-    "2026-10-18T15:00Z": 5178528,
-    "2026-10-18T18:00Z": 5173864,
-    "2026-10-18T21:00Z": 5162816,
-    "2026-10-19T00:00Z": 5176176,
-    "2026-10-19T03:00Z": 5172624,
-    "2026-10-19T06:00Z": 5170664,
-    "2026-10-19T09:00Z": 5185424,
-    "2026-10-19T12:00Z": 5187192,
-    "2026-10-19T15:00Z": 5212896,
-    "2026-10-19T18:00Z": 5201040,
-    "2026-10-19T21:00Z": 5179496,
-    "2026-10-20T00:00Z": 5167456,
-    "2026-10-20T03:00Z": 5163392,
-    "2026-10-20T06:00Z": 5166528,
-    "2026-10-20T09:00Z": 5190368,
-    "2026-10-20T12:00Z": 5199840,
-    "2026-10-20T15:00Z": 5215720,
-    "2026-10-20T18:00Z": 5197328,
-    "2026-10-20T21:00Z": 5196416,
-    "2026-10-21T00:00Z": 5187632,
-    "2026-10-21T03:00Z": 5180224,
-    "2026-10-21T06:00Z": 5187920,
-    "2026-10-21T09:00Z": 5213504,
-    "2026-10-21T12:00Z": 5219504,
-    "2026-10-21T15:00Z": 5204304,
-    "2026-10-21T18:00Z": 5204128,
-    "2026-10-21T21:00Z": 5083104,
-    "2026-10-22T00:00Z": 5067184,
-    "2026-10-22T03:00Z": 5061880,
-    "2026-10-22T06:00Z": 5091360,
-    "2026-10-22T09:00Z": 5107720,
-    "2026-10-22T12:00Z": 5107632,
-    "2026-10-22T15:00Z": 5103576,
-    "2026-10-22T18:00Z": 5095360,
-    "2026-10-22T21:00Z": 5082840,
-    "2026-10-23T00:00Z": 5068160,
-    "2026-10-23T06:00Z": 5055088,
-    "2026-10-23T12:00Z": 5061424,
-    "2026-10-23T18:00Z": 5055952,
-    "2026-10-24T00:00Z": 5022296,
-    "2026-10-24T06:00Z": 5164792,
-    "2026-10-24T12:00Z": 5170176,
-    "2026-10-24T18:00Z": 5144328,
-    "2026-10-25T00:00Z": 5134280,
-    "2026-10-25T06:00Z": 5168592,
-    "2026-10-25T12:00Z": 5180984,
-    "2026-10-25T18:00Z": 5157344,
-    "2026-10-26T00:00Z": 5114024,
-    "2026-10-26T06:00Z": 5119216,
-    "2026-10-26T12:00Z": 5149432,
-    "2026-10-26T18:00Z": 5137192,
-    "2026-10-27T00:00Z": 5122000,
-    "2026-10-27T06:00Z": 5146352,
-    "2026-10-27T12:00Z": 5155360,
-    "2026-10-27T18:00Z": 5154440,
-    "2026-10-28T00:00Z": 5121216,
-    "2026-10-28T06:00Z": 5119184,
-    "2026-10-28T12:00Z": 5117248,
-    "2026-10-28T18:00Z": 5126848,
-    "2026-10-29T00:00Z": 5110008,
-    "2026-10-29T06:00Z": 5098368,
-    "2026-10-29T12:00Z": 5131376,
-    "2026-10-29T18:00Z": 5138176,
-    "2026-10-30T00:00Z": 5133944,
-    "2026-10-30T06:00Z": 5145104,
-    "2026-10-30T12:00Z": 5176280,
-    "2026-10-30T18:00Z": 5196656,
-    "2026-10-31T00:00Z": 5161544,
-    "2026-10-31T06:00Z": 5174256,
-    "2026-10-31T12:00Z": 5205552,
-    "2026-10-31T18:00Z": 5194992,
-    "2026-11-01T00:00Z": 5179032,
-    "2026-11-01T06:00Z": 5174464,
-    "2026-11-01T12:00Z": 5198040,
-    "2026-11-01T18:00Z": 5212944,
-    "2026-11-02T00:00Z": 5169312
+    "2026-10-18T06:00Z": 4969224,
+    "2026-10-18T09:00Z": 5133896,
+    "2026-10-18T12:00Z": 5171600,
+    "2026-10-18T15:00Z": 5179664,
+    "2026-10-18T18:00Z": 5175512,
+    "2026-10-18T21:00Z": 5159664,
+    "2026-10-19T00:00Z": 5151200,
+    "2026-10-19T03:00Z": 5158472,
+    "2026-10-19T06:00Z": 5166672,
+    "2026-10-19T09:00Z": 5193400,
+    "2026-10-19T12:00Z": 5203696,
+    "2026-10-19T15:00Z": 5217360,
+    "2026-10-19T18:00Z": 5201536,
+    "2026-10-19T21:00Z": 5181480,
+    "2026-10-20T00:00Z": 5175808,
+    "2026-10-20T03:00Z": 5163816,
+    "2026-10-20T06:00Z": 5161336,
+    "2026-10-20T09:00Z": 5189016,
+    "2026-10-20T12:00Z": 5197672,
+    "2026-10-20T15:00Z": 5206232,
+    "2026-10-20T18:00Z": 5214080,
+    "2026-10-20T21:00Z": 5200624,
+    "2026-10-21T00:00Z": 5190096,
+    "2026-10-21T03:00Z": 5184312,
+    "2026-10-21T06:00Z": 5200936,
+    "2026-10-21T09:00Z": 5209784,
+    "2026-10-21T12:00Z": 5216480,
+    "2026-10-21T15:00Z": 5205544,
+    "2026-10-21T18:00Z": 5198968,
+    "2026-10-21T21:00Z": 5196256,
+    "2026-10-22T00:00Z": 5188016,
+    "2026-10-22T03:00Z": 5058976,
+    "2026-10-22T06:00Z": 5072968,
+    "2026-10-22T09:00Z": 5092968,
+    "2026-10-22T12:00Z": 5103728,
+    "2026-10-22T15:00Z": 5108328,
+    "2026-10-22T18:00Z": 5088080,
+    "2026-10-22T21:00Z": 5083032,
+    "2026-10-23T00:00Z": 5062112,
+    "2026-10-23T03:00Z": 5053920,
+    "2026-10-23T06:00Z": 5065496,
+    "2026-10-23T09:00Z": 5080232,
+    "2026-10-23T12:00Z": 5080536,
+    "2026-10-23T15:00Z": 5077768,
+    "2026-10-23T18:00Z": 5072072,
+    "2026-10-23T21:00Z": 5054032,
+    "2026-10-24T00:00Z": 5042664,
+    "2026-10-24T03:00Z": 5034472,
+    "2026-10-24T06:00Z": 5040192
   },
   "pruned": [
-    "2026-10-17T1800.om",
-    "2026-10-17T2100.om"
+    "2026-10-18T0000.om",
+    "2026-10-18T0300.om",
+    "2026-10-24T1200.om",
+    "2026-10-24T1800.om",
+    "2026-10-25T0000.om",
+    "2026-10-25T0600.om",
+    "2026-10-25T1200.om",
+    "2026-10-25T1800.om",
+    "2026-10-26T0000.om",
+    "2026-10-26T0600.om",
+    "2026-10-26T1200.om",
+    "2026-10-26T1800.om",
+    "2026-10-27T0000.om",
+    "2026-10-27T0600.om",
+    "2026-10-27T1200.om",
+    "2026-10-27T1800.om",
+    "2026-10-28T0000.om",
+    "2026-10-28T0600.om",
+    "2026-10-28T1200.om",
+    "2026-10-28T1800.om",
+    "2026-10-29T0000.om",
+    "2026-10-29T0600.om",
+    "2026-10-29T1200.om",
+    "2026-10-29T1800.om",
+    "2026-10-30T0000.om",
+    "2026-10-30T0600.om",
+    "2026-10-30T1200.om",
+    "2026-10-30T1800.om",
+    "2026-10-31T0000.om",
+    "2026-10-31T0600.om",
+    "2026-10-31T1200.om",
+    "2026-10-31T1800.om",
+    "2026-11-01T0000.om",
+    "2026-11-01T0600.om",
+    "2026-11-01T1200.om",
+    "2026-11-01T1800.om",
+    "2026-11-02T0000.om"
   ],
   "warnings": [
-    "2026-10-18T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-18T00:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
-    "2026-10-18T00:00Z: variabile 'precipitation' assente nel dominio 'ecmwf_ifs025' (precipitation): omessa",
-    "2026-10-18T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-18T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-18T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-18T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-18T03:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-18T03:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-18T03:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-18T03:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-18T03:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-18T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-18T06:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-18T06:00Z: variabile 'precipitation' assente nel dominio 'ecmwf_ifs025' (precipitation): omessa",
     "2026-10-18T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-18T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-18T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
@@ -8650,13 +5295,11 @@
     "2026-10-21T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-21T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-21T21:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-21T21:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-21T21:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-21T21:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-21T21:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-21T21:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-22T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-22T00:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-22T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-22T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-22T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
@@ -8709,209 +5352,65 @@
     "2026-10-23T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-23T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-23T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
+    "2026-10-23T03:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-23T03:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-23T03:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
+    "2026-10-23T03:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
+    "2026-10-23T03:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
+    "2026-10-23T03:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-23T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
     "2026-10-23T06:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-23T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-23T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-23T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-23T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
+    "2026-10-23T09:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-23T09:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-23T09:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
+    "2026-10-23T09:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
+    "2026-10-23T09:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
+    "2026-10-23T09:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-23T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
     "2026-10-23T12:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-23T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-23T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-23T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-23T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
+    "2026-10-23T15:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-23T15:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-23T15:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
+    "2026-10-23T15:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
+    "2026-10-23T15:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
+    "2026-10-23T15:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-23T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
     "2026-10-23T18:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-23T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-23T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-23T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-23T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
+    "2026-10-23T21:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-23T21:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-23T21:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
+    "2026-10-23T21:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
+    "2026-10-23T21:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
+    "2026-10-23T21:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-24T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
     "2026-10-24T00:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-24T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-24T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-24T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
     "2026-10-24T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
+    "2026-10-24T03:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-24T03:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
+    "2026-10-24T03:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
+    "2026-10-24T03:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
+    "2026-10-24T03:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
+    "2026-10-24T03:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
     "2026-10-24T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
+    "2026-10-24T06:00Z: variabile 'wind_gusts_10m' assente nel dominio 'ecmwf_ifs025' (wind_gusts_10m): omessa",
     "2026-10-24T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
     "2026-10-24T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
     "2026-10-24T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-24T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-24T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-24T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-24T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-24T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-24T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-24T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-24T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-24T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-24T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-24T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-25T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-25T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-25T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-25T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-25T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-25T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-25T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-25T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-25T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-25T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-25T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-25T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-25T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-25T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-25T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-25T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-25T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-25T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-25T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-25T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-26T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-26T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-26T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-26T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-26T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-26T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-26T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-26T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-26T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-26T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-26T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-26T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-26T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-26T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-26T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-26T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-26T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-26T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-26T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-26T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-27T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-27T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-27T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-27T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-27T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-27T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-27T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-27T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-27T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-27T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-27T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-27T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-27T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-27T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-27T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-27T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-27T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-27T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-27T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-27T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-28T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-28T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-28T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-28T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-28T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-28T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-28T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-28T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-28T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-28T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-28T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-28T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-28T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-28T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-28T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-28T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-28T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-28T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-28T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-28T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-29T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-29T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-29T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-29T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-29T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-29T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-29T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-29T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-29T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-29T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-29T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-29T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-29T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-29T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-29T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-29T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-29T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-29T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-29T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-29T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-30T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-30T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-30T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-30T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-30T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-30T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-30T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-30T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-30T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-30T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-30T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-30T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-30T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-30T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-30T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-30T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-30T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-30T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-30T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-30T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-31T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-31T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-31T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-31T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-31T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-31T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-31T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-31T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-31T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-31T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-31T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-31T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-31T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-31T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-31T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-10-31T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-10-31T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-10-31T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-10-31T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-10-31T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-11-01T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-11-01T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-11-01T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-11-01T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-11-01T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-11-01T06:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-11-01T06:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-11-01T06:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-11-01T06:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-11-01T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-11-01T12:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-11-01T12:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-11-01T12:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-11-01T12:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-11-01T12:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-11-01T18:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-11-01T18:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-11-01T18:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-11-01T18:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-11-01T18:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa",
-    "2026-11-02T00:00Z: variabile 'surface_pressure' assente nel dominio 'ecmwf_ifs025' (surface_pressure): omessa",
-    "2026-11-02T00:00Z: variabile 'rain' assente nel dominio 'ecmwf_ifs025' (rain): omessa",
-    "2026-11-02T00:00Z: variabile 'showers' assente nel dominio 'ecmwf_ifs025' (showers): omessa",
-    "2026-11-02T00:00Z: variabile 'weather_code' assente nel dominio 'ecmwf_ifs025' (weather_code): omessa",
-    "2026-11-02T00:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa"
+    "2026-10-24T06:00Z: variabile 'freezing_level_height' assente nel dominio 'ecmwf_ifs025' (freezing_level_height): omessa"
   ]
 }
