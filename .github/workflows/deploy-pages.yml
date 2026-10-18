@@ -7,9 +7,12 @@ name: Deploy Pages (manuale / consolidamento)
 # update-weather-data.yml (stesso ordine, stesse guardie e stessi path):
 #   - cp mri-light-1.2.4.9.html _site/index.html
 #   - data/latest, data/geography, data/radar (con restore dell'archivio
-#     rolling radar-history), data/phenomena, data/fm2 (cache mappe
-#     previsionali V2), data/fm2-rendered (WebP pre-renderizzati delle mappe
-#     previsionali V2) e satellite (con restore della finestra satellite-cache).
+#     rolling radar-history), data/phenomena e satellite (con restore della
+#     finestra satellite-cache).
+# NON copiamo data/fm2 ne' data/fm2-rendered: il client li legge da
+# raw.githubusercontent.com (FM_CACHE_BASE / FM_RENDERED_BASE); copiarli
+# gonfiava l'artefatto a ~8,6 GB e faceva fallire/cancellare il deploy
+# (limite Pages).
 # Senza questi restore un deploy manuale DROPPEREBBE da Pages i dati che
 # vivono solo sui branch dedicati (radar-history / satellite-cache).
 # Trigger: solo workflow_dispatch (manuale) + repository_dispatch (esterno,
@@ -29,7 +32,11 @@ permissions:
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # timeout 10 -> 30: il checkout del repo (main con ~8,6 GB di dati in git)
+    # prende ~6 min, + ~1 min di build + upload/deploy Pages; con 10 minuti il
+    # deploy veniva cancellato. L'artefatto _site resta ~37 MB perche' NON
+    # copiamo data/fm2 ne' data/fm2-rendered (letti dal client via raw).
+    timeout-minutes: 30
     # Stesso group "pages-deploy" usato da radar-engine A LIVELLO DI JOB: i
     # deploy dei workflow che pubblicano su Pages si serializzano tra loro
     # (cancel-in-progress: false -> le run in coda proseguono).
@@ -45,7 +52,7 @@ jobs:
 
       # Build dell'artefatto replicando radar-engine.yml / update-weather-data.yml:
       # app + tutti i dati gia' pubblicati su main + restore dei branch dedicati.
-      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + data/fm2 + data/fm2-rendered + satellite)
+      - name: Build sito statico Pages (app + data/latest + data/geography + data/radar + data/phenomena + satellite)
         run: |
           mkdir -p _site/data
           cp mri-light-1.2.4.9.html _site/index.html
@@ -56,8 +63,6 @@ jobs:
           fi
           if [ -d data/radar ]; then cp -R data/radar _site/data/radar; fi
           if [ -d data/phenomena ]; then cp -R data/phenomena _site/data/phenomena; fi
-          if [ -d data/fm2 ]; then cp -R data/fm2 _site/data/fm2; fi
-          if [ -d data/fm2-rendered ]; then cp -R data/fm2-rendered _site/data/fm2-rendered; fi
           if git fetch --depth 1 origin "+satellite-cache:refs/heads/satellite-cache-base" 2>/dev/null && git restore --source satellite-cache-base --worktree -- satellite 2>/dev/null; then
             echo "[INFO] Finestra satellite/ ripristinata da satellite-cache per l'artifact."
           fi

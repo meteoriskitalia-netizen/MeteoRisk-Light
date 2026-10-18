@@ -73,10 +73,10 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #        (nessuna finestra in cui l'indice punta a file non ancora pubblicati).
 #        Zero shard validi => l'indice non viene scritto, il passo fallisce e
 #        nulla viene committato.
-#   - Il deploy Pages NON e' toccato qui: data/fm2 e data/fm2-rendered arrivano su
-#     Pages tramite la build _site di deploy-pages / update-weather-data / radar-engine
-#     (cp -R data/fm2 e cp -R data/fm2-rendered: ricorsivi, coprono la struttura
-#     per-dominio e per-regione), come per data/phenomena.
+#   - Il deploy Pages NON e' toccato qui: i WebP vengono pubblicati su GitHub raw
+#     (raw.githubusercontent.com), NON su Pages; i workflow Pages non li copiano piu'
+#     (data/fm2 e data/fm2-rendered sono letti dal client via FM_CACHE_BASE /
+#     FM_RENDERED_BASE).
 
 on:
   workflow_dispatch:
