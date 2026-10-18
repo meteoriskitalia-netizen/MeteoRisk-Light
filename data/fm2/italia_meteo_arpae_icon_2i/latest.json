@@ -1,21 +1,9 @@
 {
   "version": "fm2-1",
-  "generated_at": "2026-10-17T20:47:44Z",
+  "generated_at": "2026-10-18T06:11:27Z",
   "domain": "italia_meteo_arpae_icon_2i",
-  "reference_time": "2026-10-17T12:00:00Z",
+  "reference_time": "2026-10-18T00:00:00Z",
   "valid_times": [
-    "2026-10-17T12:00Z",
-    "2026-10-17T13:00Z",
-    "2026-10-17T14:00Z",
-    "2026-10-17T15:00Z",
-    "2026-10-17T16:00Z",
-    "2026-10-17T17:00Z",
-    "2026-10-17T18:00Z",
-    "2026-10-17T19:00Z",
-    "2026-10-17T20:00Z",
-    "2026-10-17T21:00Z",
-    "2026-10-17T22:00Z",
-    "2026-10-17T23:00Z",
     "2026-10-18T00:00Z",
     "2026-10-18T01:00Z",
     "2026-10-18T02:00Z",
@@ -53,14 +41,26 @@
     "2026-10-19T10:00Z",
     "2026-10-19T11:00Z",
     "2026-10-19T12:00Z",
+    "2026-10-19T13:00Z",
+    "2026-10-19T14:00Z",
     "2026-10-19T15:00Z",
+    "2026-10-19T16:00Z",
+    "2026-10-19T17:00Z",
     "2026-10-19T18:00Z",
+    "2026-10-19T19:00Z",
+    "2026-10-19T20:00Z",
     "2026-10-19T21:00Z",
+    "2026-10-19T22:00Z",
+    "2026-10-19T23:00Z",
     "2026-10-20T00:00Z",
     "2026-10-20T03:00Z",
     "2026-10-20T06:00Z",
     "2026-10-20T09:00Z",
-    "2026-10-20T12:00Z"
+    "2026-10-20T12:00Z",
+    "2026-10-20T15:00Z",
+    "2026-10-20T18:00Z",
+    "2026-10-20T21:00Z",
+    "2026-10-21T00:00Z"
   ],
   "bbox": {
     "lat_min": 36.5,
@@ -115,1618 +115,349 @@
   "license": "Open-Meteo (CC BY 4.0) — attribuzione richiesta",
   "frames": [
     {
-      "valid_time": "2026-10-17T12:00Z",
-      "file": "2026-10-17T1200.om",
-      "bytes": 1246224,
-      "variables": 18
-    },
-    {
-      "valid_time": "2026-10-17T13:00Z",
-      "file": "2026-10-17T1300.om",
-      "bytes": 1266328,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T14:00Z",
-      "file": "2026-10-17T1400.om",
-      "bytes": 1280832,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T15:00Z",
-      "file": "2026-10-17T1500.om",
-      "bytes": 1283992,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T16:00Z",
-      "file": "2026-10-17T1600.om",
-      "bytes": 1283544,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T17:00Z",
-      "file": "2026-10-17T1700.om",
-      "bytes": 1282648,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T18:00Z",
-      "file": "2026-10-17T1800.om",
-      "bytes": 1288640,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T19:00Z",
-      "file": "2026-10-17T1900.om",
-      "bytes": 1303312,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T20:00Z",
-      "file": "2026-10-17T2000.om",
-      "bytes": 1317944,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T21:00Z",
-      "file": "2026-10-17T2100.om",
-      "bytes": 1338632,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T22:00Z",
-      "file": "2026-10-17T2200.om",
-      "bytes": 1358056,
-      "variables": 21
-    },
-    {
-      "valid_time": "2026-10-17T23:00Z",
-      "file": "2026-10-17T2300.om",
-      "bytes": 1378312,
-      "variables": 21
-    },
-    {
       "valid_time": "2026-10-18T00:00Z",
       "file": "2026-10-18T0000.om",
-      "bytes": 1397256,
-      "variables": 21
+      "bytes": 1383224,
+      "variables": 18
     },
     {
       "valid_time": "2026-10-18T01:00Z",
       "file": "2026-10-18T0100.om",
-      "bytes": 1411440,
+      "bytes": 1409520,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T02:00Z",
       "file": "2026-10-18T0200.om",
-      "bytes": 1412816,
+      "bytes": 1422408,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T03:00Z",
       "file": "2026-10-18T0300.om",
-      "bytes": 1419296,
+      "bytes": 1427512,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T04:00Z",
       "file": "2026-10-18T0400.om",
-      "bytes": 1425008,
+      "bytes": 1422680,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T05:00Z",
       "file": "2026-10-18T0500.om",
-      "bytes": 1418408,
+      "bytes": 1415944,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T06:00Z",
       "file": "2026-10-18T0600.om",
-      "bytes": 1424320,
+      "bytes": 1413408,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T07:00Z",
       "file": "2026-10-18T0700.om",
-      "bytes": 1397128,
+      "bytes": 1391032,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T08:00Z",
       "file": "2026-10-18T0800.om",
-      "bytes": 1381520,
+      "bytes": 1378224,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T09:00Z",
       "file": "2026-10-18T0900.om",
-      "bytes": 1394376,
+      "bytes": 1397936,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T10:00Z",
       "file": "2026-10-18T1000.om",
-      "bytes": 1419872,
+      "bytes": 1427504,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T11:00Z",
       "file": "2026-10-18T1100.om",
-      "bytes": 1437080,
+      "bytes": 1441192,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T12:00Z",
       "file": "2026-10-18T1200.om",
-      "bytes": 1441928,
+      "bytes": 1447240,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T13:00Z",
       "file": "2026-10-18T1300.om",
-      "bytes": 1423328,
+      "bytes": 1435264,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T14:00Z",
       "file": "2026-10-18T1400.om",
-      "bytes": 1401256,
+      "bytes": 1406520,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T15:00Z",
       "file": "2026-10-18T1500.om",
-      "bytes": 1377456,
+      "bytes": 1365320,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T16:00Z",
       "file": "2026-10-18T1600.om",
-      "bytes": 1344304,
+      "bytes": 1333664,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T17:00Z",
       "file": "2026-10-18T1700.om",
-      "bytes": 1327904,
+      "bytes": 1313128,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T18:00Z",
       "file": "2026-10-18T1800.om",
-      "bytes": 1328912,
+      "bytes": 1316432,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T19:00Z",
       "file": "2026-10-18T1900.om",
-      "bytes": 1329024,
+      "bytes": 1329256,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T20:00Z",
       "file": "2026-10-18T2000.om",
-      "bytes": 1328752,
+      "bytes": 1335048,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T21:00Z",
       "file": "2026-10-18T2100.om",
-      "bytes": 1326984,
+      "bytes": 1335800,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T22:00Z",
       "file": "2026-10-18T2200.om",
-      "bytes": 1327096,
+      "bytes": 1332936,
       "variables": 21
     },
     {
       "valid_time": "2026-10-18T23:00Z",
       "file": "2026-10-18T2300.om",
-      "bytes": 1331624,
+      "bytes": 1327632,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T00:00Z",
       "file": "2026-10-19T0000.om",
-      "bytes": 1333992,
+      "bytes": 1314328,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T01:00Z",
       "file": "2026-10-19T0100.om",
-      "bytes": 1322592,
+      "bytes": 1300304,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T02:00Z",
       "file": "2026-10-19T0200.om",
-      "bytes": 1309632,
+      "bytes": 1291008,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T03:00Z",
       "file": "2026-10-19T0300.om",
-      "bytes": 1301672,
+      "bytes": 1278344,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T04:00Z",
       "file": "2026-10-19T0400.om",
-      "bytes": 1293016,
+      "bytes": 1269808,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T05:00Z",
       "file": "2026-10-19T0500.om",
-      "bytes": 1279376,
+      "bytes": 1269160,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T06:00Z",
       "file": "2026-10-19T0600.om",
-      "bytes": 1262784,
+      "bytes": 1261536,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T07:00Z",
       "file": "2026-10-19T0700.om",
-      "bytes": 1240480,
+      "bytes": 1231376,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T08:00Z",
       "file": "2026-10-19T0800.om",
-      "bytes": 1220328,
+      "bytes": 1203832,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T09:00Z",
       "file": "2026-10-19T0900.om",
-      "bytes": 1232240,
+      "bytes": 1211520,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T10:00Z",
       "file": "2026-10-19T1000.om",
-      "bytes": 1263760,
+      "bytes": 1252776,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T11:00Z",
       "file": "2026-10-19T1100.om",
-      "bytes": 1289776,
+      "bytes": 1283488,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T12:00Z",
       "file": "2026-10-19T1200.om",
-      "bytes": 1297680,
+      "bytes": 1294672,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T13:00Z",
+      "file": "2026-10-19T1300.om",
+      "bytes": 1289336,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T14:00Z",
+      "file": "2026-10-19T1400.om",
+      "bytes": 1274720,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T15:00Z",
       "file": "2026-10-19T1500.om",
-      "bytes": 1271984,
+      "bytes": 1259416,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T16:00Z",
+      "file": "2026-10-19T1600.om",
+      "bytes": 1236912,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T17:00Z",
+      "file": "2026-10-19T1700.om",
+      "bytes": 1232112,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T18:00Z",
       "file": "2026-10-19T1800.om",
-      "bytes": 1230712,
+      "bytes": 1237600,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T19:00Z",
+      "file": "2026-10-19T1900.om",
+      "bytes": 1240984,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T20:00Z",
+      "file": "2026-10-19T2000.om",
+      "bytes": 1244600,
       "variables": 21
     },
     {
       "valid_time": "2026-10-19T21:00Z",
       "file": "2026-10-19T2100.om",
-      "bytes": 1263808,
+      "bytes": 1245528,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T22:00Z",
+      "file": "2026-10-19T2200.om",
+      "bytes": 1256672,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-19T23:00Z",
+      "file": "2026-10-19T2300.om",
+      "bytes": 1273008,
       "variables": 21
     },
     {
       "valid_time": "2026-10-20T00:00Z",
       "file": "2026-10-20T0000.om",
-      "bytes": 1300392,
+      "bytes": 1286872,
       "variables": 21
     },
     {
       "valid_time": "2026-10-20T03:00Z",
       "file": "2026-10-20T0300.om",
-      "bytes": 1333568,
+      "bytes": 1319936,
       "variables": 21
     },
     {
       "valid_time": "2026-10-20T06:00Z",
       "file": "2026-10-20T0600.om",
-      "bytes": 1347120,
+      "bytes": 1305720,
       "variables": 21
     },
     {
       "valid_time": "2026-10-20T09:00Z",
       "file": "2026-10-20T0900.om",
-      "bytes": 1333840,
+      "bytes": 1299744,
       "variables": 21
     },
     {
       "valid_time": "2026-10-20T12:00Z",
       "file": "2026-10-20T1200.om",
-      "bytes": 1382776,
+      "bytes": 1375608,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-20T15:00Z",
+      "file": "2026-10-20T1500.om",
+      "bytes": 1360992,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-20T18:00Z",
+      "file": "2026-10-20T1800.om",
+      "bytes": 1325168,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-20T21:00Z",
+      "file": "2026-10-20T2100.om",
+      "bytes": 1370088,
+      "variables": 21
+    },
+    {
+      "valid_time": "2026-10-21T00:00Z",
+      "file": "2026-10-21T0000.om",
+      "bytes": 1428760,
       "variables": 21
     }
   ],
   "variables": {
-    "2026-10-17T12:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T13:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T14:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T15:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T16:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T17:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T18:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T19:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T20:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T21:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T22:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
-    "2026-10-17T23:00Z": {
-      "temperature_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_2m",
-        "derived": false
-      },
-      "temperature_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_850hPa",
-        "derived": false
-      },
-      "temperature_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "temperature_500hPa",
-        "derived": false
-      },
-      "relative_humidity_2m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_2m",
-        "derived": false
-      },
-      "relative_humidity_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "relative_humidity_850hPa",
-        "derived": false
-      },
-      "pressure_msl": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "pressure_msl",
-        "derived": false
-      },
-      "geopotential_height_500hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_500hPa",
-        "derived": false
-      },
-      "geopotential_height_850hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_850hPa",
-        "derived": false
-      },
-      "geopotential_height_1000hPa": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "geopotential_height_1000hPa",
-        "derived": false
-      },
-      "wind_gusts_10m": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "wind_gusts_10m",
-        "derived": false
-      },
-      "cloud_cover": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover",
-        "derived": false
-      },
-      "cloud_cover_low": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_low",
-        "derived": false
-      },
-      "cloud_cover_mid": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_mid",
-        "derived": false
-      },
-      "cloud_cover_high": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cloud_cover_high",
-        "derived": false
-      },
-      "cape": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "cape",
-        "derived": false
-      },
-      "snow_depth": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
-        "derived": false
-      },
-      "weather_code": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "weather_code",
-        "derived": false
-      },
-      "freezing_level_height": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "freezing_level_height",
-        "derived": false
-      }
-    },
     "2026-10-18T00:00Z": {
       "temperature_2m": {
         "source_domain": "italia_meteo_arpae_icon_2i",
@@ -1806,21 +537,6 @@
       "snow_depth": {
         "source_domain": "italia_meteo_arpae_icon_2i",
         "source_var": "snow_depth",
-        "derived": false
-      },
-      "precipitation": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "precipitation",
-        "derived": false
-      },
-      "rain": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "rain",
-        "derived": false
-      },
-      "showers": {
-        "source_domain": "italia_meteo_arpae_icon_2i",
-        "source_var": "showers",
         "derived": false
       },
       "weather_code": {
@@ -5686,7 +4402,435 @@
         "derived": false
       }
     },
+    "2026-10-19T13:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T14:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
     "2026-10-19T15:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T16:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T17:00Z": {
       "temperature_2m": {
         "source_domain": "italia_meteo_arpae_icon_2i",
         "source_var": "temperature_2m",
@@ -5900,7 +5044,435 @@
         "derived": false
       }
     },
+    "2026-10-19T19:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T20:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
     "2026-10-19T21:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T22:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-19T23:00Z": {
       "temperature_2m": {
         "source_domain": "italia_meteo_arpae_icon_2i",
         "source_var": "temperature_2m",
@@ -6541,124 +6113,516 @@
         "source_var": "freezing_level_height",
         "derived": false
       }
+    },
+    "2026-10-20T15:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-20T18:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-20T21:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
+    },
+    "2026-10-21T00:00Z": {
+      "temperature_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_2m",
+        "derived": false
+      },
+      "temperature_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_850hPa",
+        "derived": false
+      },
+      "temperature_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "temperature_500hPa",
+        "derived": false
+      },
+      "relative_humidity_2m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_2m",
+        "derived": false
+      },
+      "relative_humidity_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "relative_humidity_850hPa",
+        "derived": false
+      },
+      "pressure_msl": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "pressure_msl",
+        "derived": false
+      },
+      "geopotential_height_500hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_500hPa",
+        "derived": false
+      },
+      "geopotential_height_850hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_850hPa",
+        "derived": false
+      },
+      "geopotential_height_1000hPa": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "geopotential_height_1000hPa",
+        "derived": false
+      },
+      "wind_gusts_10m": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "wind_gusts_10m",
+        "derived": false
+      },
+      "cloud_cover": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover",
+        "derived": false
+      },
+      "cloud_cover_low": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_low",
+        "derived": false
+      },
+      "cloud_cover_mid": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_mid",
+        "derived": false
+      },
+      "cloud_cover_high": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cloud_cover_high",
+        "derived": false
+      },
+      "cape": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "cape",
+        "derived": false
+      },
+      "snow_depth": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "snow_depth",
+        "derived": false
+      },
+      "precipitation": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "precipitation",
+        "derived": false
+      },
+      "rain": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "rain",
+        "derived": false
+      },
+      "showers": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "showers",
+        "derived": false
+      },
+      "weather_code": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "weather_code",
+        "derived": false
+      },
+      "freezing_level_height": {
+        "source_domain": "italia_meteo_arpae_icon_2i",
+        "source_var": "freezing_level_height",
+        "derived": false
+      }
     }
   },
   "sizes": {
-    "2026-10-17T12:00Z": 1246224,
-    "2026-10-17T13:00Z": 1266328,
-    "2026-10-17T14:00Z": 1280832,
-    "2026-10-17T15:00Z": 1283992,
-    "2026-10-17T16:00Z": 1283544,
-    "2026-10-17T17:00Z": 1282648,
-    "2026-10-17T18:00Z": 1288640,
-    "2026-10-17T19:00Z": 1303312,
-    "2026-10-17T20:00Z": 1317944,
-    "2026-10-17T21:00Z": 1338632,
-    "2026-10-17T22:00Z": 1358056,
-    "2026-10-17T23:00Z": 1378312,
-    "2026-10-18T00:00Z": 1397256,
-    "2026-10-18T01:00Z": 1411440,
-    "2026-10-18T02:00Z": 1412816,
-    "2026-10-18T03:00Z": 1419296,
-    "2026-10-18T04:00Z": 1425008,
-    "2026-10-18T05:00Z": 1418408,
-    "2026-10-18T06:00Z": 1424320,
-    "2026-10-18T07:00Z": 1397128,
-    "2026-10-18T08:00Z": 1381520,
-    "2026-10-18T09:00Z": 1394376,
-    "2026-10-18T10:00Z": 1419872,
-    "2026-10-18T11:00Z": 1437080,
-    "2026-10-18T12:00Z": 1441928,
-    "2026-10-18T13:00Z": 1423328,
-    "2026-10-18T14:00Z": 1401256,
-    "2026-10-18T15:00Z": 1377456,
-    "2026-10-18T16:00Z": 1344304,
-    "2026-10-18T17:00Z": 1327904,
-    "2026-10-18T18:00Z": 1328912,
-    "2026-10-18T19:00Z": 1329024,
-    "2026-10-18T20:00Z": 1328752,
-    "2026-10-18T21:00Z": 1326984,
-    "2026-10-18T22:00Z": 1327096,
-    "2026-10-18T23:00Z": 1331624,
-    "2026-10-19T00:00Z": 1333992,
-    "2026-10-19T01:00Z": 1322592,
-    "2026-10-19T02:00Z": 1309632,
-    "2026-10-19T03:00Z": 1301672,
-    "2026-10-19T04:00Z": 1293016,
-    "2026-10-19T05:00Z": 1279376,
-    "2026-10-19T06:00Z": 1262784,
-    "2026-10-19T07:00Z": 1240480,
-    "2026-10-19T08:00Z": 1220328,
-    "2026-10-19T09:00Z": 1232240,
-    "2026-10-19T10:00Z": 1263760,
-    "2026-10-19T11:00Z": 1289776,
-    "2026-10-19T12:00Z": 1297680,
-    "2026-10-19T15:00Z": 1271984,
-    "2026-10-19T18:00Z": 1230712,
-    "2026-10-19T21:00Z": 1263808,
-    "2026-10-20T00:00Z": 1300392,
-    "2026-10-20T03:00Z": 1333568,
-    "2026-10-20T06:00Z": 1347120,
-    "2026-10-20T09:00Z": 1333840,
-    "2026-10-20T12:00Z": 1382776
+    "2026-10-18T00:00Z": 1383224,
+    "2026-10-18T01:00Z": 1409520,
+    "2026-10-18T02:00Z": 1422408,
+    "2026-10-18T03:00Z": 1427512,
+    "2026-10-18T04:00Z": 1422680,
+    "2026-10-18T05:00Z": 1415944,
+    "2026-10-18T06:00Z": 1413408,
+    "2026-10-18T07:00Z": 1391032,
+    "2026-10-18T08:00Z": 1378224,
+    "2026-10-18T09:00Z": 1397936,
+    "2026-10-18T10:00Z": 1427504,
+    "2026-10-18T11:00Z": 1441192,
+    "2026-10-18T12:00Z": 1447240,
+    "2026-10-18T13:00Z": 1435264,
+    "2026-10-18T14:00Z": 1406520,
+    "2026-10-18T15:00Z": 1365320,
+    "2026-10-18T16:00Z": 1333664,
+    "2026-10-18T17:00Z": 1313128,
+    "2026-10-18T18:00Z": 1316432,
+    "2026-10-18T19:00Z": 1329256,
+    "2026-10-18T20:00Z": 1335048,
+    "2026-10-18T21:00Z": 1335800,
+    "2026-10-18T22:00Z": 1332936,
+    "2026-10-18T23:00Z": 1327632,
+    "2026-10-19T00:00Z": 1314328,
+    "2026-10-19T01:00Z": 1300304,
+    "2026-10-19T02:00Z": 1291008,
+    "2026-10-19T03:00Z": 1278344,
+    "2026-10-19T04:00Z": 1269808,
+    "2026-10-19T05:00Z": 1269160,
+    "2026-10-19T06:00Z": 1261536,
+    "2026-10-19T07:00Z": 1231376,
+    "2026-10-19T08:00Z": 1203832,
+    "2026-10-19T09:00Z": 1211520,
+    "2026-10-19T10:00Z": 1252776,
+    "2026-10-19T11:00Z": 1283488,
+    "2026-10-19T12:00Z": 1294672,
+    "2026-10-19T13:00Z": 1289336,
+    "2026-10-19T14:00Z": 1274720,
+    "2026-10-19T15:00Z": 1259416,
+    "2026-10-19T16:00Z": 1236912,
+    "2026-10-19T17:00Z": 1232112,
+    "2026-10-19T18:00Z": 1237600,
+    "2026-10-19T19:00Z": 1240984,
+    "2026-10-19T20:00Z": 1244600,
+    "2026-10-19T21:00Z": 1245528,
+    "2026-10-19T22:00Z": 1256672,
+    "2026-10-19T23:00Z": 1273008,
+    "2026-10-20T00:00Z": 1286872,
+    "2026-10-20T03:00Z": 1319936,
+    "2026-10-20T06:00Z": 1305720,
+    "2026-10-20T09:00Z": 1299744,
+    "2026-10-20T12:00Z": 1375608,
+    "2026-10-20T15:00Z": 1360992,
+    "2026-10-20T18:00Z": 1325168,
+    "2026-10-20T21:00Z": 1370088,
+    "2026-10-21T00:00Z": 1428760
   },
   "pruned": [
-    "2026-10-17T0000.om",
-    "2026-10-17T0100.om",
-    "2026-10-17T0200.om",
-    "2026-10-17T0300.om",
-    "2026-10-17T0400.om",
-    "2026-10-17T0500.om",
-    "2026-10-17T0600.om",
-    "2026-10-17T0700.om",
-    "2026-10-17T0800.om",
-    "2026-10-17T0900.om",
-    "2026-10-17T1000.om",
-    "2026-10-17T1100.om"
+    "2026-10-17T1200.om",
+    "2026-10-17T1300.om",
+    "2026-10-17T1400.om",
+    "2026-10-17T1500.om",
+    "2026-10-17T1600.om",
+    "2026-10-17T1700.om",
+    "2026-10-17T1800.om",
+    "2026-10-17T1900.om",
+    "2026-10-17T2000.om",
+    "2026-10-17T2100.om",
+    "2026-10-17T2200.om",
+    "2026-10-17T2300.om"
   ],
   "warnings": [
-    "2026-10-17T12:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T12:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T12:00Z: variabile 'precipitation' assente nel dominio 'italia_meteo_arpae_icon_2i' (precipitation): omessa",
-    "2026-10-17T12:00Z: variabile 'rain' assente nel dominio 'italia_meteo_arpae_icon_2i' (rain): omessa",
-    "2026-10-17T12:00Z: variabile 'showers' assente nel dominio 'italia_meteo_arpae_icon_2i' (showers): omessa",
-    "2026-10-17T13:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T13:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T13:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T14:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T14:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T14:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T15:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T15:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T15:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T16:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T16:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T16:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T17:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T17:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T17:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T18:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T18:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T18:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T19:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T19:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T19:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T20:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T20:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T20:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T21:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T21:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T21:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T22:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T22:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T22:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
-    "2026-10-17T23:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
-    "2026-10-17T23:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-17T23:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-18T00:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-18T00:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-18T00:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-18T00:00Z: variabile 'precipitation' assente nel dominio 'italia_meteo_arpae_icon_2i' (precipitation): omessa",
+    "2026-10-18T00:00Z: variabile 'rain' assente nel dominio 'italia_meteo_arpae_icon_2i' (rain): omessa",
+    "2026-10-18T00:00Z: variabile 'showers' assente nel dominio 'italia_meteo_arpae_icon_2i' (showers): omessa",
     "2026-10-18T01:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-18T01:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-18T01:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
@@ -6767,15 +6731,39 @@
     "2026-10-19T12:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-19T12:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-19T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T13:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T13:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T13:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T14:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T14:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T14:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-19T15:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-19T15:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-19T15:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T16:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T16:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T16:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T17:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T17:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T17:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-19T18:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-19T18:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-19T18:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T19:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T19:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T19:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T20:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T20:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T20:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-19T21:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-19T21:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-19T21:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T22:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T22:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T22:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-19T23:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-19T23:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-19T23:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-20T00:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-20T00:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
     "2026-10-20T00:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
@@ -6790,6 +6778,18 @@
     "2026-10-20T09:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
     "2026-10-20T12:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
     "2026-10-20T12:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
-    "2026-10-20T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa"
+    "2026-10-20T12:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-20T15:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-20T15:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-20T15:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-20T18:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-20T18:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-20T18:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-20T21:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-20T21:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-20T21:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa",
+    "2026-10-21T00:00Z: variabile 'surface_pressure' assente nel dominio 'italia_meteo_arpae_icon_2i' (surface_pressure): omessa",
+    "2026-10-21T00:00Z: variabile 'wind_u_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_u_component_10m): omessa",
+    "2026-10-21T00:00Z: variabile 'wind_v_component_10m' assente nel dominio 'italia_meteo_arpae_icon_2i' (wind_v_component_10m): omessa"
   ]
 }
