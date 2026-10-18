@@ -27,25 +27,43 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     (key fm2-frames-<dominio>-<run_number> + restore-keys fm2-frames-<dominio>-).
 #   - Commit SOLO se data/fm2/<dominio> cambia (nessun churn a manifest invariato).
 #   - RENDERER (fast-path raster) — HOTFIX 1.2.4.8.1: SHARD PER-DOMINIO + MERGE
-#     SINGLE-WRITER. Il vecchio job `render` monolitico (tutti i domini x 2 regioni
-#     x 2 temi ~55k encode WebP, Pillow method=6) moriva SEMPRE a timeout-minutes:90
-#     (4/4 run uccise) e data/fm2-rendered non veniva mai pubblicato: la fast-path
-#     WebP del client non si attivava mai. Architettura nuova (entrambi i temi
-#     light/dark conservati, nessun cap sugli frame):
+#     SINGLE-WRITER, aggiornato nella 1.2.4.9 alla regione `domain` + upsampling.
+#     Il vecchio job `render` monolitico (tutti i domini x 2 regioni x 2 temi ~55k
+#     encode WebP, Pillow method=6) moriva SEMPRE a timeout-minutes:90 (4/4 run
+#     uccise) e data/fm2-rendered non veniva mai pubblicato: la fast-path WebP del
+#     client non si attivava mai. Architettura attuale (entrambi i temi light/dark
+#     conservati, nessun cap sugli frame; TRE regioni per dominio: `italia`,
+#     `europa` e `domain` = l'intero dominio, resa solo per i domini non globali):
 #     1) `render` = MATRICE per-dominio (stessa lista dei 10 domini dell'engine,
 #        fail-fast:false, concurrency forecast-maps-v2-render-<dominio>,
-#        timeout-minutes:150): ogni shard scarica l'artifact engine ESATTO del
+#        timeout-minutes:240): ogni shard scarica l'artifact engine ESATTO del
 #        proprio dominio (fm2-<dominio>), renderizza SOLO quel dominio
 #        (`--domains <dominio> --limit-frames 0 --method 4`, method=4 =
-#        bilanciamento velocita'/size approvato) in un albero vuoto e carica
-#        l'artifact `fm2r-<dominio>` (prefisso fm2r-: il download engine `fm2-*`
-#        del merge non aggancia gli shard; le due path caricate sono solo
-#        italia/<dominio> e europa/<dominio>, quindi gli shard NON pubblicano mai
-#        index.json ne' color_scales.json, che vivono fuori dalle directory
-#        dominio). Un dominio engine fallito fa fallire il solo shard corrispondente
-#        (download artifact per nome ESATTO): quel dominio manchera' dal merge.
+#        bilanciamento velocita'/size approvato, upsampling `--upsample auto`:
+#        default del renderer 1.2.4.9) in un albero vuoto e carica l'artifact
+#        `fm2r-<dominio>` (prefisso fm2r-: il download engine `fm2-*` del merge
+#        non aggancia gli shard; le path caricate sono solo le directory
+#        regione/dominio italia/<dominio>, europa/<dominio> e domain/<dominio>,
+#        quindi gli shard NON pubblicano mai index.json ne' color_scales.json, che
+#        vivono fuori dalle directory dominio). Un dominio engine fallito fa
+#        fallire il solo shard corrispondente (download artifact per nome ESATTO):
+#        quel dominio manchera' dal merge.
+#        PERCHE' 240' — e' HEADROOM, non un fix alla cieca. Il picco misurato PRIMA
+#        della 1.2.4.9 e' 227 s/shard, cioe' senza upsampling, col thinning ancora
+#        attivo e senza la regione `domain`. I tre fattori si SOMMANO sul lavoro
+#        dello shard: (a) il motore NON decima piu' i frame (thinning RIMOSSO: il
+#        totale pubblicato passa da 630 a 844 valid_times, +34,0%; +23,4% a parita'
+#        di run — rilevazione 2026-10-17); (b) l'UPSAMPLING `--upsample auto`
+#        (lato corto del crop portato a ~512 px, fattore intero capato da
+#        `--upsample-max`=8) moltiplica i pixel del WebP per (regione, frame): la
+#        stima di riferimento e' ~9x pixel sul crop piu' piccolo, con cap teorico
+#        del renderer a 8x per lato (~64x pixel nel caso limite); (c) una regione
+#        in piu' (`domain`). 240' copre i tre fattori insieme con margine
+#        conservativo e va RIVERIFICATO alla prima run reale: se uno shard si
+#        avvicina al limite si riduce `--upsample-max` o si ripristina un cap
+#        frame, NON si alza di nuovo il timeout.
 #     2) `render-merge` = UNO scrittore (concurrency forecast-maps-v2-render,
-#        timeout-minutes:30): riscarica gli artifact engine (fm2-*) + tutti gli
+#        timeout-minutes:90): riscarica gli artifact engine (fm2-*) + tutti gli
 #        shard (fm2r-*), sostituisce ogni data/fm2-rendered/<regione>/<dominio>
 #        con la versione autorevole dello shard (rm -rf + cp -a: le variabili
 #        droppate vengono pulite), ricostruisce gli index.json per regione con
@@ -211,8 +229,9 @@ jobs:
 
   render:
     # SHARD PER-DOMINIO (hotfix 1.2.4.8.1): un job per dominio, ciascuno renderizza
-    # SOLO il proprio dominio (--domains ${{ matrix.domain }}, entrambe le regioni,
-    # entrambi i temi) in un albero vuoto e carica l'artifact fm2r-<dominio>.
+    # SOLO il proprio dominio (--domains ${{ matrix.domain }}, le TRE regioni
+    # italia/europa/domain, entrambi i temi) in un albero vuoto e carica
+    # l'artifact fm2r-<dominio>.
     # Gli shard NON possono scrivere gli index.json (ognuno vedrebbe solo se stesso):
     # li ricostruisce il single-writer render-merge.
     name: render (${{ matrix.domain }})
@@ -221,9 +240,13 @@ jobs:
     # dominio manchera' dal --in del merge e verra' escluso dalla gate.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    # Il vecchio render monolitico (tutti i domini, method=6) moriva a 90': uno
-    # shard singolo con --method 4 sta largamente entro 150'.
-    timeout-minutes: 150
+    # Timeout del shard 150' -> 240': i 227 s/shard misurati PRIMA della 1.2.4.9
+    # non coprono thinning rimosso (+34,0% frame; +23,4% a parita' di run),
+    # upsampling (~9x pixel sul crop piu' piccolo) e regione `domain` (vedi
+    # l'header di questo file). E' MARGINE conservativo, non un fix alla cieca:
+    # va riverificato alla prima run reale. Il vecchio render monolitico
+    # (method=6, tutti i domini) moriva sempre a 90'.
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
@@ -282,7 +305,7 @@ jobs:
           mkdir -p "data/fm2/${{ matrix.domain }}"
           cp -a /tmp/fm2art/. "data/fm2/${{ matrix.domain }}/"
 
-      - name: Build WebP shard ${{ matrix.domain }} (europa/italia, light+dark)
+      - name: Build WebP shard ${{ matrix.domain }} (italia/europa/domain, light+dark)
         run: |
           # --method 4 = bilanciamento velocita'/size approvato (6 = massima
           # compressione ma troppo lento: il render monolitico a method=6 moriva
@@ -326,6 +349,7 @@ jobs:
           path: |
             data/fm2-rendered/italia/${{ matrix.domain }}
             data/fm2-rendered/europa/${{ matrix.domain }}
+            data/fm2-rendered/domain/${{ matrix.domain }}
           if-no-files-found: warn
           retention-days: 1
 
@@ -339,7 +363,12 @@ jobs:
     needs: render
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Timeout 30' -> 90': il merge ora (a) riscarica TUTTI gli shard, (b) copia le
+    # directory dominio per TRE regioni (italia/europa/domain) invece di due e
+    # (c) riscrive gli index.json su un albero cresciuto per frame non piu'
+    # decimati (thinning rimosso, +34,0% valid_times). E' margine conservativo,
+    # da riverificare alla prima run reale.
+    timeout-minutes: 90
     concurrency:
       queue: max
       # Lock del single-writer: serializza SOLO il merge (disgiunto dal matrix
@@ -399,7 +428,7 @@ jobs:
             [ -d "$d" ] || continue
             dom="${d%/}"; dom="${dom##*fm2r-}"
             got=0
-            for region in italia europa; do
+            for region in italia europa domain; do
               src="$d$region/$dom"
               if [ -d "$src" ]; then
                 rm -rf "data/fm2-rendered/$region/$dom"
@@ -448,6 +477,11 @@ jobs:
             else
               echo "europa — index.json non disponibile."
             fi
+            if [ -f data/fm2-rendered/domain/index.json ]; then
+              python -c "import json; d=json.load(open('data/fm2-rendered/domain/index.json')); doms=d.get('domains',{}); print('domain — themes:', ','.join(d.get('themes',[]))); print('domain — generated_at:', d.get('generated_at')); print('domain — domini:', len(doms), '->', ', '.join(sorted(doms)))"
+            else
+              echo "domain — index.json non disponibile."
+            fi
             echo ""
             echo "WebP totali in cache: $(find data/fm2-rendered -name '*.webp' 2>/dev/null | wc -l)"
             echo ""
@@ -470,7 +504,7 @@ jobs:
             echo "[INFO] Nessuna modifica a data/fm2-rendered (NO-OP)."
             exit 0
           fi
-          git commit -m "chore(fm2): aggiornamento WebP pre-renderizzati (regioni europa/italia, light+dark)"
+          git commit -m "chore(fm2): aggiornamento WebP pre-renderizzati (regioni italia/europa/domain, light+dark)"
           # Retry: altre run (engine matrix) possono pushare su main in parallelo,
           # quindi il merge esegue lo stesso pattern `git pull --rebase --autostash`
           # dell'engine. I path sono disgiunti engine (data/fm2/<dominio>) vs render

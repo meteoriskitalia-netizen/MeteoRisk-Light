@@ -19,7 +19,7 @@ import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const HTML = path.join(ROOT, 'mri-light-1.2.4.8.html');
+const HTML = path.join(ROOT, 'mri-light-1.2.4.9.html');
 const src = fs.readFileSync(HTML, 'utf8');
 
 let failures = 0;
@@ -185,9 +185,11 @@ ok('B9c: ogni voce di FM_REGIONS ha id e label',
   }),
   regions && regions.map(function (r) { return r.id + ':' + r.label; }).join(', '));
 
-// ---------- C. ASSERT COMPORTAMENTALE PRELOAD / WARM (1.2.4.0) ----------
-// Il preload usa layer nascosti sul pane forecastMapsPanePre (protocollo om://),
-// NON new Image(). Simuliamo fmAdapter + map + DOM e verifichiamo la catena.
+// ---------- C. ASSERT COMPORTAMENTALE PRELOAD / WARM (1.2.4.0, pool in 1.2.4.9) ----------
+// Il preload usa un POOL a concorrenza (FM_PRELOAD_CONCURRENCY): fast-path WebP con
+// new Image() quando l'indice e' disponibile, altrimenti layer nascosti sul pane
+// forecastMapsPanePre (protocollo om://). Qui (fmWebpIndex assente) esercitiamo il
+// fallback .om simulando fmAdapter + map + DOM e verificando la catena del pool.
 const createdLayers = [];
 const statusSeq = [];
 const btnMock = { textContent: '', disabled: false };
@@ -248,6 +250,7 @@ function resetFmState() {
   ctx.fmIsPlaying = false;
   ctx.fmInterval = null;
   ctx.fmPendingPreloadLayer = null;
+  ctx.fmPendingPreloadLayers = [];
   ctx.fmLayerKey = null;
   ctx.fmRasterLayer = null;
   ctx.fmVectorLayer = null;
@@ -305,27 +308,35 @@ ok('C2g: fmPreloadActive tornato false a fine corsa', ctx.fmPreloadActive === fa
 resetFmState();
 ctx.fmStartPreload();
 const inflight = createdLayers.length;
+const poolN = Math.min(ctx.FM_PRELOAD_CONCURRENCY || 4, 3);
 ctx.fmStopPreload();
 await tick(60);
-ok('C3a: al momento dello stop era in volo 1 layer', inflight === 1, `${inflight}`);
-ok('C3b: dopo fmStopPreload nessun altro layer creato', createdLayers.length === 1, `${createdLayers.length}`);
+ok('C3a: al momento dello stop erano in volo FM_PRELOAD_CONCURRENCY layer (min col totale)',
+  inflight === poolN, `${inflight} / ${poolN}`);
+ok('C3b: dopo fmStopPreload nessun altro layer creato', createdLayers.length === inflight, `${createdLayers.length} / ${inflight}`);
 ok('C3c: fmStopPreload riabilita il bottone', btnMock.disabled === false);
 
-// C4 (P0-C2): annullo del preload mentre un frame e' ANCORA IN VOLO.
+// C4 (P0-C2): annullo del preload mentre dei frame sono ANCORA IN VOLO.
 // Regressione: la vecchia fmPreloadFrame tornava su gen!==fmPreloadGen PRIMA di
 // rimuovere il layer gia' aggiunto alla mappa -> layer orfano (opacity 0) residuo.
 resetFmState();
 ctx.fmStartPreload();
 const inFlightLayer = ctx.fmPendingPreloadLayer;
-ok('C4a: dopo fmStartPreload esiste un layer preload in volo sulla mappa',
-  !!inFlightLayer && ctx.map._layers.has(inFlightLayer));
-ctx.fmStopPreload(); // invalida la generazione mentre il layer non e' ancora caricato
-ok('C4b: fmStopPreload azzera fmPendingPreloadLayer', ctx.fmPendingPreloadLayer === null);
-ok('C4c: il layer in volo e\' stato RIMOSSO dalla mappa (nessun orfano)',
-  ctx.map.removed.indexOf(inFlightLayer) >= 0 && !ctx.map._layers.has(inFlightLayer));
-await tick(50); // il load tardivo del layer annullato non deve duplicare la rimozione
-ok('C4d: il load tardivo non rimuove due volte lo stesso layer',
-  ctx.map.removed.filter((l) => l === inFlightLayer).length === 1);
+const inFlightSet = ctx.fmPendingPreloadLayers.slice();
+ok('C4a: dopo fmStartPreload il SET traccia FM_PRELOAD_CONCURRENCY layer in volo sulla mappa',
+  inFlightSet.length === Math.min(ctx.FM_PRELOAD_CONCURRENCY || 4, 3) &&
+  inFlightSet.every((l) => ctx.map._layers.has(l)),
+  `${inFlightSet.length}`);
+ok("C4a-bis: fmPendingPreloadLayer e' l'ultimo layer del SET",
+  !!inFlightLayer && inFlightLayer === inFlightSet[inFlightSet.length - 1]);
+ctx.fmStopPreload(); // invalida la generazione mentre i layer non sono ancora caricati
+ok('C4b: fmStopPreload azzera fmPendingPreloadLayer e svuota il SET',
+  ctx.fmPendingPreloadLayer === null && ctx.fmPendingPreloadLayers.length === 0);
+ok('C4c: i layer in volo sono stati RIMOSSI dalla mappa (nessun orfano)',
+  inFlightSet.every((l) => ctx.map.removed.indexOf(l) >= 0 && !ctx.map._layers.has(l)));
+await tick(50); // il load tardivo dei layer annullati non deve duplicare la rimozione
+ok('C4d: il load tardivo non rimuove due volte gli stessi layer',
+  inFlightSet.every((l) => ctx.map.removed.filter((x) => x === l).length === 1));
 
 // C5 (P0-C1): fmRebuild non ricrea i layer per lo STESSO frame (cache-by-url).
 resetFmState();

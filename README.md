@@ -6,10 +6,25 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.8
+## Versione attiva: 1.2.4.9
 
-- File applicativo: `mri-light-1.2.4.8.html` (`APP_VERSION = '1.2.4.8'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.8', date: '2026-10-15' }`).
+- File applicativo: `mri-light-1.2.4.9.html` (`APP_VERSION = '1.2.4.9'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.9', date: '2026-10-18' }`).
+- Contenuto della 1.2.4.9 (release sopra la 1.2.4.8):
+  - **CI - Mappe previsionali**: nuova regione di rendering WebP `domain` (intero dominio)
+    accanto a Europa e Italia nel workflow `forecast-maps-v2.yml` (shard `render` + single-writer
+    `render-merge`, indice `domain/index.json`).
+  - **Client - legenda a segmenti con tick numerici**: la legenda delle Mappe previsionali
+    e' composta da una banda per colore, posizionata in modo proporzionale ai valori reali,
+    con tooltip dell'intervallo `[lo - hi)` e un asse a tick adattivi (max 9); fallback
+    invariato per le scale non-breakpoint.
+  - **Client - preload WebP parallelo (pool)**: il preload usa un pool a concorrenza
+    (`FM_PRELOAD_CONCURRENCY`) con fast-path WebP (`new Image`) e fallback automatico al
+    layer `.om` su errore/timeout.
+  - **Client - fix Mappe previsionali**: gate tema scuro (`themes` array + path per-tema),
+    race su metadati/indice (token di generazione), leak Chart.js (un solo `setInterval`
+    condiviso + `clearInterval`/timeout), regione `domain` per il rendering per-dominio,
+    upsampling mappe e rimozione thinning.
 - Contenuto della 1.2.4.8 (release sopra la 1.2.4.7):
   - **Mappe previsionali - fast-path raster WebP pre-renderizzati**: il client serve le
     mappe come raster via `L.imageOverlay` dalla cache `data/fm2-rendered` (non piu' i frame
@@ -107,13 +122,13 @@ Sito statico piu' sei workflow GitHub Actions che aggiornano i dati e pubblicano
 
 ## Trigger
 
-Ogni workflow parte da `workflow_dispatch`, `schedule` (cron) e `repository_dispatch`:
+Ogni workflow parte da `workflow_dispatch` e `repository_dispatch`:
 
 - `ci-run` -> radar-engine + satellite-engine (dispatch esterno ogni 5 min);
 - `ci-weather` -> update-weather-data (dispatch esterno ogni 10 min).
 
-Il dispatch esterno e' **best-effort**: se non arriva, il cron ridondante del workflow
-fa da backup. Nessuna garanzia di latenza fissa sui dati.
+Il dispatch esterno e' **best-effort**: se non arriva, l'unico recupero e' un
+trigger manuale via `workflow_dispatch`. Nessuna garanzia di latenza fissa sui dati.
 
 ## Test
 
@@ -143,7 +158,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.8.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.9.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)

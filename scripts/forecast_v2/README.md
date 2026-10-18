@@ -25,11 +25,21 @@ data/fm2/
   `valid_times`, `grid` del crop, `source_grid` (griglia piena derivata),
   `grid_source`, `variables` (per frame e per variabile: dominio sorgente),
   `sizes`, `frames`, `warnings`, `pruned`.
-- **Orizzonte INTERNO/intero per dominio**: si pubblicano TUTTI i `valid_times`
+- **Orizzonte INTERO per dominio**: si pubblicano TUTTI i `valid_times`
   del manifest **del dominio** (nessuna troncatura a un numero fisso). In
   `data/fm2/<dominio>/` resta esattamente la finestra corrente (le ancore
   pubblicate); i frame di run precedenti vengono rimossi. `V2_MAX_FRAMES`
   (default `0`) è un cap *opzionale* di sicurezza del pruning: `0` = nessun cap.
+- **Nessuna decimazione (fino alla 1.2.4.8 era applicato un *thinning*)**: il
+  motore pubblicava un sottoinsieme dei `valid_times` secondo la regola
+  `h ≤ 48 h → passo 1 h`, `48 h < h ≤ 120 h → passo 3 h`, `h > 120 h → passo 6 h`
+  (con `h` = ore dal `reference_time`). Dalla **1.2.4.9** quel filtro è
+  **RIMOSSO**: la cadenza pubblicata è quella **nativa della sorgente** e il
+  numero di frame di un dominio coincide con `len(valid_times)` del suo
+  `latest.json` S3. Conseguenza: più frame per dominio (crescita dipendente dal
+  run; misurata +23,4% complessiva il 2026-10-17 sui 10 domini, con `ncep_gfs025`
+  il dominio più penalizzato dal vecchio thinning, +78,6%), a parità di
+  `--valid-frames 0`.
 
 Il client legge un file con `readVariable(url, "<nome_var>", ranges)` dove `ranges`
 sono gli indici del crop (vedi `grid` nel manifest del dominio: `nx`, `ny`,
@@ -198,10 +208,33 @@ espone) sono **omesse con warning** nel manifest del dominio, senza crash.
   `25 x 22` = **550 celle**, 2 frame: **9.720 byte (18 var)** e **10.200 byte
   (19 var)** → **~19,4 KiB** totali per 2 frame. I crop grossi producono frame
   nell'ordine dei KiB (proporzionali al numero di celle).
-- Il numero di frame per dominio = **orizzonte intero** del manifest del dominio
-  (variabile per run): osservato `dwd_icon_eu` 93, `jma_gsm` 45, `ncep_gfs025`
-  209, `chmi_aladin_central_europe_2km` 73 al momento della verifica. Il conteggio
-  reale va letto dal campo `valid_times` del `latest.json` del dominio.
+- Il numero di frame per dominio = **orizzonte intero** del manifest S3 del
+  dominio (variabile per run). Rilevazione del **2026-10-17** (manifest
+  pubblicati `data/fm2/<dom>/latest.json` vs manifest upstream
+  `openmeteo.s3.amazonaws.com/data_spatial/<dom>/latest.json`):
+
+  | dominio | `valid_times` pubblicato (con thinning) | `valid_times` senza thinning |
+  |---|---|---|
+  | `dwd_icon_eu` | 31 | 93 |
+  | `dwd_icon_d2` | 49 | 49 |
+  | `italia_meteo_arpae_icon_2i` | 57 | 73 |
+  | `ecmwf_ifs025` | 81 | 85 |
+  | `ncep_gfs025` | 117 | 209 |
+  | `dwd_icon` | 83 | 93 |
+  | `meteofrance_arpege_world025` | 67 | 67 |
+  | `ukmo_global_deterministic_10km` | 81 | 89 |
+  | `jma_gsm` | 23 | 45 |
+  | `cma_grapes_global` | 41 | 41 |
+  | **totale** | **630** | **844** (+34,0%) |
+
+  I due conteggi non sono sempre lo stesso run (il manifest pubblicato può
+  riferirsi a un `reference_time` precedente). **A parità di run** la
+  decimazione rimuoveva **684 → 844 frame, +23,4%** (verificato il 2026-10-17
+  sui 5 domini col `reference_time` allineato: `italia_meteo_arpae_icon_2i`
+  57→73, `ecmwf_ifs025` 81→85, `ncep_gfs025` 117→209,
+  `ukmo_global_deterministic_10km` 81→89, `cma_grapes_global` 41→41). Il
+  conteggio reale va comunque letto dal campo `valid_times` del `latest.json`
+  del dominio.
 
 ## Come il client (reader WML 0.2.2) legge le variabili
 
@@ -243,10 +276,14 @@ applica delle *derivation rules* basate sul nome:
 l'output del motore (`data/fm2/<dominio>/latest.json` + frame `<VALID>.om`),
 dequantizza ogni variabile con `omfiles`, riproietta le righe in spaziatura Web
 Mercator, colora ogni pixel con le scale WML v0.2.2 (`color_scales.json`) e
-scrive, per ogni **regione** (`italia`, `europa`) e **tema** (`light`, `dark`),
-i WebP pre-renderizzati che il client consuma via `L.imageOverlay`. Per ogni
-coppia (regione, dominio) il ritaglio è l'intersezione bbox dominio × bbox
+scrive, per ogni **regione** (`italia`, `europa`, `domain`) e **tema** (`light`,
+`dark`), i WebP pre-renderizzati che il client consuma via `L.imageOverlay`. Per
+ogni coppia (regione, dominio) il ritaglio è l'intersezione bbox dominio × bbox
 regione sulla griglia del dominio; le coppie che non si intersecano sono saltate.
+Dalla **1.2.4.9** il renderer applica un'**interpolazione bilineare dei valori**
+prima della colorazione (opzione `--upsample`, default `auto`): i colori restano
+le bande discrete della scala (nessun blending), vedi la sezione *Regione
+`domain` e upsampling dei valori*.
 
 ### CLI
 
@@ -254,7 +291,7 @@ regione sulla griglia del dominio; le coppie che non si intersecano sono saltate
 |---|---|
 | `--in DIR` | Radice dell'output motore con `<dominio>/latest.json` (default `data/fm2`). |
 | `--out DIR` | Radice di output (default `data/fm2-rendered`). |
-| `--regions R1,R2` | Allow-list regioni, separati da virgola (default: `italia,europa`). |
+| `--regions R1,R2` | Allow-list regioni, separati da virgola (default: `italia,europa,domain`). |
 | `--domains D1,D2` | Allow-list domini, separati da virgola (default: tutti quelli presenti in `--in`). Con `--index-only` è l'elenco **esplicito** dei domini resi con successo dagli shard. |
 | `--vars V1,V2` | Allow-list variabili (default: ordine del manifest). |
 | `--themes light,dark` | Temi colore (default `light,dark`; `dark` è scritto sotto `<var>/dark/`). |
@@ -262,13 +299,15 @@ regione sulla griglia del dominio; le coppie che non si intersecano sono saltate
 | `--lossless` | WebP lossless. |
 | `--limit-frames N` | Renderizza al massimo N frame per dominio (debug); `0` = orizzonte intero del manifest. |
 | `--method N` | Metodo di encode Pillow 0-6 (default `6` = massima compressione/più lento, output byte-compatibile col comportamento storico; la CI passa `4` come bilanciamento velocità/size). |
+| `--upsample N\|auto` | Upsampling dei **valori** prima della colorazione: `auto` (default) → fattore `max(1, min(--upsample-max, ceil(512 / lato_corto_del_crop)))` per portare il lato corto a ~512 px; `1` = nessun upsampling (output **storico**, byte-identico); intero ≥ 2 = fattore fisso. Vedi *Regione `domain` e upsampling dei valori*. |
+| `--upsample-max N` | Cap del fattore di `--upsample auto` (default `8`). |
 | `--index-only` | Ricostruisce i soli `index.json` di regione dai manifest per-variabili già presenti in `--out` (con prune dei WebP orfani contro il keep-set del proprio manifest, per tema); nessun rendering, funziona anche **senza** numpy/Pillow/omfiles. `--domains` è obbligatorio: ogni manifest variabile non valido viene saltato interamente (nessun prune, nessuna voce in indice); se nessuna regione ha almeno un dominio valido esce `1` e **nulla** viene pubblicato. |
 
 ### Output (layout per-regione)
 
 ```
 data/fm2-rendered/
-  <regione>/                         # italia | europa
+  <regione>/                         # italia | europa | domain
     index.json                       # version, generated_at, region, theme, themes, bbox, domains
     <dominio>/
       <var>/
@@ -284,6 +323,45 @@ Ogni directory tema viene **prunata** contro il keep-set del proprio manifest
 (solo `*.webp` orfani, per nome file). L'indice di regione aggrega i domini con
 almeno una variabile valida; `themes` elenca solo i temi effettivamente presenti.
 
+### Regione `domain` e upsampling dei valori (novità 1.2.4.9)
+
+**Regione `domain`.** `REGIONS["domain"]` è una **sentinella `None`**: la regione
+non ha un bbox fisso, ma coincide con l'**intero bbox del dominio** letto dal
+manifest del motore (`resolve_region_bbox`):
+
+- ritaglio = **nessuno**: `region_crop` restituisce l'intera griglia del dominio
+  (`(0, ny, 0, nx)`), quindi il WebP copre tutto il dominio;
+- **saltata per i domini globali** (`DOMAIN_REGION_SKIP_GLOBAL = True`): se il
+  bbox del dominio è globale (`_is_global_bbox`: lat ±90 / lon ±180 sui domini
+  worldwide) la regione `domain` **non viene resa**, perché "tutto il dominio"
+  sarebbe il globo (già raggiungibile via `italia`/`europa`, e troppo grande per
+  un singolo WebP). La regione è resa solo per i domini a copertura regionale
+  (es. `dwd_icon_eu`, `dwd_icon_d2`, `italia_meteo_arpae_icon_2i`);
+- l'output va in `data/fm2-rendered/domain/<dominio>/<var>/...` (stesso layout
+  di `italia`/`europa`) e il suo `index.json` aggrega i domini indicizzati con il
+  bbox **unione** dei loro bbox.
+
+**Upsampling dei valori (`--upsample`).** Il renderer, prima della lookup dei
+breakpoint, può **interpolare bilinearmente i valori** su una griglia più fitta
+(`((nx-1)*scale+1, (ny-1)*scale+1)`, righe Mercator + colonne lineari in
+longitudine):
+
+- `--upsample auto` (default): `scale = max(1, min(--upsample-max,
+  ceil(512 / min(nx, ny))))` sul **crop** della regione, mirando a ~512 px sul
+  lato corto; `--upsample-max` (default `8`) limita il fattore;
+- `--upsample 1`: nessun upsampling → output **storico** (row-only Mercator,
+  regola due-tap, byte-identico al pre-1.2.4.9);
+- `--upsample N` (N ≥ 2): fattore fisso.
+
+Proprietà garantite (test dedicati `test_render_fm_webp_upsample.py`):
+
+- i colori restano le **bande discrete** della scala WML: ogni pixel **finito**
+  indossa **esattamente** una riga della palette, **nessun blending** dei colori
+  (l'interpolazione avviene sui **valori**, non sui colori);
+- **un NaN non acquisisce mai colore**: con `scale > 1` un pixel è emesso solo se
+  **tutti** i suoi vertici bilineari sono finiti, altrimenti resta trasparente
+  (`0,0,0,0`); con `scale == 1` vale la regola due-tap storica.
+
 ### Architettura CI (hotfix 1.2.4.8.1: shard per-dominio + merge single-writer)
 
 Il vecchio job `render` monolitico del workflow `forecast-maps-v2.yml` (10 domini
@@ -295,12 +373,13 @@ fast-path WebP del client non si attivava mai. Il workflow ora esegue:
    (`fail-fast: false`, concurrency `forecast-maps-v2-render-<dominio>`,
    `timeout-minutes: 150`): scarica l'artifact engine **esatto** `fm2-<dominio>`,
    renderizza solo quel dominio (`--domains <dominio> --limit-frames 0 --method 4`,
-   entrambe le regioni, entrambi i temi) in un albero vuoto e carica l'artifact
-   **`fm2r-<dominio>`** (prefisso `fm2r-` così il download engine `fm2-*` del
-   merge non aggancia gli shard; le due path caricate sono solo `italia/<dominio>`
-   e `europa/<dominio>`, quindi gli shard non pubblicano mai `index.json` né
-   `color_scales.json`). Un dominio engine fallito fa fallire il solo shard
-   corrispondente: quel dominio manca dal merge e viene escluso.
+   tutte le regioni — `italia`, `europa`, `domain` —, entrambi i temi) in un
+   albero vuoto e carica l'artifact **`fm2r-<dominio>`** (prefisso `fm2r-` così
+   il download engine `fm2-*` del merge non aggancia gli shard; le path caricate
+   sono solo `<regione>/<dominio>` per `italia`/`europa`/`domain`, quindi gli
+   shard non pubblicano mai `index.json` né `color_scales.json`). Un dominio
+   engine fallito fa fallire il solo shard corrispondente: quel dominio manca dal
+   merge e viene escluso.
 2. **`render-merge` (single-writer)** — un job (concurrency
    `forecast-maps-v2-render`, `timeout-minutes: 30`) che riscarica gli artifact
    engine (`fm2-*`) e tutti gli shard (`fm2r-*`), sostituisce ogni
