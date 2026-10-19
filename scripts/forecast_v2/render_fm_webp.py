@@ -111,7 +111,7 @@ REGIONS = {
 # domain's "whole domain" is the globe, which the client already reaches through
 # its other regions and which is far too large to publish as a single WebP.
 # "Global" is decided by _is_global_bbox, whose thresholds are ALIGNED to the
-# client predicate fmIsGlobalDomain (mri-light-1.2.4.9.html line 11459:
+# client predicate fmIsGlobalDomain (mri-light-1.2.4.10.html:
 # lon_span > 300 || lat_span > 120) -- the same classification on both sides.
 DOMAIN_REGION = "domain"
 DOMAIN_REGION_SKIP_GLOBAL = True
@@ -385,8 +385,7 @@ def _is_global_bbox(bbox: dict) -> bool:
     """True when the domain spans (near) the whole globe.
 
     Thresholds ALIGNED to the client predicate ``fmIsGlobalDomain``
-    (``mri-light-1.2.4.9.html`` lines 11456-11460, the ``return`` is at line
-    11459): ``lon_span > 300 || lat_span > 120``.
+    (``mri-light-1.2.4.10.html``): ``lon_span > 300 || lat_span > 120``.
     """
     return ((float(bbox["lon_max"]) - float(bbox["lon_min"])) > 300.0
             or (float(bbox["lat_max"]) - float(bbox["lat_min"])) > 120.0)

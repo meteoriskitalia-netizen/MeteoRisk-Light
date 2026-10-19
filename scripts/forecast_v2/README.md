@@ -236,6 +236,34 @@ espone) sono **omesse con warning** nel manifest del dominio, senza crash.
   conteggio reale va comunque letto dal campo `valid_times` del `latest.json`
   del dominio.
 
+## Quantizzazione dei frame `.om` (novità 1.2.4.10)
+
+**Convenzione `omfiles`.** Il writer memorizza ogni valore come intero:
+`int = round(valore * scale_factor)`; il lettore ricostruisce
+`valore = int / scale_factor`. Il **passo** di quantizzazione effettivo è quindi
+`PASSO = 1 / scale_factor` (non `scale_factor`).
+
+**Il bug (introdotto nella 1.2.4.6).** Il motore passava al writer
+`scale_factor` uguale al **passo** dichiarato (0.1 per `temperature_2m`,
+`pressure_msl`, `wind_gusts_10m`, `rain`, `precipitation`, ...), ottenendo
+`PASSO = 1 / 0.1 = 10`: 10 °C, 10 hPa, 10 m/s, 10 mm/h. Le mappe risultavano a
+4-5 bande piatte e tutta la pioggia sotto i 5 mm/h veniva arrotondata a 0, cioè
+**trasparente**.
+
+**Il fix (1.2.4.10).** La tabella è rinominata `VARIABLE_STEP` (contiene i
+**passi**) e il writer riceve `scale_factor = 1.0 / VARIABLE_STEP.get(name,
+DEFAULT_STEP)` (con `DEFAULT_STEP = 1.0`): il passo ricostruito torna uguale al
+passo dichiarato (0.1 per le variabili continue, 1 per le percentuali, 10 per
+`cape`/`freezing_level_height`). Regressione coperta da
+`scripts/tests/test_forecast_v2_scale_step.py` (round-trip `omfiles` reale, che
+fallisce col codice pre-fix: `20.75 → 20.0` e `4.0 → 0.0`).
+
+**Nota NO-OP.** Il motore **non riscrive** i frame già pubblicati se
+`reference_time`/`valid_times` del dominio non cambiano (guardia NO-OP
+per-dominio): per applicare il fix subito servono `--force` (CLI) /
+`force_update=true` (workflow); altrimenti basta il ciclo di forecast successivo,
+che cambia `reference_time`.
+
 ## Come il client (reader WML 0.2.2) legge le variabili
 
 Attenzione: il reader WML **non** restituisce sempre l'array così com'è scritto,

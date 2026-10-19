@@ -1828,9 +1828,14 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.9';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-18';
+    const APP_VERSION = '1.2.4.10';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-19';
     const APP_CHANGELOG = [
+        { version: '1.2.4.10', date: '2026-10-19', changes: [
+            'FIX= Mappe previsionali: il motore V2 scriveva i frame .om con il passo di quantizzazione INVERTITO (scale_factor = passo invece di 1/passo), collassando temperatura/pressione/vento/pioggia a 4-5 bande piatte e rendendo TRASPARENTE la pioggia sotto i 5 mm/h (una pioggia di 4 mm/h finiva a 0). Ora VARIABLE_STEP dichiara il passo e il writer riceve scale_factor = 1.0/passo.',
+            'FIX= Mappe previsionali: il selettore variabili mostra solo le variabili realmente presenti nel dominio (disponibilita\u0027 dal campo variables del manifest, unione sui frame). Le variabili non pubblicate dalla sorgente (es. surface_pressure in tutti i 10 domini; ncep_gfs025 ne pubblica 10 su 24) non compaiono piu\u0027 come mappe vuote.',
+            'DOC= Bump versione 1.2.4.10.',
+        ]},
         { version: '1.2.4.9', date: '2026-10-18', changes: [
             'MAPPE= Legenda a segmenti con tick numerici proporzionali ai valori reali: ogni banda mostra l\'intervallo [lo - hi) al passaggio del mouse; fallback invariato per le scale non-breakpoint.',
             'MAPPE= Preload piu\' veloce: pool a concorrenza (FM_PRELOAD_CONCURRENCY) con fast-path WebP (new Image) e fallback automatico al layer .om su errore/timeout.',
@@ -11627,6 +11632,46 @@ function fm2FetchMeta(domain, cb) {
     var legacyUrl = FM_CACHE_BASE + 'latest.json';
     var perDomain = domain ? (FM_CACHE_BASE + encodeURIComponent(domain) + '/latest.json') : legacyUrl;
     var allowFallback = (!domain || domain === 'fm2') && (perDomain !== legacyUrl);
+    // Disponibilita' REALE delle variabili nel dominio corrente (1.2.4.10).
+    // Il manifest del motore espone `var_order` SEMPRE completo (24 nomi) anche
+    // per le variabili che la sorgente non pubblica (es. surface_pressure,
+    // assente in tutti i 10 domini; ncep_gfs025 ne pubblica 10 su 24): da solo
+    // popolerebbe il selettore con mappe destinate a restare vuote.
+    // Il campo `variables` (mappa valid_time -> { nome: meta }) elenca invece le
+    // sole variabili realmente presenti in quel frame: l'UNIONE sui frame e'
+    // l'insieme delle variabili offribili. Ritorna [] se il manifest non ha il
+    // campo (retro-compatibile: nessun filtro applicato).
+    function fmAvailableVarsFromManifest(j) {
+        if (!j || !j.variables) return [];
+        var out = [];
+        var seen = {};
+        var addVar = function (nm) {
+            if (!nm || seen[nm]) return;
+            seen[nm] = true;
+            out.push(nm);
+        };
+        var addKeys = function (obj) {
+            for (var k in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, k)) addVar(k);
+            }
+        };
+        if (Array.isArray(j.variables)) {
+            for (var a = 0; a < j.variables.length; a++) addVar(j.variables[a]);
+        } else {
+            for (var vt in j.variables) {
+                if (!Object.prototype.hasOwnProperty.call(j.variables, vt)) continue;
+                var perFrame = j.variables[vt];
+                if (!perFrame) continue;
+                if (Array.isArray(perFrame)) {
+                    for (var b = 0; b < perFrame.length; b++) addVar(perFrame[b]);
+                } else if (typeof perFrame === 'object') {
+                    addKeys(perFrame);
+                }
+            }
+        }
+        return out;
+    }
+
     function fetchManifest(url, canFallback, usedLegacy) {
         fetch(url, { cache: 'no-store' }).then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -11685,6 +11730,7 @@ function fm2FetchMeta(domain, cb) {
                 valid_times: valid_times,
                 var_order: varOrder,
                 variables: varsOut,
+                available: fmAvailableVarsFromManifest(j),
                 frames: j.frames || [],
                 grid: j.grid || null,
                 reference_time: j.reference_time || null,
@@ -12227,6 +12273,13 @@ function fmLoadDomain(dom) {
             vars = (meta.variables || []).slice();
         }
         vars = vars.filter(function (vv) { return FM_CURATED_VARS.indexOf(vv) >= 0 || (FM_VAR_LABELS && FM_VAR_LABELS[vv]); });
+        // Filtro disponibilita' (1.2.4.10): tieni solo le variabili realmente
+        // presenti nel dominio. Guardia: se il filtro svuota la lista (manifest
+        // senza `variables`, oppure nessun frame), si resta sulla lista completa.
+        if (vars.length && meta.available && meta.available.length) {
+            var varsAvail = vars.filter(function (vv) { return meta.available.indexOf(vv) >= 0; });
+            if (varsAvail.length) vars = varsAvail;
+        }
         if (vars.indexOf(fmVariable) < 0) { fmVariable = fmPickDefaultVar(vars); fmOverlayVariable = null; }
         fmPopulateVariables(vars);
         if (fmIdx >= meta.valid_times.length) fmIdx = 0;

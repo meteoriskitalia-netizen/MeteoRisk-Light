@@ -163,34 +163,38 @@ V2_RISK_VARS = [
 V2_MAX_FRAMES = 0
 V2_OUT = "data/fm2"
 
-# Fattori di scala per variabile pubblicata (.om), convenzione Open-Meteo.
-VARIABLE_SCALE = {
-    "temperature_2m": 0.1,
-    "temperature_850hPa": 0.1,
-    "temperature_500hPa": 0.1,
-    "relative_humidity_2m": 1.0,
-    "relative_humidity_850hPa": 1.0,
-    "pressure_msl": 0.1,
-    "geopotential_height_500hPa": 1.0,
-    "geopotential_height_850hPa": 1.0,
-    "geopotential_height_1000hPa": 1.0,
-    "surface_pressure": 0.1,
-    "wind_u_component_10m": 0.1,
-    "wind_v_component_10m": 0.1,
-    "wind_gusts_10m": 0.1,
-    "cloud_cover": 1.0,
-    "cloud_cover_low": 1.0,
-    "cloud_cover_mid": 1.0,
-    "cloud_cover_high": 1.0,
-    "cape": 10.0,
-    "snow_depth": 0.1,
-    "precipitation": 0.1,
-    "rain": 0.1,
-    "showers": 0.1,
-    "weather_code": 1.0,
-    "freezing_level_height": 10.0,
+# Passo di quantizzazione voluto per variabile pubblicata (.om).
+# CONVENZIONE omfiles: il writer memorizza int = round(valore * scale_factor)
+# e il lettore rilegge valore = int / scale_factor: quindi il passo effettivo
+# e' 1/scale_factor. Qui si dichiarano i PASSI (unita' della variabile); il
+# writer riceve scale_factor = 1.0 / passo (vedi write_frame_om).
+VARIABLE_STEP = {
+    "temperature_2m": 0.1,              # 0.1 degC
+    "temperature_850hPa": 0.1,          # 0.1 degC
+    "temperature_500hPa": 0.1,          # 0.1 degC
+    "relative_humidity_2m": 1.0,        # 1 %
+    "relative_humidity_850hPa": 1.0,    # 1 %
+    "pressure_msl": 0.1,                # 0.1 hPa
+    "geopotential_height_500hPa": 1.0,  # 1 m
+    "geopotential_height_850hPa": 1.0,  # 1 m
+    "geopotential_height_1000hPa": 1.0, # 1 m
+    "surface_pressure": 0.1,            # 0.1 hPa
+    "wind_u_component_10m": 0.1,        # 0.1 m/s
+    "wind_v_component_10m": 0.1,        # 0.1 m/s
+    "wind_gusts_10m": 0.1,              # 0.1 m/s
+    "cloud_cover": 1.0,                 # 1 %
+    "cloud_cover_low": 1.0,             # 1 %
+    "cloud_cover_mid": 1.0,             # 1 %
+    "cloud_cover_high": 1.0,            # 1 %
+    "cape": 10.0,                       # 10 J/kg
+    "snow_depth": 0.1,                  # 0.1 m
+    "precipitation": 0.1,               # 0.1 mm
+    "rain": 0.1,                        # 0.1 mm
+    "showers": 0.1,                     # 0.1 mm
+    "weather_code": 1.0,                # 1 (codice WMO)
+    "freezing_level_height": 10.0,      # 10 m
 }
-DEFAULT_SCALE = 1.0
+DEFAULT_STEP = 1.0
 DEFAULT_CHUNKS = [32, 32]
 DEFAULT_COMPRESSION = "pfor_delta_2d_int16"
 
@@ -557,8 +561,10 @@ def write_frame_om(path, ordered, arrays, crs_wkt, coordinates,
         # clampa al minimo tra DEFAULT_CHUNKS e la shape effettiva.
         chunks = [min(DEFAULT_CHUNKS[0], int(arr.shape[0])),
                   min(DEFAULT_CHUNKS[1], int(arr.shape[1]))]
+        # omfiles memorizza int = round(valore * scale_factor): per ottenere il
+        # passo voluto (VARIABLE_STEP) si passa scale_factor = 1.0 / passo.
         c = w.write_array(arr, chunks=chunks,
-                          scale_factor=float(VARIABLE_SCALE.get(name, DEFAULT_SCALE)),
+                          scale_factor=float(1.0 / VARIABLE_STEP.get(name, DEFAULT_STEP)),
                           add_offset=0.0, compression=DEFAULT_COMPRESSION, name=name)
         children.append(c)
     children.append(w.write_scalar(str(crs_wkt), name="crs_wkt"))

@@ -1,3 +1,13 @@
+MeteoRisk Light - 1.2.4.10 - MAPPE PREVISIONALI: FIX QUANTIZZAZIONE FRAME .om (scale_factor invertito: passo 10 invece di 0.1 -> pioggia trasparente e mappe a bande piatte) + FILTRO DISPONIBILITA' VARIABILI NEL CLIENT (bump da 1.2.4.9)
+MAJOR=1
+MINOR=2
+PATCH=4
+BUILD=10
+RELEASE_TYPE=release
+DATE=2026-10-19
+NOTE=Release 1.2.4.10 (bump da 1.2.4.9): (a) FIX motore V2 - i frame .om venivano scritti con scale_factor uguale al passo (0.1) mentre la convenzione omfiles e' value=int/scale_factor, quindi il passo effettivo era 10 (10 degC, 10 hPa, 10 m/s, 10 mm/h): le mappe risultavano a 4-5 bande piatte e la pioggia sotto i 5 mm/h finiva a 0, cioe' TRASPARENTE. La tabella diventa VARIABLE_STEP (passo) e il writer riceve scale_factor=1.0/passo. Il motore non riscrive i frame gia' pubblicati se il reference_time non cambia (guardia NO-OP): servono --force/force_update=true oppure il ciclo di forecast successivo. (b) FIX client - il selettore variabili mostra solo le variabili realmente presenti nel dominio (campo variables del manifest, unione sui frame), eliminando le mappe vuote (surface_pressure e' assente in tutti i 10 domini; ncep_gfs025 pubblica 10 variabili su 24). (c) TEST - nuovo scripts/tests/test_forecast_v2_scale_step.py (15 test, round-trip omfiles che fallisce col codice vecchio).
+APP_FILE=mri-light-1.2.4.10.html
+
 MeteoRisk Light - 1.2.4.9 - MAPPE PREVISIONALI: NUOVA REGIONE DI RENDERING WebP 'domain' (INTERO DOMINIO) NEL WORKFLOW forecast-maps-v2.yml (bump da 1.2.4.8)
 MAJOR=1
 MINOR=2

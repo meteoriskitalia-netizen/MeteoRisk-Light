@@ -6,10 +6,25 @@ back-end applicativo, nessuna dipendenza runtime oltre agli asset statici.
 
 Repository: https://github.com/meteoriskitalia-netizen/MeteoRisk-Light
 
-## Versione attiva: 1.2.4.9
+## Versione attiva: 1.2.4.10
 
-- File applicativo: `mri-light-1.2.4.9.html` (`APP_VERSION = '1.2.4.9'`; ultimo blocco
-  changelog in-app `{ version: '1.2.4.9', date: '2026-10-18' }`).
+- File applicativo: `mri-light-1.2.4.10.html` (`APP_VERSION = '1.2.4.10'`; ultimo blocco
+  changelog in-app `{ version: '1.2.4.10', date: '2026-10-19' }`).
+- Contenuto della 1.2.4.10 (release sopra la 1.2.4.9):
+  - **Motore V2 - fix quantizzazione `.om`**: `scale_factor` era passato uguale al passo (0.1)
+    mentre la convenzione `omfiles` e' `valore = int / scale_factor`, quindi il passo effettivo
+    diventava 10 (10 °C, 10 hPa, 10 m/s, 10 mm/h); le mappe risultavano a 4-5 bande piatte e la
+    pioggia sotto i 5 mm/h finiva a 0, cioe' TRASPARENTE. La tabella diventa `VARIABLE_STEP`
+    (passo) e il writer riceve `scale_factor = 1.0 / passo`.
+  - **Motore V2 - guardia NO-OP**: il motore non riscrive i frame gia' pubblicati se il
+    `reference_time` non cambia: servono `--force`/`force_update=true` oppure il ciclo di
+    forecast successivo.
+  - **Client - filtro disponibilita' variabili**: il selettore variabili mostra solo le variabili
+    realmente presenti nel dominio (campo `variables` del manifest, unione sui frame),
+    eliminando le mappe vuote (`surface_pressure` e' assente in tutti i 10 domini;
+    `ncep_gfs025` pubblica 10 variabili su 24).
+  - **Test**: `scripts/tests/test_forecast_v2_scale_step.py` (15 test, round-trip omfiles che
+    fallisce col codice vecchio).
 - Contenuto della 1.2.4.9 (release sopra la 1.2.4.8):
   - **CI - Mappe previsionali**: nuova regione di rendering WebP `domain` (intero dominio)
     accanto a Europa e Italia nel workflow `forecast-maps-v2.yml` (shard `render` + single-writer
@@ -158,7 +173,7 @@ Comandi e conteggi aggiornati sono quelli documentati in `AGENTS.md`.
 
 ## File chiave
 
-- `mri-light-1.2.4.9.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
+- `mri-light-1.2.4.10.html` — applicazione (html/css/js unico, nessuna dipendenza runtime)
 - `VERSION` — bump di versione e storico note di rilascio
 - `.github/workflows/{radar-engine,satellite-engine,update-weather-data,phenomena-verify,deploy-pages,forecast-maps-v2}.yml` — i 6 workflow
 - `scripts/radar_engine/` — motore radar DPC (Fase 1 + candidati supercelle, sperimentali)
