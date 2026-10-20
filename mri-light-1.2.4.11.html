@@ -1828,9 +1828,17 @@ satelliteEumetsat: true,         // WMS EUMETSAT / EUMETView (view.eumetsat.int)
     //     v10.29.1.0 (fix bug DPC il giorno dopo)
     //     v10.30.0.0 (aggiunto nuovo tab UV Index)
     // ================================================================
-    const APP_VERSION = '1.2.4.10';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
-    const APP_RELEASE_DATE = '2026-10-19';
+    const APP_VERSION = '1.2.4.11';  // MAJOR.MINOR.PATCH.BUILD — Light / Public Educational Edition (indipendente dalla Full Development 10.x.x)
+    const APP_RELEASE_DATE = '2026-10-20';
     const APP_CHANGELOG = [
+        { version: '1.2.4.11', date: '2026-10-20', changes: [
+            'MAPPE= Palette riscritte e sincronizzate (renderer + client): pioggia a 18 bande da 0 a 50 mm con 17 bande opache (solo la banda < 0,1 mm resta trasparente: la pioggia debole non e\' piu\' un velo), geopotenziale Z500/Z850/Z1000 a 31 bande con alpha 1.0 sul modello Meteociel (Z500 passo 40 m, copertura completa di Z850 e Z1000) e isobare ogni 5 hPa; la banda bianca [1010,1016) di pressure_msl diventa grigio chiaro nel solo tema chiaro.',
+            'MAPPE= Legenda e mappa ora usano la stessa scala: le palette sono iniettate in defaultOmProtocolSettings.colorScales e passate a getColorScale; legenda a bande di uguale larghezza con tooltip e unita\' mm/passo calcolata dai valid_times.',
+            'V2= Domini ridotti da 10 a 7 (rimossi ukmo_global_deterministic_10km, jma_gsm, cma_grapes_global, italia_meteo_arpae_icon_2i) con il nuovo ncep_gfs013 (GFS di superficie a 0,117 gradi, crop Europa): porta la precipitazione che ncep_gfs025, solo upper-air, non ha (0 variabili su 24 in comune).',
+            'V2= Motore: download selettivo via HTTP Range (fsspec + OmFileReaderAsync.from_fsspec) con fallback esplicito al file intero e --no-range; 31 variabili pubblicate con le derivate dew_point_2m, wind_speed_*/wind_direction_* (coppia pubblicata, u/v solo input) e precipitation_cum.',
+            'MAPPE= Il selettore variabili mostra solo quelle realmente presenti nel dominio (campo variables del manifest): niente piu\' mappe vuote; FM_DOMAINS a 7 e nuove etichette (Punto di rugiada 2 m, Umidita\' 700 hPa, Vento 10 m, Vento 850 hPa, Jet Stream 300 hPa, Cumulata precipitazione).',
+            'DOC= Bump versione 1.2.4.11. I dati dei 4 domini rimossi saranno potati dopo il deploy.',
+        ]},
         { version: '1.2.4.10', date: '2026-10-19', changes: [
             'FIX= Mappe previsionali: il motore V2 scriveva i frame .om con il passo di quantizzazione INVERTITO (scale_factor = passo invece di 1/passo), collassando temperatura/pressione/vento/pioggia a 4-5 bande piatte e rendendo TRASPARENTE la pioggia sotto i 5 mm/h (una pioggia di 4 mm/h finiva a 0). Ora VARIABLE_STEP dichiara il passo e il writer riceve scale_factor = 1.0/passo.',
             'FIX= Mappe previsionali: il selettore variabili mostra solo le variabili realmente presenti nel dominio (disponibilita\u0027 dal campo variables del manifest, unione sui frame). Le variabili non pubblicate dalla sorgente (es. surface_pressure in tutti i 10 domini; ncep_gfs025 ne pubblica 10 su 24) non compaiono piu\u0027 come mappe vuote.',
@@ -11253,14 +11261,11 @@ var FM_WML_URLS = [
 var FM_DOMAINS = [
     { id: 'dwd_icon_eu', label: 'DWD ICON EU (0.0625)', group: 'Europa' },
     { id: 'dwd_icon_d2', label: 'DWD ICON-D2 (2 km, 48 h)', group: 'Europa' },
-    { id: 'italia_meteo_arpae_icon_2i', label: 'ICON 2I ARPAE (Italia)', group: 'Italia' },
     { id: 'ecmwf_ifs025', label: 'ECMWF IFS 0.25', group: 'Globale' },
     { id: 'ncep_gfs025', label: 'NOAA GFS 0.25', group: 'Globale' },
+    { id: 'ncep_gfs013', label: 'NOAA GFS 0.117 (Europa)', group: 'Europa' },
     { id: 'dwd_icon', label: 'DWD ICON Global', group: 'Globale' },
-    { id: 'meteofrance_arpege_world025', label: 'Meteo-France ARPEGE World', group: 'Globale' },
-    { id: 'ukmo_global_deterministic_10km', label: 'UKMO Global (10 km)', group: 'Globale' },
-    { id: 'jma_gsm', label: 'JMA GSM', group: 'Globale' },
-    { id: 'cma_grapes_global', label: 'CMA GRAPES Global', group: 'Globale' }
+    { id: 'meteofrance_arpege_world025', label: 'Meteo-France ARPEGE World', group: 'Globale' }
 ];
 // Aree geografiche per i modelli globali (bbox in formato [S, W, N, E])
 var FM_REGIONS = [
@@ -11281,12 +11286,104 @@ var FM_REGIONS = [
 // in fmPopulateVariables dopo il raggruppamento per categoria.
 var FM_SYNTH_PRESSURE_GEOPOT = '__pressure_geopot';
 var FM_CAT_ORDER = ['Pressione', 'Livelli di pressione', 'Temperatura', 'Umidita', 'Precipitazione e neve', 'Nuvolosita', 'Vento', 'Instabilita', 'Quote termiche', 'Radiazione', 'Codice meteo', 'Altro'];
-var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_u_component_10m','wind_v_component_10m','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height'];
+var FM_CURATED_VARS = ['temperature_2m','temperature_850hPa','temperature_500hPa','relative_humidity_2m','relative_humidity_850hPa','pressure_msl','geopotential_height_500hPa','geopotential_height_850hPa','geopotential_height_1000hPa','surface_pressure','wind_gusts_10m','cloud_cover','cloud_cover_low','cloud_cover_mid','cloud_cover_high','cape','snow_depth','precipitation','rain','showers','weather_code','freezing_level_height','dew_point_2m','relative_humidity_700hPa','wind_speed_10m','wind_speed_850hPa','wind_speed_300hPa','precipitation_cum'];
+// 1.2.4.11 - PALETTE PRECIPITAZIONE ALLINEATA AL RENDERER.
+// La scala di precipitazione del client deve essere IDENTICA a quella pubblicata dal
+// renderer in scripts/forecast_v2/color_scales.json (precipitation/rain/showers, stessi
+// breakpoints e stessi colori, identici light/dark). Il registro viene iniettato in
+// fmModule.defaultOmProtocolSettings.colorScales (vedi ensureWeatherMapLayer) cosi' sia
+// il rendering raster .om sia la legenda usano ESATTAMENTE la stessa scala: mappa e
+// legenda non possono divergere. La coerenza e' bloccata dal test
+// scripts/tests/test_fm_webp_palette_sync.mjs.
+var FM_PRECIP_BREAKPOINTS = [0, 0.1, 0.2, 0.5, 1, 2, 3, 4.5, 6, 8, 10, 12.5, 15, 20, 25, 30, 40, 50];
+var FM_PRECIP_COLORS = [[0, 0, 0, 0], [170, 220, 255, 1], [130, 200, 255, 1], [90, 180, 255, 1], [30, 150, 255, 1], [0, 100, 255, 1], [0, 190, 200, 1], [0, 205, 120, 1], [0, 205, 50, 1], [110, 215, 0, 1], [185, 230, 0, 1], [240, 225, 0, 1], [255, 195, 0, 1], [255, 145, 0, 1], [255, 90, 0, 1], [240, 30, 0, 1], [190, 0, 0, 1], [140, 0, 70, 1]];
+var FM_PRECIP_COLOR_SCALE = { type: 'breakpoint', unit: 'mm', min: null, max: null, breakpoints: FM_PRECIP_BREAKPOINTS, colors: { light: FM_PRECIP_COLORS, dark: FM_PRECIP_COLORS } };
+// 1.2.4.11 - PALETTE GEOPOTENZIALE (Meteociel) + SOSTITUZIONE BANDA pressure_msl.
+// Stessa forma / stesso meccanismo della palette precipitazione: le scale definite qui sotto
+// entrano in FM_COLOR_SCALE_OVERRIDES, vengono iniettate in
+// fmModule.defaultOmProtocolSettings.colorScales (vedi ensureWeatherMapLayer) e passate come
+// 3o argomento alle DUE chiamate a getColorScale (fmContourColor = colore isolinee,
+// fmUpdateLegend = legenda), quindi raster .om, isolinee e legenda condividono ESATTAMENTE la
+// stessa scala. La libreria (getColorScale, WML 0.2.2) risolve la forma `colors: { light, dark }`
+// col tema richiesto: `light` per il tema chiaro (fmOpts.dark === false, default) e `dark`
+// quando l'utente attiva il checkbox "Palette scura" (fm-chk-dark).
+// La coerenza con il renderer (scripts/forecast_v2/color_scales.json) e' bloccata dal test
+// scripts/tests/test_fm_webp_palette_sync.mjs.
+var FM_GEOP_COLORS = [[64, 0, 64, 1], [96, 0, 96, 1], [170, 0, 170, 1], [128, 16, 128, 1], [96, 0, 64, 1], [48, 51, 102, 1], [0, 51, 153, 1], [0, 0, 204, 1], [0, 0, 255, 1], [0, 85, 255, 1], [0, 153, 255, 1], [51, 204, 255, 1], [102, 255, 255, 1], [102, 255, 153, 1], [102, 255, 102, 1], [102, 255, 0, 1], [191, 250, 14, 1], [255, 255, 9, 1], [255, 255, 134, 1], [253, 232, 81, 1], [255, 204, 0, 1], [255, 153, 0, 1], [255, 105, 0, 1], [255, 77, 51, 1], [255, 48, 0, 1], [255, 0, 0, 1], [204, 0, 0, 1], [153, 0, 0, 1], [108, 0, 0, 1], [79, 0, 0, 1], [0, 0, 0, 1]];
+var FM_GEOP_BREAKPOINTS_500 = [4920, 4960, 5000, 5040, 5080, 5120, 5160, 5200, 5240, 5280, 5320, 5360, 5400, 5440, 5480, 5520, 5560, 5600, 5640, 5680, 5720, 5760, 5800, 5840, 5880, 5920, 5960, 6000, 6040, 6080, 6120];
+var FM_GEOP_BREAKPOINTS_850 = [700, 740, 780, 820, 860, 900, 940, 980, 1020, 1060, 1100, 1140, 1180, 1220, 1260, 1300, 1340, 1380, 1420, 1460, 1500, 1540, 1580, 1620, 1660, 1700, 1740, 1780, 1820, 1860, 1900];
+var FM_GEOP_BREAKPOINTS_1000 = [-800, -760, -720, -680, -640, -600, -560, -520, -480, -440, -400, -360, -320, -280, -240, -200, -160, -120, -80, -40, 0, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400];
+var FM_GEOP_500_COLOR_SCALE = { type: 'breakpoint', unit: 'm', min: null, max: null, breakpoints: FM_GEOP_BREAKPOINTS_500, colors: { light: FM_GEOP_COLORS, dark: FM_GEOP_COLORS } };
+var FM_GEOP_850_COLOR_SCALE = { type: 'breakpoint', unit: 'm', min: null, max: null, breakpoints: FM_GEOP_BREAKPOINTS_850, colors: { light: FM_GEOP_COLORS, dark: FM_GEOP_COLORS } };
+var FM_GEOP_1000_COLOR_SCALE = { type: 'breakpoint', unit: 'm', min: null, max: null, breakpoints: FM_GEOP_BREAKPOINTS_1000, colors: { light: FM_GEOP_COLORS, dark: FM_GEOP_COLORS } };
+// pressure_msl: scala divergente della libreria, breakpoints INVARIATI (940..1060). Unica
+// modifica, SOLO variante light: la banda [1010,1016) (indice 10), pura bianca (255,255,255),
+// diventa un grigio chiaro neutro (210,210,215) per restare visibile su una base cartografica
+// chiara; sul tema scuro il bianco resta invariato.
+var FM_MSL_BREAKPOINTS = [940, 950, 960, 970, 980, 986, 990, 996, 1000, 1006, 1010, 1016, 1020, 1026, 1030, 1040, 1050, 1060];
+var FM_MSL_COLORS_LIGHT = [[68, 68, 255, 1], [95, 95, 255, 1], [121, 121, 255, 1], [148, 148, 255, 1], [175, 175, 255, 1], [191, 191, 255, 1], [202, 202, 255, 1], [218, 218, 255, 1], [228, 228, 255, 1], [244, 244, 255, 1], [210, 210, 215, 1], [255, 233, 233, 1], [255, 218, 218, 1], [255, 195, 195, 1], [255, 180, 180, 1], [255, 143, 143, 1], [255, 105, 105, 1], [255, 68, 68, 1]];
+var FM_MSL_COLORS_DARK = [[68, 68, 255, 1], [95, 95, 255, 1], [121, 121, 255, 1], [148, 148, 255, 1], [175, 175, 255, 1], [191, 191, 255, 1], [202, 202, 255, 1], [218, 218, 255, 1], [228, 228, 255, 1], [244, 244, 255, 1], [255, 255, 255, 1], [255, 233, 233, 1], [255, 218, 218, 1], [255, 195, 195, 1], [255, 180, 180, 1], [255, 143, 143, 1], [255, 105, 105, 1], [255, 68, 68, 1]];
+var FM_MSL_COLOR_SCALE = { type: 'breakpoint', unit: 'hPa', min: null, max: null, breakpoints: FM_MSL_BREAKPOINTS, colors: { light: FM_MSL_COLORS_LIGHT, dark: FM_MSL_COLORS_DARK } };
+// 1.2.4.11 - VENTO: SI PUBBLICANO LE VELOCITA' (+ DIREZIONE PER IL READER), NON LE COMPONENTI.
+// Il motore pubblica SEI variabili: wind_speed_10m / wind_direction_10m,
+// wind_speed_850hPa / wind_direction_850hPa, wind_speed_300hPa / wind_direction_300hPa.
+// Le componenti wind_u_component_* / wind_v_component_* restano INPUT interni del motore
+// (servono solo a derivare velocita' e direzione): NON sono pubblicate, NON hanno scala,
+// NON hanno etichetta e NON compaiono in FM_CURATED_VARS ne' in FM_COLOR_SCALE_OVERRIDES.
+// La DIREZIONE e' pubblicata per il READER, non per il disegno: la libreria
+// (@openmeteo/weather-map-layer 0.2.2) per un nome che corrisponde a `_(?:speed|direction)_`
+// legge la COPPIA (getSourceVars('wind_speed_10m') -> primaria `wind_speed_10m`, secondaria
+// `wind_direction_10m`) e se la secondaria manca il reader LANCIA "Secondary variable ...
+// not found". La direzione quindi serve, ma senza scala il renderer la SALTA (nessun WebP
+// inutile) e il client non la offre.
+// La scala delle VELOCITA' e' la rampa SEQUENZIALE `wind` della libreria (21 bande, 0..40 m/s,
+// prima banda alpha 0), replicata qui in FM_WIND_COLOR_SCALE per 10 m e 850 hPa. Per il getto
+// (300 hPa) la STESSA rampa di 21 colori e' ri-spaziata sull'inviluppo 0..100 m/s
+// (FM_JET_COLOR_SCALE): il nucleo supera routinariamente i 40 m/s e saturerebbe.
+// Tutte e tre sono registrate in FM_COLOR_SCALE_OVERRIDES, quindi mappa (renderer) e legenda
+// (client) usano ESATTAMENTE gli stessi oggetti e non possono divergere; la fonte unica e' la
+// copia pubblicata di scripts/forecast_v2/color_scales.json e la coerenza e' bloccata dal test
+// scripts/tests/test_fm_webp_palette_sync.mjs.
+var FM_WIND_BREAKPOINTS = [0, 0.3, 0.6, 1, 1.5, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 21, 25, 30, 40];
+var FM_WIND_COLORS = [[70, 130, 180, 0], [64, 137, 179, 0.1], [58, 144, 177, 0.143], [51, 155, 175, 0.2], [42, 169, 172, 0.267], [34, 167, 150, 0.333], [20, 157, 100, 0.467], [9, 144, 48, 0.6], [0, 128, 0, 0.733], [28, 146, 0, 0.867], [64, 164, 0, 1], [106, 182, 0, 1], [211, 219, 0, 1], [255, 165, 0, 1], [255, 110, 0, 1], [255, 55, 0, 1], [255, 0, 0, 1], [201, 0, 86, 1], [128, 0, 128, 1], [124, 2, 83, 1], [116, 5, 5, 1]];
+var FM_WIND_COLOR_SCALE = { type: 'breakpoint', unit: 'm/s', min: null, max: null, breakpoints: FM_WIND_BREAKPOINTS, colors: { light: FM_WIND_COLORS, dark: FM_WIND_COLORS } };
+// wind_speed_300hPa (corrente a getto): la rampa `wind` 0..40 m/s della libreria
+// SATURA il nucleo del getto, che supera routinariamente i 40 m/s. Si riusa la STESSA
+// rampa `wind` (stessi 21 colori, stessi alpha) con i breakpoint ri-spaziati
+// sull'inviluppo 0..100 m/s del livello 300 hPa (21 bande, piu' fitte dove sta la
+// distribuzione, piu' larghe nella coda del getto). Poiche' differisce dal default
+// `wind` della libreria, DEVE essere registrata anche qui: altrimenti mappa e legenda
+// divergono. Anche 10 m e 850 hPa sono registrate (FM_WIND_COLOR_SCALE): cosi' le tre
+// velocita' hanno un oggetto scala ESPLICITO su entrambi i lati e la legenda non dipende
+// dal prefisso risolto dalla libreria.
+var FM_JET_BREAKPOINTS = [0, 2, 4, 6, 8, 11, 14, 17, 20, 24, 28, 32, 36, 41, 46, 52, 58, 65, 73, 84, 100];
+var FM_JET_COLORS = [[70, 130, 180, 0], [64, 137, 179, 0.1], [58, 144, 177, 0.143], [51, 155, 175, 0.2], [42, 169, 172, 0.267], [34, 167, 150, 0.333], [20, 157, 100, 0.467], [9, 144, 48, 0.6], [0, 128, 0, 0.733], [28, 146, 0, 0.867], [64, 164, 0, 1], [106, 182, 0, 1], [211, 219, 0, 1], [255, 165, 0, 1], [255, 110, 0, 1], [255, 55, 0, 1], [255, 0, 0, 1], [201, 0, 86, 1], [128, 0, 128, 1], [124, 2, 83, 1], [116, 5, 5, 1]];
+var FM_JET_COLOR_SCALE = { type: 'breakpoint', unit: 'm/s', min: null, max: null, breakpoints: FM_JET_BREAKPOINTS, colors: { light: FM_JET_COLORS, dark: FM_JET_COLORS } };
+// 1.2.4.11 - SCALA CUMULATA DI PRECIPITAZIONE (precipitation_cum).
+// La cumulata dal riferimento della run ("Cumul depuis 0h") NON esisteva nella libreria:
+// il client la risolveva per PREFISSO su `precipitation` (scala 0-50 mm -> saturava a
+// 50 mm) e il renderer la SALTava. Qui si definisce una scala dedicata 0..300 mm tarata
+// sulla distribuzione MISURATA (4 domini, 3.226.911 celle: p50 4,5 mm, p90 29,9,
+// p99 94,3, p99.9 194,0, max 1128,7 mm; >300 mm copre il 99,986% delle celle) con bande
+// piu' fitte in basso (dove sta la massa) e piu' larghe in alto. Prima banda [0,1)
+// TRASPARENTE ("non piove"); rampa campionata sul bordo SINISTRO della scala
+// `rain`/`precipitation` (indici 1..11, fino a 50 mm) ed ESTESA in alto verso il violetto
+// scuro (indici 12..20, 50->300 mm, R decrescente e B crescente). 21 bande, alpha 1 su
+// tutte tranne la prima, nessun colore ripetuto. Stessa forma/meccanismo delle scale
+// precedenti: la fonte unica e' la copia pubblicata di scripts/forecast_v2/color_scales.json
+// e la coerenza e' bloccata dal test scripts/tests/test_fm_webp_palette_sync.mjs.
+var FM_PRECUM_BREAKPOINTS = [0, 1, 2.5, 5, 7.5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200, 250, 300];
+var FM_PRECUM_COLORS = [[0, 0, 0, 0], [30, 150, 255, 1], [0, 100, 255, 1], [0, 205, 120, 1], [0, 205, 50, 1], [185, 230, 0, 1], [255, 195, 0, 1], [255, 145, 0, 1], [255, 90, 0, 1], [240, 30, 0, 1], [190, 0, 0, 1], [140, 0, 70, 1], [133, 0, 77, 1], [126, 0, 83, 1], [118, 0, 90, 1], [111, 0, 97, 1], [104, 0, 103, 1], [97, 0, 110, 1], [89, 0, 117, 1], [82, 0, 123, 1], [75, 0, 130, 1]];
+var FM_PRECUM_COLOR_SCALE = { type: 'breakpoint', unit: 'mm', min: null, max: null, breakpoints: FM_PRECUM_BREAKPOINTS, colors: { light: FM_PRECUM_COLORS, dark: FM_PRECUM_COLORS } };
+var FM_COLOR_SCALE_OVERRIDES = { precipitation_cum: FM_PRECUM_COLOR_SCALE, precipitation: FM_PRECIP_COLOR_SCALE, rain: FM_PRECIP_COLOR_SCALE, showers: FM_PRECIP_COLOR_SCALE, geopotential_height_500hPa: FM_GEOP_500_COLOR_SCALE, geopotential_height_850hPa: FM_GEOP_850_COLOR_SCALE, geopotential_height_1000hPa: FM_GEOP_1000_COLOR_SCALE, pressure_msl: FM_MSL_COLOR_SCALE, wind_speed_10m: FM_WIND_COLOR_SCALE, wind_speed_850hPa: FM_WIND_COLOR_SCALE, wind_speed_300hPa: FM_JET_COLOR_SCALE };
 var FM_VAR_LABELS = {
     temperature_2m: 'Temperatura 2 m',
+    dew_point_2m: 'Punto di rugiada 2 m',
     apparent_temperature: 'Temperatura percepita',
     relative_humidity_2m: 'Umidita relativa 2 m',
+    relative_humidity_700hPa: 'Umidita relativa 700 hPa',
     precipitation: 'Precipitazione totale',
+    precipitation_cum: 'Cumulata precipitazione',
     rain: 'Pioggia',
     showers: 'Rovesci',
     snowfall: 'Neve',
@@ -11298,8 +11395,9 @@ var FM_VAR_LABELS = {
     pressure_msl: 'Pressione al livello del mare',
     surface_pressure: 'Pressione al suolo',
     wind_gusts_10m: 'Raffiche 10 m',
-    wind_u_component_10m: 'Vento U 10 m',
-    wind_v_component_10m: 'Vento V 10 m',
+    wind_speed_10m: 'Vento 10 m',
+    wind_speed_850hPa: 'Vento 850 hPa',
+    wind_speed_300hPa: 'Jet Stream 300 hPa',
     cape: 'CAPE',
     cin: 'CIN',
     lifted_index: 'Lifted Index',
@@ -11348,6 +11446,7 @@ var fmInterval = null;
 var fmSpeed = 800;
 var fmMoveHooked = false;
 var fmModule = null;
+var fmColorScales = null; // 1.2.4.11: registro colorScales unificato (libreria + override precipitazione)
 var fmAdapter = null;
 var fmWmlState = 'not-loaded';
 var fmWmlWaiters = [];
@@ -11467,8 +11566,8 @@ function fmIsGlobalDomain() {
 // i modelli a copertura europea solo Europa/Mediterraneo/Italia, e il modello
 // a copertura italiana solo l'Italia ('domain' e' sempre disponibile).
 function fmDomainRegionIds(d) {
-    if (d === 'italia_meteo_arpae_icon_2i') return ['domain', 'italy'];
     if (d === 'dwd_icon_eu' || d === 'dwd_icon_d2') return ['domain', 'europe', 'italy'];
+    if (d === 'ncep_gfs013') return ['domain', 'europe', 'italy'];
     return ['domain', 'europe', 'italy', 'natl', 'namerica', 'samerica', 'africa', 'asia', 'oceania', 'arctic'];
 }
 function fmPopulateRegions() {
@@ -11581,6 +11680,16 @@ function ensureWeatherMapLayer(cb) {
             try {
                 fmModule = mod;
                 try {
+                    // 1.2.4.11 - registro scala colori UNIFICATO: si parte dal registro della
+                    // libreria e si sovrascrivono precipitation/rain/showers con la scala del
+                    // renderer (FM_COLOR_SCALE_OVERRIDES). Assegnato a defaultOmProtocolSettings
+                    // cosi' il raster .om usa la stessa scala; conservato in fmColorScales per
+                    // passarlo alla legenda (terzo argomento di getColorScale).
+                    var baseScales = (fmModule.defaultOmProtocolSettings && fmModule.defaultOmProtocolSettings.colorScales) || {};
+                    fmColorScales = Object.assign({}, baseScales, FM_COLOR_SCALE_OVERRIDES);
+                    if (fmModule.defaultOmProtocolSettings) fmModule.defaultOmProtocolSettings.colorScales = fmColorScales;
+                } catch (e) { fmColorScales = null; }
+                try {
                     var frc = fmModule.defaultOmProtocolSettings ? fmModule.defaultOmProtocolSettings.fileReaderConfig : null;
                     if (frc && fmModule.LruBlockCache) {
                         fmModule.defaultOmProtocolSettings.fileReaderConfig = Object.assign({}, frc, { cache: new fmModule.LruBlockCache(512 * 1024, 32) });
@@ -11635,7 +11744,7 @@ function fm2FetchMeta(domain, cb) {
     // Disponibilita' REALE delle variabili nel dominio corrente (1.2.4.10).
     // Il manifest del motore espone `var_order` SEMPRE completo (24 nomi) anche
     // per le variabili che la sorgente non pubblica (es. surface_pressure,
-    // assente in tutti i 10 domini; ncep_gfs025 ne pubblica 10 su 24): da solo
+    // assente in tutti i 7 domini; ncep_gfs025 ne pubblica 10 su 24): da solo
     // popolerebbe il selettore con mappe destinate a restare vuote.
     // Il campo `variables` (mappa valid_time -> { nome: meta }) elenca invece le
     // sole variabili realmente presenti in quel frame: l'UNIONE sui frame e'
@@ -11888,7 +11997,9 @@ function fmContourColor(value, varName) {
     var vn = varName || fmContourVar || fmVariable;
     try {
         if (fmModule && typeof fmModule.getColorScale === 'function') {
-            var scale = fmModule.getColorScale(vn, !!fmOpts.dark);
+            var scale = fmColorScales
+                ? fmModule.getColorScale(vn, !!fmOpts.dark, fmColorScales)
+                : fmModule.getColorScale(vn, !!fmOpts.dark);
             if (scale) {
                 if (typeof fmModule.getColor === 'function') {
                     var c = fmModule.getColor(scale, value);
@@ -12064,10 +12175,10 @@ function fmRebuild() {
     var vurl;
     if (overlayActive) {
         // MODIFICA B: raster = geopotential_height_500hPa (cur.url); layer vettoriale = isobare
-        // MSL forzate con intervallo sinottico 4 hPa, sul pane forecastMapsPaneVector.
+        // MSL forzate con intervallo sinottico 5 hPa, sul pane forecastMapsPaneVector.
         var overlayBase = fmOmUrlForIndexVar(fmIdx, fmOverlayVariable);
         if (overlayBase) {
-            vurl = fmVectorUrl(overlayBase, fmOverlayVariable, true, 4);
+            vurl = fmVectorUrl(overlayBase, fmOverlayVariable, true, 5);
         } else {
             vurl = fmVectorUrl(cur.url, fmVariable);
         }
@@ -12115,6 +12226,31 @@ function fmUpdateBounds() {
         fmModule.updateCurrentBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
     } catch (e) { }
 }
+function fmValidTimeStepHours() {
+    // 1.2.4.11 - Passo temporale della serie del dominio corrente, in ore, ricavato dai
+    // valid_times del manifest (differenza fra due valid_times consecutivi). Se il passo
+    // CAMBIA lungo la serie si usa quello della FASCIA del frame corrente (fmIdx):
+    // preferisce il passo in avanti (valid_times[i+1]-valid_times[i]) e ricade su quello
+    // all'indietro per l'ultimo frame. Ritorna null se non determinabile (nessuna label
+    // inventata). Fonte: fmMeta.valid_times (costruito in fm2FetchMeta, sia path .om sia
+    // WebP); per il path WebP l'indice della regione espone anche themed.valid_times.
+    if (!fmMeta || !fmMeta.valid_times || fmMeta.valid_times.length < 2) return null;
+    var vt = fmMeta.valid_times;
+    var i = fmIdx;
+    if (!(i >= 0 && i < vt.length)) i = 0;
+    var a, b;
+    if (i + 1 < vt.length) { a = vt[i]; b = vt[i + 1]; }
+    else { a = vt[i - 1]; b = vt[i]; }
+    var ta = Date.parse(a), tb = Date.parse(b);
+    if (!isFinite(ta) || !isFinite(tb) || tb <= ta) return null;
+    var h = (tb - ta) / 3600000;
+    return (isFinite(h) && h > 0) ? h : null;
+}
+function fmFmtStepHours(h) {
+    var mins = Math.round(h * 60);
+    if (mins <= 0) return '';
+    return (mins % 60 === 0) ? (mins / 60) + ' h' : mins + ' min';
+}
 function fmLegendTickValues(bp, lo, hi, maxTicks) {
     // Valori dei tick dell'asse legenda: sottoinsieme ADATTIVO delle soglie reali
     // (bp) con al massimo maxTicks etichette, sempre includendo gli estremi.
@@ -12136,7 +12272,11 @@ function fmUpdateLegend() {
     if (!el) return;
     if (!fmModule || typeof fmModule.getColorScale !== 'function' || !fmVariable) { el.innerHTML = ''; return; }
     var cs;
-    try { cs = fmModule.getColorScale(fmVariable, !!fmOpts.dark); } catch (e) { el.innerHTML = ''; return; }
+    try {
+        cs = fmColorScales
+            ? fmModule.getColorScale(fmVariable, !!fmOpts.dark, fmColorScales)
+            : fmModule.getColorScale(fmVariable, !!fmOpts.dark);
+    } catch (e) { el.innerHTML = ''; return; }
     if (!cs || !cs.colors || !cs.colors.length) { el.innerHTML = ''; return; }
     var colors = cs.colors;
     var n = colors.length;
@@ -12163,31 +12303,37 @@ function fmUpdateLegend() {
     var barHtml;
     var ticksHtml = '';
     if (boundaries && boundaries.length === n - 1 && hi > lo) {
-        // Barra a SEGMENTI: una banda per colore, posizione PROPORZIONALE ai valori
-        // (pct = 100*(bp-lo)/(hi-lo)) + tooltip con l'intervallo [lo_i, hi_i) + unita'.
-        var pts = [0];
-        for (var j = 0; j < boundaries.length; j++) {
-            var pct = 100 * (boundaries[j] - lo) / (hi - lo);
-            pts.push(pct < 0 ? 0 : (pct > 100 ? 100 : pct));
-        }
-        pts.push(100);
+        // Barra a SEGMENTI a BANDE DI UGUALE LARGHEZZA (1.2.4.11): ogni banda k occupa
+        // left = k*100/n, width = 100/n. La posizione NON e' piu' proporzionale al valore:
+        // le soglie bp[k] sono i bordi sinistri delle bande (bp[k] -> k*100/n), cosi' ogni
+        // banda ha la stessa area e i tick restano ALLINEATI ai cambi di colore.
+        // Tooltip per banda con l'intervallo [lo_i, hi_i) + unita' (cap aperto = \u221e).
+        var bandW = 100 / n;
         var bands = [];
         for (var k = 0; k < n; k++) {
-            var width = pts[k + 1] - pts[k];
-            if (width <= 0) continue; // banda cap degenere (ultimo colore): nessuna area
+            var leftPct = k * bandW;
             var bLo, bHi;
             if (cs.type === 'breakpoint' && cs.breakpoints) { bLo = cs.breakpoints[k]; bHi = cs.breakpoints[k + 1]; }
             else { bLo = (k === 0 ? lo : boundaries[k - 1]); bHi = boundaries[k]; }
             var hiTxtB = (bHi === null || bHi === undefined) ? '\u221e' : fmFmtNum(bHi);
             var tip = '[' + fmFmtNum(bLo) + ' \u2013 ' + hiTxtB + ') ' + (cs.unit || '');
-            bands.push('<span class="fm-legend-band" title="' + tip + '" style="left:' + pts[k] + '%;width:' + width + '%;background:' + rgba(colors[k]) + '"></span>');
+            bands.push('<span class="fm-legend-band" title="' + tip + '" style="left:' + leftPct + '%;width:' + bandW + '%;background:' + rgba(colors[k]) + '"></span>');
         }
         barHtml = '<div class="fm-legend-bar">' + bands.join('') + '</div>';
-        var tvals = fmLegendTickValues((cs.type === 'breakpoint' ? cs.breakpoints : null), lo, hi, 9);
+        // Tick adattivi: su scala breakpoint la soglia bp[j] sta sul bordo sinistro della
+        // banda j (j*100/n); su scala min/max (bande uniformi) la posizione resta proporzionale.
+        var bpArr = (cs.type === 'breakpoint' && cs.breakpoints) ? cs.breakpoints : null;
+        var tvals = fmLegendTickValues(bpArr, lo, hi, 9);
         var ticks = [];
         for (var t = 0; t < tvals.length; t++) {
             var tv = Number(tvals[t]);
-            var tp = 100 * (tv - lo) / (hi - lo);
+            var tp;
+            if (bpArr) {
+                var bi = bpArr.indexOf(tv);
+                tp = (bi >= 0) ? (bi * bandW) : (100 * (tv - lo) / (hi - lo));
+            } else {
+                tp = 100 * (tv - lo) / (hi - lo);
+            }
             tp = tp < 0 ? 0 : (tp > 100 ? 100 : tp);
             var edge = tp < 6 ? ' fm-legend-tick-edg' : (tp > 94 ? ' fm-legend-tick-edd' : '');
             ticks.push('<span class="fm-legend-tick' + edge + '" style="left:' + tp + '%">' + fmFmtNum(tvals[t]) + '</span>');
@@ -12208,12 +12354,21 @@ function fmUpdateLegend() {
     var hiTxt = '';
     if (cs.type === 'breakpoint' && cs.breakpoints && cs.breakpoints.length) { loTxt = cs.breakpoints[0]; hiTxt = cs.breakpoints[cs.breakpoints.length - 1]; }
     else { loTxt = (cs.min === null || cs.min === undefined ? '' : cs.min); hiTxt = (cs.max === null || cs.max === undefined ? '' : cs.max); }
+    // 1.2.4.11 - per le variabili di precipitazione l'unita' mostra anche il PASSO
+    // TEMPORALE della serie del dominio corrente (dai valid_times): es. "mm \u00b7 1 h".
+    // Se il passo non e' determinabile si scrive SOLO l'unita' (nessuna label inventata).
+    var unitTxt = cs.unit || '';
+    if (fmVariable === 'precipitation' || fmVariable === 'rain' || fmVariable === 'showers') {
+        var stepH = fmValidTimeStepHours();
+        var stepTxt = stepH ? fmFmtStepHours(stepH) : '';
+        if (stepTxt) unitTxt = unitTxt ? (unitTxt + ' \u00b7 ' + stepTxt) : stepTxt;
+    }
     el.innerHTML = barHtml + ticksHtml
-        + '<div class="fm-legend-labels"><span>' + fmFmtNum(loTxt) + '</span><span>' + (cs.unit || '') + '</span><span>' + fmFmtNum(hiTxt) + '</span></div>';
+        + '<div class="fm-legend-labels"><span>' + fmFmtNum(loTxt) + '</span><span>' + unitTxt + '</span><span>' + fmFmtNum(hiTxt) + '</span></div>';
     // MODIFICA B: con overlay attivo aggiunge l'etichetta delle isobare MSL. La scala raster
     // (geopotential_height_500hPa) resta invariata e la semantica alpha resta 0..1.
     if (fmOverlayVariable === 'pressure_msl') {
-        el.innerHTML += '<div class="fm-legend-overlay">Isobare MSL (hPa) · passo 4 hPa</div>';
+        el.innerHTML += '<div class="fm-legend-overlay">Isobare MSL (hPa) · passo 5 hPa</div>';
     }
 }
 function fmDomainChanged() {

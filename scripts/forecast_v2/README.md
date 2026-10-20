@@ -14,7 +14,7 @@ la propria griglia, la propria cache e il proprio manifest.
 
 ```
 data/fm2/
-  <dominio>/                          # es. dwd_icon_eu, italia_meteo_arpae_icon_2i
+  <dominio>/                          # es. dwd_icon_eu, ncep_gfs013
     <YYYY-MM-DDTHH00>.om              # un file per valid_time, multi-variabile, crop per-dominio
     latest.json                       # manifest del dominio
 ```
@@ -37,7 +37,7 @@ data/fm2/
   **RIMOSSO**: la cadenza pubblicata è quella **nativa della sorgente** e il
   numero di frame di un dominio coincide con `len(valid_times)` del suo
   `latest.json` S3. Conseguenza: più frame per dominio (crescita dipendente dal
-  run; misurata +23,4% complessiva il 2026-10-17 sui 10 domini, con `ncep_gfs025`
+  run; misurata +23,4% complessiva il 2026-10-17 sui 10 domini allora attivi, con `ncep_gfs025`
   il dominio più penalizzato dal vecchio thinning, +78,6%), a parità di
   `--valid-frames 0`.
 
@@ -50,20 +50,20 @@ sono gli indici del crop (vedi `grid` nel manifest del dominio: `nx`, `ny`,
 ```bash
 # Un dominio:
 python scripts/forecast_v2/forecast_v2_engine.py \
-  --domains jma_gsm \
+  --domains ncep_gfs013 \
   --valid-frames 0 \
   --out data/fm2
 
 # Più domini (ciascuno indipendente), con cache persistente dei frame:
 python scripts/forecast_v2/forecast_v2_engine.py \
-  --domains dwd_icon_eu ecmwf_ifs025 jma_gsm \
+  --domains dwd_icon_eu ecmwf_ifs025 ncep_gfs013 \
   --valid-frames 0 \
   --out data/fm2 \
   --frames-cache .cache_fm2_frames
 
 # Piano di TUTTI i domini senza scaricare/scrivere nulla:
 python scripts/forecast_v2/forecast_v2_engine.py \
-  --domains dwd_icon_eu jma_gsm ncep_gfs025 chmi_aladin_central_europe_2km \
+  --domains dwd_icon_eu ncep_gfs013 ncep_gfs025 dwd_icon_d2 \
   --valid-frames 0 --dry-run
 ```
 
@@ -71,13 +71,14 @@ python scripts/forecast_v2/forecast_v2_engine.py \
 
 | Opzione | Descrizione |
 |---|---|
-| `--domains D1 D2 ...` | Domini da elaborare, ciascuno **indipendente** (nessun ordine di priorità; ognuno produce `data/fm2/<dominio>/`). Default: `dwd_icon_eu italia_meteo_arpae_icon_2i`. |
+| `--domains D1 D2 ...` | Domini da elaborare, ciascuno **indipendente** (nessun ordine di priorità; ognuno produce `data/fm2/<dominio>/`). Default: i 7 domini di `V2_DOMAINS` — `dwd_icon_eu dwd_icon_d2 ecmwf_ifs025 ncep_gfs025 ncep_gfs013 dwd_icon meteofrance_arpege_world025`. |
 | `--valid-frames N` | Numero di `valid_times` da pubblicare a partire dal primo, **per ogni dominio**. `0` (default) o negativo = **intero orizzonte** del manifest del dominio (tutti i `valid_times`). |
 | `--out DIR` | Directory di output radice (default `data/fm2`); la cache di ogni dominio va in `<DIR>/<dominio>/`. |
 | `--once` | Un solo ciclo ed esce (default/compat). |
 | `--no-prune` | Non rimuove i frame oltre il limite. |
 | `--dry-run` | Stampa il piano di TUTTI i domini senza scaricare/scrivere. |
 | `--force` | Ignora il NO-OP guard (riscrive sempre). |
+| `--no-range` | Disabilita la lettura a intervalli (HTTP Range) e scarica ogni frame **a file intero**, come prima della 1.2.4.11. Utile per diagnosi o se `fsspec`/`aiohttp` non sono disponibili. |
 | `--cache-dir DIR` | Directory dei download temporanei (default: temp di sistema; flat `<dominio>__<VALID>.om`, nessuna verifica). |
 | `--frames-cache DIR` | Cache **persistente** dei frame full-size, layout `<DIR>/<dominio>/<VALID>.om`. Un frame in cache è riusato **senza download** se la sua `Content-Length` combacia con quella remota (HEAD leggero; fallback: size locale). Default: vuoto = disabilitata. |
 
@@ -89,7 +90,7 @@ Per ogni dominio elencato in `--domains` il motore, in modo indipendente:
    `completed`, `crs_wkt`;
 2. **riconosce il CRS** dal `crs_wkt`:
    - se **inizia per `GEOGCRS`** → dominio supportato;
-   - altrimenti (es. il `PROJCRS` Lambert di
+   - altrimenti (es. un `PROJCRS` Lambert, come il vecchio
      `chmi_aladin_central_europe_2km`) → **SKIP** con log esplicito
      `SKIP dominio '<dominio>': griglia proiettata non supportata
      (PROJCRS/Lambert)`, e la run prosegue con gli altri domini;
@@ -100,9 +101,9 @@ Per ogni dominio elencato in `--domains` il motore, in modo indipendente:
    `dx=(lonMax-lonMin)/(nx-1)`, `dy=(latMax-latMin)/(ny-1)`. Il dict griglia è
    memorizzato in una cache per-run;
 4. calcola il **crop PER-DOMINIO** (`DOMAIN_BBOX`/`bbox_for`): ogni dominio è
-   tagliato sulla **propria area reale** — `dwd_icon_eu` → Europa/Med
-   (`34.0,-15.0,62.0,40.0`), `italia_meteo_arpae_icon_2i` → Italia
-   (`36.5,6.5,47.2,18.6`); `V2_BBOX` (Italia) resta come fallback per domini non
+   tagliato sulla **propria area reale** — `dwd_icon_eu` e `ncep_gfs013` → Europa/Med
+   (`34.0,-15.0,62.0,40.0`), `dwd_icon_d2` → Europa centrale
+   (`43.18,-3.94,58.08,20.34`); `V2_BBOX` (Italia) resta come fallback per domini non
    mappati — sulla griglia del dominio (`bbox_to_indices`/`target_latlon`, generici);
 5. pubblica l'**orizzonte** (`--valid-frames`) e il set unico `V2_RISK_VARS` (24),
    con la presenza reale decisa **file-per-file** dai child del `.om`;
@@ -112,7 +113,7 @@ Per ogni dominio elencato in `--domains` il motore, in modo indipendente:
 ## Griglie derivate e GRIGLIE NOTE
 
 La griglia di run è **sempre derivata** da `crs_wkt` + shape del frame. La tabella
-seguente elenca le **griglie note** dei 10 domini GEOGCRS: **non è la fonte
+seguente elenca le **griglie note** dei 7 domini GEOGCRS: **non è la fonte
 unica**, serve solo come (a) **fallback nel `--dry-run`** (dove il frame non si
 scarica, quindi `nx,ny` non è derivabile) e (b) **guardia di coerenza**: se i
 `dx`/`dy` derivati si scostano **>1%** dai valori noti (e il dominio è in tabella)
@@ -123,16 +124,13 @@ si logga un warning, ma si **usano i valori derivati**.
 | `dwd_icon_eu` | 1377 | 657 | 0.0625 | 0.0625 |
 | `ecmwf_ifs025` | 1440 | 721 | 0.25 | 0.25 |
 | `ncep_gfs025` | 1440 | 721 | 0.25 | 0.25 |
+| `ncep_gfs013` | 3072 | 1536 | 0.1171875 | 0.1171493 |
 | `dwd_icon` | 2879 | 1441 | 0.125 | 0.125 |
 | `meteofrance_arpege_world025` | 1440 | 721 | 0.25 | 0.25 |
-| `ukmo_global_deterministic_10km` | 2560 | 1920 | 0.140625 | 0.09375 |
-| `jma_gsm` | 720 | 361 | 0.5 | 0.5 |
-| `cma_grapes_global` | 2880 | 1440 | 0.125 | 0.125 |
 | `dwd_icon_d2` | 1215 | 746 | 0.02 | 0.02 |
-| `italia_meteo_arpae_icon_2i` | 761 | 761 | 0.025 | 0.02 |
 
-`chmi_aladin_central_europe_2km` è `PROJCRS` (Lambert) → **SKIP**, non compare in
-tabella.
+Nessun dominio `PROJCRS` (Lambert) compare in tabella: un eventuale dominio
+proiettato viene **SKIP**pato (come il vecchio `chmi_aladin_central_europe_2km`).
 
 ### `--dry-run`
 
@@ -175,28 +173,42 @@ Con `--frames-cache` il motore, per ogni `<dominio>/<VALID>.om`:
   e, come indice, `<dominio>/latest.json`.
 - Ogni variabile pubblicata viene **dal dominio stesso** (nessun ricampionamento
   da altri domini): il crop è esatto (nearest = identità sui centri-cella).
-- Nessuna variabile è **derivata** lato server: tutto ciò che è pubblicato arriva
-  dalla sorgente diretta. Le variabili assenti nel frame (es. `surface_pressure`,
-  spesso non disponibile) vengono **omesse con warning** nel manifest.
+- **Derivate (dalla 1.2.4.11)**: `dew_point_2m` (formula di Magnus da T2m + RH2m),
+  le sei `wind_speed_*`/`wind_direction_*` (calcolate dalla coppia di componenti
+  `u/v`, che restano input interni) e `precipitation_cum` (cumulata dall'inizio
+  della run, sommando i frame in ordine di `valid_time`, con frame 0 = 0.0 mm).
+  Tutto il resto è pass-through diretto dalla sorgente.
+- Le variabili assenti nel frame (es. `surface_pressure`, spesso non disponibile)
+  vengono **omesse con warning** nel manifest.
 
 ## Set variabili pubblicate
 
-Il motore pubblica l'**unione** di due gruppi, nello stesso ordine del manifest
-(`var_order`), identica per tutti i domini (nessun set per-dominio):
+Il motore pubblica **31 variabili** nello stesso ordine del manifest (`var_order`),
+identiche per tutti i domini (nessun set per-dominio). Legge inoltre **6 componenti
+`u/v` del vento che NON pubblica** (INPUT interni, solo per derivare):
 
-- **14 variabili di rischio** (base): `temperature_2m`, `relative_humidity_2m`,
-  `pressure_msl`, `surface_pressure`, `wind_u_component_10m`,
-  `wind_v_component_10m`, `wind_gusts_10m`, `cloud_cover`, `cape`, `snow_depth`,
-  `precipitation`, `rain`, `showers`, `weather_code`.
-- **10 variabili `FM_CACHE core`** (pass-through dirette): `temperature_850hPa`,
-  `temperature_500hPa`, `relative_humidity_850hPa`,
+- **Variabili di rischio** (31, base + derivate): `temperature_2m`, `dew_point_2m`,
+  `temperature_850hPa`, `temperature_500hPa`, `relative_humidity_2m`,
+  `relative_humidity_850hPa`, `relative_humidity_700hPa`, `pressure_msl`,
   `geopotential_height_500hPa`, `geopotential_height_850hPa`,
-  `geopotential_height_1000hPa`, `cloud_cover_low`, `cloud_cover_mid`,
-  `cloud_cover_high`, `freezing_level_height`.
+  `geopotential_height_1000hPa`, `surface_pressure`, `wind_speed_10m`,
+  `wind_direction_10m`, `wind_speed_850hPa`, `wind_direction_850hPa`,
+  `wind_speed_300hPa`, `wind_direction_300hPa`, `wind_gusts_10m`, `cloud_cover`,
+  `cloud_cover_low`, `cloud_cover_mid`, `cloud_cover_high`, `cape`, `snow_depth`,
+  `precipitation`, `precipitation_cum`, `rain`, `showers`, `weather_code`,
+  `freezing_level_height`. Le pass-through dirette del gruppo `FM_CACHE core` sono
+  `temperature_850hPa`, `temperature_500hPa`, `relative_humidity_850hPa`, le tre
+  `geopotential_height_*`, le tre `cloud_cover_*` e `freezing_level_height`.
+- **6 componenti `u/v` del vento (INPUT, NON pubblicate)**: `wind_u_component_10m`,
+  `wind_v_component_10m`, `wind_u_component_850hPa`, `wind_v_component_850hPa`,
+  `wind_u_component_300hPa`, `wind_v_component_300hPa`. Sono lette dal frame
+  sorgente (`V2_INPUT_VARS`, incluse in `V2_READ_VARS`) **solo** per derivare le sei
+  `wind_speed_*`/`wind_direction_*`: non hanno scala e non vengono scritte nel `.om`.
 
-Totale: **24 variabili** in `var_order`. Le variabili assenti nel frame (es.
-accumuli/flussi di analisi, o `freezing_level_height`/`cape` se il dominio non le
-espone) sono **omesse con warning** nel manifest del dominio, senza crash.
+Totale: **31 variabili pubblicate** in `var_order` (le 6 `u/v` di INPUT non sono
+scritte). Le variabili assenti nel frame (es. accumuli/flussi di analisi, o
+`freezing_level_height`/`cape` se il dominio non le espone) sono **omesse con
+warning** nel manifest del dominio, senza crash.
 
 ### Stime di dimensione (misurato + stima)
 
@@ -211,7 +223,10 @@ espone) sono **omesse con warning** nel manifest del dominio, senza crash.
 - Il numero di frame per dominio = **orizzonte intero** del manifest S3 del
   dominio (variabile per run). Rilevazione del **2026-10-17** (manifest
   pubblicati `data/fm2/<dom>/latest.json` vs manifest upstream
-  `openmeteo.s3.amazonaws.com/data_spatial/<dom>/latest.json`):
+  `openmeteo.s3.amazonaws.com/data_spatial/<dom>/latest.json`). **Tabella
+  storica**: fotografa i 10 domini attivi fino alla 1.2.4.10; dalla 1.2.4.11 i
+  domini attivi sono 7 (`V2_DOMAINS`), con `ncep_gfs013` al posto dei quattro
+  rimossi:
 
   | dominio | `valid_times` pubblicato (con thinning) | `valid_times` senza thinning |
   |---|---|---|
@@ -276,23 +291,30 @@ applica delle *derivation rules* basate sul nome:
   accessibili come singolo array via `readVariable`.
 - Nomi che contengono `_speed_` / `_direction_` (es. `wind_speed_10m`,
   `wind_direction_10m`): il reader legge la **coppia** (speed + direction) e
-  restituisce `values = speed`, `directions = direction`. Il motore però scrive
-  solo le componenti `u/v`: velocità e direzione si ottengono da queste (regola
-  `_[uv]_component`), non da array `wind_speed_10m`/`wind_direction_10m` separati.
+  restituisce `values = speed`, `directions = direction`; se la secondaria
+  `wind_direction_*` manca, il reader **lancia** `Secondary variable ... not found`.
+  Per questo, dalla 1.2.4.11, il motore pubblica ENTRAMBE le variabili (velocita' e
+  direzione sono due array separati nel `.om`) per 10 m, 850 hPa e 300 hPa: i reader
+  che chiedono `wind_speed_*` trovano la `wind_direction_*` che si aspettano. Le
+  componenti `u/v` restano solo INPUT interni e non sono piu' pubblicate.
 - Tutte le altre variabili (`temperature_2m`, `cape`, `weather_code`, ...) sono
   lette come semplici (`values` = array, niente `directions`).
 
 ## Limiti noti
 
-- Il download avviene a **file intero** dal S3 (nessuna range-read); l'output
-  pubblicato è invece piccolo. Con `--frames-cache` i download a file intero sono
-  ammortizzati tra run consecutive; a cache fredda il costo resta quello del file
-  intero.
+- **Download selettivo via HTTP Range (1.2.4.11)**: il frame remoto viene aperto
+  con `fsspec`/`aiohttp` (`OmFileReaderAsync.from_fsspec`) e si leggono **solo** le
+  variabili di `V2_READ_VARS` (pubblicate + input), non il file intero. **Fallback
+  esplicito**: se `fsspec` manca, il backend HTTP non è disponibile o il formato
+  remoto non è leggibile a intervalli, il motore scarica il **file intero** e lo
+  registra (WARN + contatore); `--no-range` forza direttamente il percorso
+  classico. Con `--frames-cache` i frame già scaricati sono ammortizzati tra run
+  consecutive.
 - Il NO-OP guard è **per-dominio** e confronta `reference_time` + `valid_times`
   del dominio: l'insieme dei frame è deterministico a parità di run del modello.
 - I chunk di scrittura `.om` sono clampati alla dimensione effettiva dell'array
-  (i domini a griglia grossa, es. `jma_gsm` con crop `25x22`, hanno celle < 32 e
-  `omfiles` rifiuta chunk più grandi dell'array).
+  (un dominio con crop molto piccolo, es. `25x22`, ha celle < 32 e `omfiles`
+  rifiuta chunk più grandi dell'array).
 - `pick_secondary_valid` e la fase "dominio secondario" sono **rimosse**: ogni
   variabile è presa solo dal dominio corrente. Chi invocava `--domains` con il
   primo dominio come "primario" deve ora aspettarsi un sottodirectory per
@@ -364,7 +386,7 @@ manifest del motore (`resolve_region_bbox`):
   worldwide) la regione `domain` **non viene resa**, perché "tutto il dominio"
   sarebbe il globo (già raggiungibile via `italia`/`europa`, e troppo grande per
   un singolo WebP). La regione è resa solo per i domini a copertura regionale
-  (es. `dwd_icon_eu`, `dwd_icon_d2`, `italia_meteo_arpae_icon_2i`);
+  (es. `dwd_icon_eu`, `dwd_icon_d2`, `ncep_gfs013`);
 - l'output va in `data/fm2-rendered/domain/<dominio>/<var>/...` (stesso layout
   di `italia`/`europa`) e il suo `index.json` aggrega i domini indicizzati con il
   bbox **unione** dei loro bbox.
@@ -397,7 +419,7 @@ Il vecchio job `render` monolitico del workflow `forecast-maps-v2.yml` (10 domin
 a `timeout-minutes: 90` e `data/fm2-rendered` non veniva mai pubblicato: la
 fast-path WebP del client non si attivava mai. Il workflow ora esegue:
 
-1. **`render` (matrice per-dominio)** — un job per ciascuno dei 10 domini
+1. **`render` (matrice per-dominio)** — un job per ciascuno dei 7 domini
    (`fail-fast: false`, concurrency `forecast-maps-v2-render-<dominio>`,
    `timeout-minutes: 150`): scarica l'artifact engine **esatto** `fm2-<dominio>`,
    renderizza solo quel dominio (`--domains <dominio> --limit-frames 0 --method 4`,

@@ -180,7 +180,7 @@ def test_index_only_domain_region_end_to_end(tmp_path):
 # Predicato server PRIMA del fix (bug, assi scambiati):
 #     lat_span > 300 OR lon_span > 120
 # Predicato DOPO il fix == client fmIsGlobalDomain
-# (mri-light-1.2.4.10.html): lon_span > 300 OR lat_span > 120.
+# (mri-light-1.2.4.11.html): lon_span > 300 OR lat_span > 120.
 #
 # Per i 10 domini reali i due predicati coincidono (7 globali / 3 non-globali,
 # nessun cambio di classificazione: golden sotto), ma si DISTINGUONO sui due

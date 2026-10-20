@@ -11,7 +11,7 @@ WML 0.2.2 (stesso formato del POC `spike_omfiles/`, verificato bit-exact).
     python scripts/forecast_v2/forecast_v2_engine.py \
         [--domains dwd_icon_eu ecmwf_ifs025 ...] [--valid-frames 0] \
         [--out data/fm2] [--once] [--no-prune] [--dry-run] [--force] \
-        [--frames-cache .cache_fm2_frames]
+        [--frames-cache .cache_fm2_frames] [--no-range]
 
     --valid-frames 0 (default) o negativo = pubblica l'INTERO orizzonte di ogni
     dominio (tutti i valid_times del rispettivo manifest). N > 0 = primi N frame.
@@ -44,10 +44,17 @@ Disegno (V2 del motore, scelte DICHIARATE):
   - ORIZZONTE INTERO: si pubblicano TUTTI i valid_times del manifest del dominio
     (nessuna troncatura a un numero fisso di frame). --valid-frames 0/negativo
     (default) = intero orizzonte; N > 0 = primi N.
-  - VARIABILI: lista UNICA `V2_RISK_VARS` (24) per tutti i domini. Nessun set
-    per-dominio: la presenza reale e' decisa FILE-PER-FILE dai child del `.om`.
-    Le variabili assenti nella sorgente sono OMESSE con warning (es.
-    `surface_pressure`, spesso non disponibile).
+  - VARIABILI: lista UNICA `V2_RISK_VARS` (31: 23 dirette + 8 derivate) per
+    tutti i domini. Nessun set per-dominio: la presenza reale e' decisa
+    FILE-PER-FILE dai child del `.om`. Le variabili assenti nella sorgente sono
+    OMESSE con warning (es. `surface_pressure`, spesso non disponibile). Le
+    DERIVATE (dew_point_2m, wind_speed_10m/850hPa/300hPa,
+    wind_direction_10m/850hPa/300hPa, precipitation_cum) sono CALCOLATE dal
+    motore (registro `DERIVED_VARS`); `V2_INPUT_VARS` elenca le variabili di
+    INPUT (componenti u/v a 10 m, 850 e 300 hPa) lette ma NON pubblicate.
+    Il vento si pubblica come COPPIA velocita'+direzione: `wind_direction_*`
+    e' la secondaria pretesa dalla libreria client per ogni `wind_speed_*`
+    (le u/v non sono piu' pubblicate).
   - NO-OP GUARD PER-DOMINIO: se `data/fm2/<dominio>/latest.json` esiste con lo
     stesso `reference_time` e gli stessi `valid_times` (e non --force) il dominio
     viene saltato SENZA scaricare/riscrivere (evita commit inutili).
@@ -59,11 +66,24 @@ Disegno (V2 del motore, scelte DICHIARATE):
     (ripristinata in CI via actions/cache), layout `<dir>/<dominio>/<VALID>.om`.
     Un frame in cache viene riusato SENZA download se la sua Content-Length
     combacia con quella remota (HEAD leggero; fallback: size locale).
+  - LETTURA SELETTIVA (default): il frame sorgente NON viene scaricato per
+    intero. Aprendo il `.om` remoto via fsspec (HTTP Range) si leggono SOLO le
+    variabili di `V2_READ_VARS` (pubblicate + input) presenti (risoluzione nomi,
+    crop e `scale_factor` INVARIATI) + `crs_wkt` e la shape (header, letture
+    piccole).
+    I frame sorgente contengono molte piu' variabili di quelle pubblicate
+    (es. `ncep_gfs025`: ~315 array -> ~10 pubblicate). Ordine I/O per frame:
+    frame in frames-cache -> lettura a intervalli -> DOWNLOAD COMPLETO come
+    FALLBACK ESPLICITO. Ogni fallback emette `[WARN]` (dominio/frame/motivo) e
+    incrementa `download.fallback_count` nel manifest: mai silenzioso.
+    `--no-range` disabilita del tutto la lettura a intervalli.
   - EXIT: se TUTTI i domini falliscono -> exit 1. Se almeno UN dominio e' `ok`
     (anche solo NO-OP) -> exit 0, con summary esplicito `ok`/`skip`/`fail` (il
     workflow deve poter committare la cache dei domini riusciti).
   - Scrittura ATOMICA (.tmp -> os.replace) e nessun segreto: l'accesso S3 e'
-    anonimo. Nessuna dipendenza oltre `omfiles` e `numpy`.
+    anonimo. Dipendenze: `omfiles`, `numpy`, `Pillow` (mappe) e `fsspec` (+ il
+    backend HTTP `aiohttp`) per la lettura a intervalli; se fsspec manca si usa
+    il download completo (fallback esplicito).
 
 LICENZE / ATTRIBUZIONE:
   - Dati meteo: Open-Meteo (https://open-meteo.com), licenza CC BY 4.0 ->
@@ -74,6 +94,7 @@ LICENZE / ATTRIBUZIONE:
 """
 
 import argparse
+import asyncio
 import datetime as _dt
 import json
 import math
@@ -95,6 +116,20 @@ except ImportError:  # pragma: no cover - dipendenza CI
           "Eseguire: python -m pip install -r scripts/forecast_v2/requirements.txt")
     raise
 
+# Reader ASINCRONO (lettura a intervalli). Opzionale: se l'omfiles installato
+# non lo espone, la lettura selettiva non e' disponibile e si usa il download
+# completo (fallback esplicito, vedi `read_frame_selective`).
+try:
+    from omfiles import OmFileReaderAsync
+except ImportError:  # pragma: no cover - omfiles piu' vecchio
+    OmFileReaderAsync = None
+
+# fsspec (backend HTTP con Range). Opzionale: se assente idem sopra.
+try:
+    import fsspec as _fsspec
+except ImportError:  # pragma: no cover - dipendenza opzionale
+    _fsspec = None
+
 LOG = "[forecast_v2]"
 
 # ---------------------------------------------------------------------------
@@ -110,38 +145,49 @@ V2_BBOX = (36.5, 6.5, 47.2, 18.6)
 DOMAIN_BBOX = {
     "dwd_icon_eu": (34.0, -15.0, 62.0, 40.0),
     "dwd_icon_d2": (43.18, -3.94, 58.08, 20.34),
-    "italia_meteo_arpae_icon_2i": (36.5, 6.5, 47.2, 18.6),
     "ecmwf_ifs025": (-90.0, -180.0, 90.0, 179.75),
     "ncep_gfs025": (-90.0, -180.0, 90.0, 179.75),
+    # `ncep_gfs013` (0.13 deg) usa lo STESSO bbox europeo di `dwd_icon_eu`.
+    # La voce e' OBBLIGATORIA: senza di essa `bbox_for()` ricadrebbe IN SILENZIO
+    # su `V2_BBOX` (Italia) e il crop sarebbe 104x92 invece di ~470x239.
+    "ncep_gfs013": (34.0, -15.0, 62.0, 40.0),
     "dwd_icon": (-90.0, -180.0, 90.0, 179.75),
     "meteofrance_arpege_world025": (-90.0, -180.0, 90.0, 179.75),
-    "ukmo_global_deterministic_10km": (-90.0, -180.0, 89.90625, 179.85938),
-    "jma_gsm": (-90.0, -180.0, 90.0, 179.5),
-    "cma_grapes_global": (-89.9375, -180.0, 89.9375, 179.875),
 }
 
 def bbox_for(domain):
     return DOMAIN_BBOX.get(domain, V2_BBOX)
 
 # Domini di default (MULTI-DOMINIO INDIPENDENTE: nessun ordine di priorita').
-V2_DOMAINS = ["dwd_icon_eu", "dwd_icon_d2", "italia_meteo_arpae_icon_2i", "ecmwf_ifs025", "ncep_gfs025", "dwd_icon", "meteofrance_arpege_world025", "ukmo_global_deterministic_10km", "jma_gsm", "cma_grapes_global"]
+V2_DOMAINS = ["dwd_icon_eu", "dwd_icon_d2", "ecmwf_ifs025", "ncep_gfs025", "ncep_gfs013", "dwd_icon", "meteofrance_arpege_world025"]
 
 # Lista ORDINATA delle variabili di rischio desiderate, con sinonimi/forme.
 # name = nome pubblicato nel `.om`; sources = nomi candidati nel file sorgente
 # (il primo presente vince). La presenza reale e' determinata per-file.
+# NOTA (1.2.4.11): le voci con `sources: []` sono DERIVATE (non esistono nella
+# sorgente): compaiono nel registro `DERIVED_VARS` piu' sotto, che ne dichiara
+# le variabili sorgente e la funzione. `resolve_direct` non le risolve (nessun
+# candidato) e vengono aggiunte dopo la lettura diretta (vedi `derive_per_frame`
+# per le derivate per-frame e l'accumulo stateful per precipitation_cum).
 V2_RISK_VARS = [
     {"name": "temperature_2m",       "sources": ["temperature_2m"]},
+    {"name": "dew_point_2m",         "sources": []},                          # DERIVATA (T2m + RH2m)
     {"name": "temperature_850hPa",   "sources": ["temperature_850hPa"]},      # FM_CACHE core
     {"name": "temperature_500hPa",   "sources": ["temperature_500hPa"]},      # FM_CACHE core
     {"name": "relative_humidity_2m", "sources": ["relative_humidity_2m"]},
     {"name": "relative_humidity_850hPa", "sources": ["relative_humidity_850hPa"]},  # FM_CACHE core
+    {"name": "relative_humidity_700hPa", "sources": ["relative_humidity_700hPa"]},  # diretta (10/11 domini)
     {"name": "pressure_msl",         "sources": ["pressure_msl", "msl_pressure"]},
     {"name": "geopotential_height_500hPa", "sources": ["geopotential_height_500hPa"]},   # FM_CACHE core
     {"name": "geopotential_height_850hPa", "sources": ["geopotential_height_850hPa"]},   # FM_CACHE core
     {"name": "geopotential_height_1000hPa", "sources": ["geopotential_height_1000hPa"]},  # FM_CACHE core
     {"name": "surface_pressure",     "sources": ["surface_pressure"]},        # spesso assente
-    {"name": "wind_u_component_10m", "sources": ["wind_u_component_10m"]},
-    {"name": "wind_v_component_10m", "sources": ["wind_v_component_10m"]},
+    {"name": "wind_speed_10m",       "sources": []},                          # DERIVATA (u/v 10m, INPUT)
+    {"name": "wind_direction_10m",   "sources": []},                          # DERIVATA (u/v 10m, INPUT)
+    {"name": "wind_speed_850hPa",    "sources": []},                          # DERIVATA (u/v 850hPa, INPUT)
+    {"name": "wind_direction_850hPa", "sources": []},                         # DERIVATA (u/v 850hPa, INPUT)
+    {"name": "wind_speed_300hPa",    "sources": []},                          # DERIVATA (u/v 300hPa, INPUT)
+    {"name": "wind_direction_300hPa", "sources": []},                         # DERIVATA (u/v 300hPa, INPUT)
     {"name": "wind_gusts_10m",       "sources": ["wind_gusts_10m"]},
     {"name": "cloud_cover",          "sources": ["cloud_cover"]},
     {"name": "cloud_cover_low",      "sources": ["cloud_cover_low"]},        # FM_CACHE core
@@ -150,11 +196,34 @@ V2_RISK_VARS = [
     {"name": "cape",                 "sources": ["cape"]},
     {"name": "snow_depth",           "sources": ["snow_depth"]},
     {"name": "precipitation",        "sources": ["precipitation"]},
+    {"name": "precipitation_cum",    "sources": []},                          # DERIVATA STATEFUL (somma precipitation)
     {"name": "rain",                 "sources": ["rain"]},
     {"name": "showers",              "sources": ["showers"]},
     {"name": "weather_code",         "sources": ["weather_code"]},
     {"name": "freezing_level_height", "sources": ["freezing_level_height"]},  # FM_CACHE core
 ]
+
+# Variabili di INPUT: lette dal frame sorgente ma NON pubblicate. Sono gli input
+# delle derivate wind_speed_*/wind_direction_* (componenti u/v a 10 m, 850 e
+# 300 hPa). Le u/v a 10 m erano PUBBLICATE fino alla 1.2.4.10: dalla 1.2.4.11
+# NON si pubblicano piu' (la libreria client vuole la COPPIA
+# speed+direction). Devono essere lette ANCHE dal percorso a intervalli, quindi
+# entrano nell'unione `V2_READ_VARS`.
+V2_INPUT_VARS = [
+    {"name": "wind_u_component_10m", "sources": ["wind_u_component_10m"]},
+    {"name": "wind_v_component_10m", "sources": ["wind_v_component_10m"]},
+    {"name": "wind_u_component_850hPa", "sources": ["wind_u_component_850hPa"]},
+    {"name": "wind_v_component_850hPa", "sources": ["wind_v_component_850hPa"]},
+    {"name": "wind_u_component_300hPa", "sources": ["wind_u_component_300hPa"]},
+    {"name": "wind_v_component_300hPa", "sources": ["wind_v_component_300hPa"]},
+]
+V2_INPUT_VAR_NAMES = frozenset(v["name"] for v in V2_INPUT_VARS)
+
+# Unione passata ai reader (`load_frame`, `read_frame_selective`): pubblicate +
+# INPUT. Va passato QUESTO insieme ai reader, altrimenti la lettura a intervalli
+# non legge le componenti u/v a 850/300 hPa e la derivazione fallisce solo su
+# quel percorso.
+V2_READ_VARS = V2_RISK_VARS + V2_INPUT_VARS
 
 # Cap OPZIONALE di sicurezza del pruning (numero massimo di frame `.om`
 # mantenuti in una dir di dominio). 0 = NESSUN CAP: si mantiene l'orizzonte
@@ -168,19 +237,36 @@ V2_OUT = "data/fm2"
 # e il lettore rilegge valore = int / scale_factor: quindi il passo effettivo
 # e' 1/scale_factor. Qui si dichiarano i PASSI (unita' della variabile); il
 # writer riceve scale_factor = 1.0 / passo (vedi write_frame_om).
+# Le wind_direction_* (direzione meteorologica in gradi, intervallo [0,360))
+# usano passo 1 grado: e' il massimo di risoluzione utile (il valore e' un
+# intero di gradi) e con scale_factor = 1/1 = 1 il massimo memorizzabile int16
+# e' 32767 gradi, ampiamente sopra il range [0,360): nessun rischio di
+# saturazione/NaN.
+# ATTENZIONE (verificato su dati reali): la quantizzazione a 1 grado fa
+# arrotondare 359.5..360.0 a 360, che e' FUORI da [0,360). Per non pubblicare
+# mai 360 il writer pubblico passa da `wrap_wind_direction_for_step`, che mappa
+# le direzioni >= 360 - passo/2 a 0 (360 equivale a 0).
+WIND_DIRECTION_STEP = 1.0
 VARIABLE_STEP = {
     "temperature_2m": 0.1,              # 0.1 degC
     "temperature_850hPa": 0.1,          # 0.1 degC
     "temperature_500hPa": 0.1,          # 0.1 degC
     "relative_humidity_2m": 1.0,        # 1 %
     "relative_humidity_850hPa": 1.0,    # 1 %
+    "relative_humidity_700hPa": 1.0,    # 1 %
+    "dew_point_2m": 0.1,                # 0.1 degC (DERIVATA, Magnus)
     "pressure_msl": 0.1,                # 0.1 hPa
     "geopotential_height_500hPa": 1.0,  # 1 m
     "geopotential_height_850hPa": 1.0,  # 1 m
     "geopotential_height_1000hPa": 1.0, # 1 m
     "surface_pressure": 0.1,            # 0.1 hPa
-    "wind_u_component_10m": 0.1,        # 0.1 m/s
-    "wind_v_component_10m": 0.1,        # 0.1 m/s
+    # wind_u/v_component_* NON sono piu' pubblicate (INPUT): nessun passo qui.
+    "wind_speed_10m": 0.1,              # 0.1 m/s (DERIVATA da u/v 10m, INPUT)
+    "wind_direction_10m": WIND_DIRECTION_STEP,    # 1 grado (DERIVATA da u/v 10m, INPUT)
+    "wind_speed_850hPa": 0.1,           # 0.1 m/s (DERIVATA da u/v 850hPa, INPUT)
+    "wind_direction_850hPa": WIND_DIRECTION_STEP, # 1 grado (DERIVATA da u/v 850hPa, INPUT)
+    "wind_speed_300hPa": 0.1,           # 0.1 m/s (DERIVATA da u/v 300hPa, INPUT)
+    "wind_direction_300hPa": WIND_DIRECTION_STEP, # 1 grado (DERIVATA da u/v 300hPa, INPUT)
     "wind_gusts_10m": 0.1,              # 0.1 m/s
     "cloud_cover": 1.0,                 # 1 %
     "cloud_cover_low": 1.0,             # 1 %
@@ -189,6 +275,13 @@ VARIABLE_STEP = {
     "cape": 10.0,                       # 10 J/kg
     "snow_depth": 0.1,                  # 0.1 m
     "precipitation": 0.1,               # 0.1 mm
+    # precipitation_cum (DERIVATA STATEFUL): cumulata lungo la serie dei
+    # valid_times. LIMITE int16 (compressione pfor_delta_2d_int16): il writer
+    # passa scale_factor = 1/passo = 10, quindi int = round(mm*10) e il massimo
+    # int16 (32767) corrisponde a 3276.7 mm; OLTRE, omfiles produce NaN (non
+    # wrap: comportamento MISURATO). Massimo osservato su dati reali: 1128.7 mm
+    # (ciclone tropicale, dominio globale ECMWF) -> 11287, sotto il limite.
+    "precipitation_cum": 0.1,           # 0.1 mm (DERIVATA STATEFUL)
     "rain": 0.1,                        # 0.1 mm
     "showers": 0.1,                     # 0.1 mm
     "weather_code": 1.0,                # 1 (codice WMO)
@@ -207,21 +300,18 @@ _BBOX_RE = re.compile(
     r"BBOX\s*\[\s*([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*,\s*"
     r"([-+0-9.eE]+)\s*,\s*([-+0-9.eE]+)\s*\]")
 
-# Tabella delle griglie NOTE dei 10 domini GEOGCRS. NON e' la fonte unica:
+# Tabella delle griglie NOTE dei 7 domini GEOGCRS. NON e' la fonte unica:
 # la griglia di run e' DERIVATA da crs_wkt (BBOX) + shape del frame. Questa
 # tabella serve SOLO come (a) FALLBACK nel --dry-run (dove il frame non si
 # scarica, quindi nx/ny non e' derivabile) e (b) GUARDIA di coerenza sui dx/dy.
 GRIDS = {
-    "dwd_icon_eu":                  {"nx": 1377, "ny": 657,  "dx": 0.0625,   "dy": 0.0625},
-    "ecmwf_ifs025":                 {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
-    "ncep_gfs025":                  {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
-    "dwd_icon":                     {"nx": 2879, "ny": 1441, "dx": 0.125,    "dy": 0.125},
-    "meteofrance_arpege_world025":  {"nx": 1440, "ny": 721,  "dx": 0.25,     "dy": 0.25},
-    "ukmo_global_deterministic_10km": {"nx": 2560, "ny": 1920, "dx": 0.140625, "dy": 0.09375},
-    "jma_gsm":                      {"nx": 720,  "ny": 361,  "dx": 0.5,      "dy": 0.5},
-    "cma_grapes_global":            {"nx": 2880, "ny": 1440, "dx": 0.125,    "dy": 0.125},
-    "dwd_icon_d2":                  {"nx": 1215, "ny": 746,  "dx": 0.02,     "dy": 0.02},
-    "italia_meteo_arpae_icon_2i":   {"nx": 761,  "ny": 761,  "dx": 0.025,    "dy": 0.02},
+    "dwd_icon_eu":                  {"nx": 1377, "ny": 657,  "dx": 0.0625,    "dy": 0.0625},
+    "ecmwf_ifs025":                 {"nx": 1440, "ny": 721,  "dx": 0.25,      "dy": 0.25},
+    "ncep_gfs025":                  {"nx": 1440, "ny": 721,  "dx": 0.25,      "dy": 0.25},
+    "ncep_gfs013":                  {"nx": 3072, "ny": 1536, "dx": 0.1171875, "dy": 0.1171493},
+    "dwd_icon":                     {"nx": 2879, "ny": 1441, "dx": 0.125,     "dy": 0.125},
+    "meteofrance_arpege_world025":  {"nx": 1440, "ny": 721,  "dx": 0.25,      "dy": 0.25},
+    "dwd_icon_d2":                  {"nx": 1215, "ny": 746,  "dx": 0.02,      "dy": 0.02},
 }
 
 
@@ -415,17 +505,22 @@ def grid_guard(domain, grid):
     return msgs
 
 
+def _reader_shape(reader):
+    """(ny, nx) dal PRIMO child array di un reader SYNC (o None)."""
+    for i in range(reader.num_children):
+        c = reader.get_child_by_index(i)
+        if not c.is_scalar:
+            shp = getattr(c, "shape", None)
+            if shp is not None and len(shp) == 2:
+                return int(shp[0]), int(shp[1])
+    return None
+
+
 def frame_shape(path):
     """(ny, nx) dal PRIMO child array del frame `.om` (o None)."""
     reader = OmFileReader.from_path(path)
     try:
-        for i in range(reader.num_children):
-            c = reader.get_child_by_index(i)
-            if not c.is_scalar:
-                shp = getattr(c, "shape", None)
-                if shp is not None and len(shp) == 2:
-                    return int(shp[0]), int(shp[1])
-        return None
+        return _reader_shape(reader)
     finally:
         reader.close()
 
@@ -473,6 +568,13 @@ def nearest_indices(grid, lats, lons):
     return jj, ii
 
 
+def _resample_window(window, jj, ii, jmin, imin):
+    """Riduce una finestra alla griglia target (nearest). STESSA aritmetica per
+    la lettura locale (sync) e per quella a intervalli (async)."""
+    window = np.asarray(window, dtype=np.float32)
+    return np.ascontiguousarray(window[np.ix_(jj - jmin, ii - imin)]).astype(np.float32)
+
+
 def read_and_resample(reader, name, src_grid, tgt_lats, tgt_lons):
     """Legge `name` dal reader e lo porta sulla griglia target (nearest).
 
@@ -487,8 +589,7 @@ def read_and_resample(reader, name, src_grid, tgt_lats, tgt_lons):
     if child is None:
         raise KeyError(name)
     window = child.read_array((slice(jmin, jmax + 1), slice(imin, imax + 1)))
-    window = np.asarray(window, dtype=np.float32)
-    return np.ascontiguousarray(window[np.ix_(jj - jmin, ii - imin)]).astype(np.float32)
+    return _resample_window(window, jj, ii, jmin, imin)
 
 
 def array_child_names(reader):
@@ -511,12 +612,230 @@ def resolve_direct(risk, child_names):
     return None
 
 
+# ---------------------------------------------------------------------------
+# Derivazioni (1.2.4.11): variabili PUBBLICATE che NON esistono nella sorgente.
+# ---------------------------------------------------------------------------
+# Coefficienti Magnus (formula richiesta): T in degC, RH in %.
+MAGNUS_A = 17.62
+MAGNUS_B = 243.12
+
+
+def dew_point_magnus(t, rh):
+    """Punto di rugiada (Magnus). T in degC, RH in %.
+
+    alpha = ln(RH/100) + a*T/(b+T);  Td = b*alpha/(a-alpha).
+    Casi limite DICHIARATI:
+      - RH <= 0: ln(0) = -inf -> RH viene CLIPPATA a 0.1% (il risultato resta
+        finito, il valore piu' basso ottenibile);
+      - RH > 100: RH viene CLIPPATA a 100 (saturazione, Td = T);
+      - T/RH assenti: la derivata NON viene calcolata (gestito da `derive_per_frame`,
+        che salta la variabile con warning).
+    T fuori intervallo fisico non e' atteso (per T <= -b il denominatore
+    degenera): non gestito, i dati reali stanno in [-90, 60] degC.
+    """
+    t = np.asarray(t, dtype=np.float64)
+    rh = np.asarray(rh, dtype=np.float64)
+    rh = np.clip(rh, 0.1, 100.0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        alpha = np.log(rh / 100.0) + MAGNUS_A * t / (MAGNUS_B + t)
+        td = MAGNUS_B * alpha / (MAGNUS_A - alpha)
+    return td.astype(np.float32)
+
+
+def wind_speed_from_uv(u, v):
+    """Velocita' del vento = sqrt(u^2 + v^2) (il segno delle componenti non conta)."""
+    u = np.asarray(u, dtype=np.float64)
+    v = np.asarray(v, dtype=np.float64)
+    return np.sqrt(u * u + v * v).astype(np.float32)
+
+
+def wind_direction_from_uv(u, v):
+    """Direzione METEOROLOGICA del vento (gradi, [0,360)): quella DA cui soffia.
+
+    Convenzione della libreria client `@openmeteo/weather-map-layer`
+    (getSourceVars per i nomi `_(?:speed|direction)_`): la direzione e' la
+    secondaria della velocita'
+
+        direction = (degrees(atan2(u, v)) + 180) % 360
+
+    dove u = componente zonale (positiva verso EST) e v = componente
+    meridionale (positiva verso NORD). Risultato: 0 = vento da NORD,
+    90 = da OVEST, 180 = da SUD, 270 = da EST.
+    """
+    u = np.asarray(u, dtype=np.float64)
+    v = np.asarray(v, dtype=np.float64)
+    return ((np.degrees(np.arctan2(u, v)) + 180.0) % 360.0).astype(np.float32)
+
+
+def wrap_wind_direction_for_step(d):
+    """Riporta a 0 le direzioni che il passo dichiarato quantizzerebbe a 360.
+
+    La formula pura (`wind_direction_from_uv`) produce valori in [0,360), ma il
+    writer memorizza int = round(valore / passo) ... nel nostro caso
+    scale_factor = 1/passo, quindi valore = int/passo e una direzione in
+    [360 - passo/2, 360) viene arrotondata a 360, FUORI dall'intervallo
+    dichiarato. Poiche' 360 e 0 sono la stessa direzione, qui le si mappa a 0:
+    il `.om` pubblicato resta sempre in [0,360). MISURATO su dwd_icon_eu reale:
+    senza questo wrap 5 celle su 395569 contenevano 360.0.
+    """
+    d = np.asarray(d, dtype=np.float32)
+    limit = np.float32(360.0 - 0.5 * WIND_DIRECTION_STEP)
+    return np.where(d >= limit, np.float32(0.0), d).astype(np.float32)
+
+
+def accumulate_precip_cum(cum, precip, shape):
+    """Cumulata di precipitazione (STATEFUL): somma per cella in ordine di valid_time.
+
+    `cum` = cumulata precedente (None al primo frame). `precip` = array del frame
+    corrente o None se il frame NON espone `precipitation` (contribuisce 0: e' il
+    caso del frame al reference_time). Ritorna la cumulata aggiornata np.float64.
+    Il frame senza precipitazione inizializza comunque la cumulata a 0 (scelta
+    DICHIARATA: precipitation_cum e' pubblicata su TUTTI i frame, cosi' l'insieme
+    delle variabili resta coerente tra i frame).
+    """
+    if cum is None:
+        cum = np.zeros(shape, dtype=np.float64)
+    if precip is not None:
+        cum = cum + np.asarray(precip, dtype=np.float64)
+    return cum
+
+
+def _derive_dew_point_2m(arrays):
+    return dew_point_magnus(arrays["temperature_2m"],
+                            arrays["relative_humidity_2m"])
+
+
+def _derive_wind_speed_10m(arrays):
+    return wind_speed_from_uv(arrays["wind_u_component_10m"],
+                              arrays["wind_v_component_10m"])
+
+
+def _derive_wind_speed_850hPa(arrays):
+    return wind_speed_from_uv(arrays["wind_u_component_850hPa"],
+                              arrays["wind_v_component_850hPa"])
+
+
+def _derive_wind_speed_300hPa(arrays):
+    return wind_speed_from_uv(arrays["wind_u_component_300hPa"],
+                              arrays["wind_v_component_300hPa"])
+
+
+def _derive_wind_direction_10m(arrays):
+    return wrap_wind_direction_for_step(
+        wind_direction_from_uv(arrays["wind_u_component_10m"],
+                               arrays["wind_v_component_10m"]))
+
+
+def _derive_wind_direction_850hPa(arrays):
+    return wrap_wind_direction_for_step(
+        wind_direction_from_uv(arrays["wind_u_component_850hPa"],
+                               arrays["wind_v_component_850hPa"]))
+
+
+def _derive_wind_direction_300hPa(arrays):
+    return wrap_wind_direction_for_step(
+        wind_direction_from_uv(arrays["wind_u_component_300hPa"],
+                               arrays["wind_v_component_300hPa"]))
+
+
+# Registro delle derivazioni: nome PUBBLICATO -> {sources, func, stateful}.
+# `sources` = nomi (pubblicati o di INPUT) che devono essere presenti; `func`
+# (arrays) = derivata per-frame; `stateful: True` = NON per-frame ma accumulata
+# dal chiamante lungo la serie (`process_domain`).
+# ATOMICITA' (velocita' + direzione): `wind_speed_X` e `wind_direction_X`
+# dichiarano le STESSE due componenti u/v come `sources`, quindi
+# `derive_per_frame` calcola la coppia o la OMETTE ENTRAMBI (se manca anche una
+# sola componente, per entrambe `missing` e' non vuoto). La coppia e' percio'
+# sempre o tutta presente o tutta assente nel `.om` pubblicato: nessuna
+# variabile orfana che manderebbe in errore il reader del client (che pretende
+# la secondaria `wind_direction_*` per ogni `wind_speed_*`).
+DERIVED_VARS = {
+    "dew_point_2m": {
+        "sources": ["temperature_2m", "relative_humidity_2m"],
+        "func": _derive_dew_point_2m,
+    },
+    "wind_speed_10m": {
+        "sources": ["wind_u_component_10m", "wind_v_component_10m"],
+        "func": _derive_wind_speed_10m,
+    },
+    "wind_direction_10m": {
+        "sources": ["wind_u_component_10m", "wind_v_component_10m"],
+        "func": _derive_wind_direction_10m,
+    },
+    "wind_speed_850hPa": {
+        "sources": ["wind_u_component_850hPa", "wind_v_component_850hPa"],
+        "func": _derive_wind_speed_850hPa,
+    },
+    "wind_direction_850hPa": {
+        "sources": ["wind_u_component_850hPa", "wind_v_component_850hPa"],
+        "func": _derive_wind_direction_850hPa,
+    },
+    "wind_speed_300hPa": {
+        "sources": ["wind_u_component_300hPa", "wind_v_component_300hPa"],
+        "func": _derive_wind_speed_300hPa,
+    },
+    "wind_direction_300hPa": {
+        "sources": ["wind_u_component_300hPa", "wind_v_component_300hPa"],
+        "func": _derive_wind_direction_300hPa,
+    },
+    "precipitation_cum": {
+        "sources": ["precipitation"],
+        "func": None,
+        "stateful": True,
+    },
+}
+
+
+def derive_per_frame(arrays, meta, domain):
+    """Applica le derivazioni STATELESS e aggiorna `arrays`/`meta` (in place).
+
+    Unica implementazione condivisa dai due percorsi di lettura (locale/reader e
+    range): NON duplicata nei due punti. Ritorna i warning per le derivate non
+    calcolabili (una sorgente assente). Le derivate stateful (precipitation_cum)
+    sono escluse: le accumula `process_domain`.
+    """
+    warnings = []
+    for name, spec in DERIVED_VARS.items():
+        if spec.get("stateful"):
+            continue
+        srcs = spec["sources"]
+        missing = [s for s in srcs if s not in arrays]
+        if missing:
+            warnings.append(
+                "variabile derivata '%s' non calcolabile nel dominio '%s': "
+                "manca %s" % (name, domain, ",".join(missing)))
+            continue
+        arrays[name] = spec["func"](arrays)
+        meta[name] = {"source_domain": domain, "derived": True,
+                      "derived_from": list(srcs)}
+    return warnings
+
+
+def missing_published_warnings(risk_vars, arrays, domain):
+    """Warning per le variabili PUBBLICATE DIRETTE non risolte (file-per-file).
+
+    Esclude gli INPUT (letti ma non pubblicati) e le derivate (gestite da
+    `derive_per_frame` / dall'accumulo stateful).
+    """
+    warns = []
+    for rv in risk_vars:
+        name = rv["name"]
+        if name in V2_INPUT_VAR_NAMES or name in DERIVED_VARS:
+            continue
+        if name not in arrays:
+            warns.append("variabile '%s' assente nel dominio '%s' (%s): omessa"
+                         % (name, domain, ",".join(rv["sources"])))
+    return warns
+
+
 def resolve_domain_frame(reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domain):
     """Costruisce gli array di output del frame del dominio + metadati.
 
     Ritorna (arrays, variables_meta, warnings). `arrays` e' dict
-    nome_pubblicato -> np.float32 crop. Nessun dominio secondario: la griglia
-    sorgente E' la griglia del dominio (il crop e' esatto).
+    nome -> np.float32 crop: variabili PUBBLICATE (dirette + derivate) piu' gli
+    INPUT (letti per le derivate, NON pubblicati e assenti da `meta`).
+    `risk_vars` e' l'UNIONE pubblicate + input (`V2_READ_VARS`). Nessun dominio
+    secondario: la griglia sorgente E' la griglia del dominio (crop esatto).
     """
     arrays = {}
     meta = {}
@@ -531,16 +850,370 @@ def resolve_domain_frame(reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domai
             continue
         arrays[rv["name"]] = read_and_resample(
             reader, src, grid, tgt_lats, tgt_lons)
-        meta[rv["name"]] = {"source_domain": domain, "source_var": src,
-                            "derived": False}
+        if rv["name"] not in V2_INPUT_VAR_NAMES:
+            meta[rv["name"]] = {"source_domain": domain, "source_var": src,
+                                "derived": False}
 
-    # 3) variabili richieste ma irrisolte -> warning
-    for rv in risk_vars:
-        if rv["name"] not in arrays:
-            warnings.append("variabile '%s' assente nel dominio '%s' (%s): omessa"
-                            % (rv["name"], domain, ",".join(rv["sources"])))
+    # 2) derivazione per-frame (stateless), condivisa coi due percorsi di lettura
+    warnings.extend(derive_per_frame(arrays, meta, domain))
+
+    # 3) variabili PUBBLICATE dirette richieste ma irrisolte -> warning
+    warnings.extend(missing_published_warnings(risk_vars, arrays, domain))
 
     return arrays, meta, warnings
+
+
+# ---------------------------------------------------------------------------
+# Lettura SELETTIVA a intervalli (range GET) delle SOLE variabili pubblicate
+# ---------------------------------------------------------------------------
+# Ogni frame sorgente contiene molte piu' variabili di quelle che pubblichiamo
+# (es. `ncep_gfs025`: ~315 array, ne pubblichiamo ~10; `ncep_gfs013`: 16 array,
+# ne pubblichiamo ~5) e pesa decine/centinaia di MB. `omfiles` sa leggere un
+# `.om` remoto a INTERVALLI via fsspec (HTTP Range): si apre il frame remoto e
+# si leggono SOLO i child richiesti, senza scaricare l'intero file. `crs_wkt` e
+# la shape della griglia (letture di header, piccole) vengono lette comunque.
+#
+# FALLBACK ESPLICITO: se fsspec/HTTP o il formato remoto non funzionano il
+# motore RICADE sul download completo, con `[WARN]` inequivocabile (dominio/
+# frame/motivo) e contatori registrati nel manifest (`download.mode`,
+# `download.fallback_count`, ...). Il fallback NON e' mai silenzioso.
+class RangeStats(object):
+    """Byte e numero di richieste HTTP di un frame letto a intervalli."""
+
+    __slots__ = ("requests", "bytes")
+
+    def __init__(self):
+        self.requests = 0
+        self.bytes = 0
+
+
+def range_supported():
+    """True se la lettura a intervalli e' disponibile (fsspec + reader async)."""
+    return _fsspec is not None and OmFileReaderAsync is not None
+
+
+# Un SOLO event loop per processo. fsspec tiene in cache l'istanza del filesystem
+# (e la sua sessione aiohttp): con `asyncio.run()` per-frame una sessione creata
+# in un loop chiuso verrebbe riusata -> errore reale "Event loop is closed" gia'
+# osservato. Qui il loop e' persistente e OGNI lettura apre un fs NUOVO (sessione
+# fresca), chiuso a fine lettura: niente sessioni stantie tra frame.
+_HTTP_LOOP = None
+_ACTIVE_STATS = None
+
+
+def _http_loop():
+    global _HTTP_LOOP
+    if _HTTP_LOOP is None or _HTTP_LOOP.is_closed():
+        _HTTP_LOOP = asyncio.new_event_loop()
+    return _HTTP_LOOP
+
+
+def _new_http_fs():
+    """fs HTTP asincrono NUOVO e strumentato (conta byte/richieste HTTP)."""
+    fs = _fsspec.filesystem("http", asynchronous=True,
+                            skip_instance_cache=True)
+    orig = fs._cat_file
+
+    async def _cat_file(path, start=None, end=None, **kwargs):
+        data = await orig(path, start=start, end=end, **kwargs)
+        if _ACTIVE_STATS is not None:
+            _ACTIVE_STATS.requests += 1
+            _ACTIVE_STATS.bytes += len(data)
+        return data
+
+    fs._cat_file = _cat_file
+    return fs
+
+
+async def _close_http_fs(fs):
+    """Chiude la sessione aiohttp del fs (best-effort)."""
+    try:
+        sess = getattr(fs, "_session", None)
+        if sess is not None:
+            await sess.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _selective_run(coro, stats):
+    """Esegue `coro` sul loop persistente, contando byte/richieste in `stats`."""
+    global _ACTIVE_STATS
+    _ACTIVE_STATS = stats
+    try:
+        return _http_loop().run_until_complete(coro)
+    finally:
+        _ACTIVE_STATS = None
+
+
+def close_http():
+    """Chiude il loop persistente (best-effort, a fine run)."""
+    global _HTTP_LOOP
+    try:
+        if _HTTP_LOOP is not None and not _HTTP_LOOP.is_closed():
+            _HTTP_LOOP.close()
+    except Exception:  # noqa: BLE001
+        pass
+    _HTTP_LOOP = None
+
+
+async def _areader_shape(reader):
+    """(ny, nx) dal PRIMO child array di un reader ASYNC (o None)."""
+    for i in range(reader.num_children):
+        c = await reader.get_child_by_index(i)
+        if not c.is_scalar:
+            shp = getattr(c, "shape", None)
+            if shp is not None and len(shp) == 2:
+                return int(shp[0]), int(shp[1])
+    return None
+
+
+async def _selective_shape_async(url):
+    fs = _new_http_fs()
+    try:
+        root = await OmFileReaderAsync.from_fsspec(fs, url)
+        try:
+            return await _areader_shape(root)
+        finally:
+            root.close()
+    finally:
+        await _close_http_fs(fs)
+
+
+async def _selective_arrays_async(url, domain, risk_vars, grid, tgt_lats,
+                                  tgt_lons):
+    """Legge dal frame remoto SOLO le variabili di `risk_vars` presenti.
+
+    Risoluzione nomi, finestra di crop e conversione sono IDENTICHE al percorso
+    locale: `resolve_direct`/`nearest_indices`/`_resample_window` sono gli stessi
+    (l'unica differenza e' l'I/O, che qui avviene a intervalli sul file remoto).
+    """
+    fs = _new_http_fs()
+    try:
+        root = await OmFileReaderAsync.from_fsspec(fs, url)
+    except BaseException:  # noqa: BLE001
+        await _close_http_fs(fs)
+        raise
+    try:
+        shape = None
+        names = set()
+        for i in range(root.num_children):
+            c = await root.get_child_by_index(i)
+            if c.is_scalar:
+                continue
+            names.add(c.name)
+            if shape is None:
+                shp = getattr(c, "shape", None)
+                if shp is not None and len(shp) == 2:
+                    shape = (int(shp[0]), int(shp[1]))
+
+        crs_frame = ""
+        try:
+            crs = await root.get_child_by_name("crs_wkt")
+            if crs is not None:
+                crs_frame = crs.read_scalar()
+        except Exception:  # noqa: BLE001
+            crs_frame = ""
+
+        arrays = {}
+        meta = {}
+        warnings = []
+        jj, ii = nearest_indices(grid, tgt_lats, tgt_lons)
+        jmin, jmax = int(jj.min()), int(jj.max())
+        imin, imax = int(ii.min()), int(ii.max())
+        sel = (slice(jmin, jmax + 1), slice(imin, imax + 1))
+        plan = []
+        for rv in risk_vars:
+            src = resolve_direct(rv, names)
+            if src is not None:
+                plan.append((rv["name"], src))
+
+        async def _read_one(src):
+            child = await root.get_child_by_name(src)
+            window = await child.read_array(sel)
+            return _resample_window(window, jj, ii, jmin, imin)
+
+        # return_exceptions=True: TUTTE le letture della finestra arrivano a
+        # termine prima di procedere, cosi' non restano task pendenti che
+        # terrebbero aperta la sessione HTTP (chiusa nel finally).
+        results = await asyncio.gather(*[_read_one(src) for _, src in plan],
+                                       return_exceptions=True)
+        for r in results:
+            if isinstance(r, BaseException):
+                raise r
+        windows = results
+        for (name, src), arr in zip(plan, windows):
+            arrays[name] = arr
+            if name not in V2_INPUT_VAR_NAMES:
+                meta[name] = {"source_domain": domain, "source_var": src,
+                              "derived": False}
+        # derivazione per-frame (stateless) + warning delle PUBBLICATE irrisolte:
+        # STESSA logica del percorso locale (`resolve_domain_frame`).
+        warnings.extend(derive_per_frame(arrays, meta, domain))
+        warnings.extend(missing_published_warnings(risk_vars, arrays, domain))
+        return {"shape": shape, "crs_frame": crs_frame, "arrays": arrays,
+                "meta": meta, "warnings": warnings}
+    finally:
+        root.close()
+        await _close_http_fs(fs)
+
+
+def probe_frame_shape_range(url, retries=3):
+    """Shape del frame via lettura a intervalli. (shape, RangeStats, errore)."""
+    stats = RangeStats()
+    last = None
+    for attempt in range(1, retries + 1):
+        try:
+            shape = _selective_run(_selective_shape_async(url), stats)
+            return shape, stats, None
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            if attempt < retries:
+                time.sleep(1.5 * attempt)
+    return None, stats, last
+
+
+def read_frame_selective(url, domain, risk_vars, grid, tgt_lats, tgt_lons,
+                         retries=3):
+    """Legge SOLO le variabili pubblicate via range GET.
+
+    Ritorna (dict|None, RangeStats, errore). Un numero LIMITATO di tentativi
+    (stesso pattern di `download`) assorbe disconnessioni transitorie; esauriti
+    i tentativi il chiamante RICADE sul download completo (fallback esplicito).
+    """
+    stats = RangeStats()
+    last = None
+    for attempt in range(1, retries + 1):
+        try:
+            res = _selective_run(_selective_arrays_async(
+                url, domain, risk_vars, grid, tgt_lats, tgt_lons), stats)
+            return res, stats, None
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+            if attempt < retries:
+                time.sleep(1.5 * attempt)
+    return None, stats, last
+
+
+def _read_local_frame(path, domain, risk_vars, grid, tgt_lats, tgt_lons, idx):
+    """Legge il frame da un file LOCALE (percorso sync invariato). Ritorna dict."""
+    reader = OmFileReader.from_path(path)
+    try:
+        shape = _reader_shape(reader)
+        crs_frame = ""
+        try:
+            crs = reader.get_child_by_name("crs_wkt")
+            if crs is not None:
+                crs_frame = crs.read_scalar()
+        except Exception:  # noqa: BLE001
+            crs_frame = ""
+        arrays, meta, warnings = resolve_domain_frame(
+            reader, grid, risk_vars, tgt_lats, tgt_lons, idx, domain)
+        return {"shape": shape, "crs_frame": crs_frame, "arrays": arrays,
+                "meta": meta, "warnings": warnings}
+    finally:
+        reader.close()
+
+
+def _cached_path(url, domain, valid_name, frames_cache):
+    """Percorso del frame in frames-cache se PRESENTE e aggiornato (nessuna GET)."""
+    if not frames_cache:
+        return None
+    dst = os.path.join(frames_cache, domain, valid_name + ".om")
+    if not os.path.isfile(dst):
+        return None
+    expected = http_content_length(url)
+    local = os.path.getsize(dst)
+    if expected is None or local == expected:
+        print("%s   frame reuse (frames-cache %s, %d byte%s)"
+              % (LOG, dst, local,
+                 "" if expected is None else ", Content-Length ok"))
+        return dst
+    print("%s   frame cache stale (%d != %d byte, %s): non riusato"
+          % (LOG, local, expected, dst))
+    return None
+
+
+def _record_fallback(dl, domain, valid_name, reason):
+    """Registra un fallback da range a download completo (WARN + contatore)."""
+    dl["fallback_count"] += 1
+    detail = "dominio=%s frame=%s: %s" % (domain, valid_name, reason)
+    if detail not in dl["fallback_reasons"]:
+        dl["fallback_reasons"].append(detail)
+    print("%s [WARN] lettura a intervalli fallita -> download completo (%s)"
+          % (LOG, detail))
+
+
+def probe_frame_shape(url, domain, valid_name, cache_dir, frames_cache, dl,
+                      allow_range=True):
+    """(shape, mode) del PRIMO frame: cache locale -> range -> download completo."""
+    path = _cached_path(url, domain, valid_name, frames_cache)
+    if path is not None:
+        dl["grid_probe_mode"] = "cache"
+        return frame_shape(path), "cache"
+    if allow_range and range_supported():
+        shape, stats, err = probe_frame_shape_range(url)
+        dl["range_requests"] += stats.requests
+        dl["range_bytes"] += stats.bytes
+        if err is None and shape:
+            dl["grid_probe_mode"] = "range"
+            return shape, "range"
+        if err is None:
+            _record_fallback(dl, domain, valid_name, "shape non leggibile via range")
+        else:
+            _record_fallback(dl, domain, valid_name,
+                             "%s: %s" % (type(err).__name__, err))
+    elif allow_range:
+        _record_fallback(dl, domain, valid_name,
+                         "lettura a intervalli non disponibile "
+                         "(fsspec/reader assente)")
+    fpath, _ = fetch_frame(url, domain, valid_name, cache_dir, frames_cache,
+                           label="griglia")
+    if fpath is None:
+        return None, "fail"
+    dl["download_bytes"] += os.path.getsize(fpath)
+    dl["grid_probe_mode"] = "download"
+    return frame_shape(fpath), "download"
+
+
+def load_frame(url, domain, valid_name, cache_dir, frames_cache, risk_vars,
+               grid, tgt_lats, tgt_lons, idx, dl, allow_range=True):
+    """Ottiene un frame sorgente con i dati pubblicati.
+
+    Ordine: (1) frame locale in frames-cache (gratis), (2) lettura selettiva a
+    intervalli, (3) FALLBACK download completo (con [WARN] e contatore).
+    Ritorna un dict {shape, arrays, meta, warnings, crs_frame, mode} o None.
+    """
+    path = _cached_path(url, domain, valid_name, frames_cache)
+    if path is not None:
+        dl["cache_frames"] += 1
+        d = _read_local_frame(path, domain, risk_vars, grid, tgt_lats, tgt_lons,
+                              idx)
+        d["mode"] = "cache"
+        return d
+    if allow_range and range_supported():
+        d, stats, err = read_frame_selective(url, domain, risk_vars, grid,
+                                             tgt_lats, tgt_lons)
+        dl["range_requests"] += stats.requests
+        dl["range_bytes"] += stats.bytes
+        if err is None:
+            dl["range_frames"] += 1
+            d["mode"] = "range"
+            return d
+        _record_fallback(dl, domain, valid_name,
+                         "%s: %s" % (type(err).__name__, err))
+    elif allow_range:
+        _record_fallback(dl, domain, valid_name,
+                         "lettura a intervalli non disponibile "
+                         "(fsspec/reader assente)")
+    fpath, _ = fetch_frame(url, domain, valid_name, cache_dir, frames_cache,
+                           label="frame")
+    if fpath is None:
+        return None
+    dl["download_frames"] += 1
+    dl["download_bytes"] += os.path.getsize(fpath)
+    d = _read_local_frame(fpath, domain, risk_vars, grid, tgt_lats, tgt_lons, idx)
+    d["mode"] = "download"
+    return d
 
 
 # ---------------------------------------------------------------------------
@@ -684,6 +1357,24 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
     res["out_dir"] = out_dir
     res["latest_path"] = latest_path
 
+    # Contatori di provenienza dei frame (registrati nel manifest: vedi
+    # `download` piu' sotto). `mode` = "range" | "mixed" | "download" |
+    # "frames-cache"; `fallback_count` conta i frame che, per un guasto della
+    # lettura a intervalli, sono stati scaricati per intero.
+    dl = {
+        "mode": "range",
+        "grid_probe_mode": None,
+        "range_frames": 0,
+        "cache_frames": 0,
+        "download_frames": 0,
+        "fallback_count": 0,
+        "fallback_reasons": [],
+        "range_requests": 0,
+        "range_bytes": 0,
+        "download_bytes": 0,
+    }
+    res["download"] = dl
+
     # --- DRY-RUN: pianifica SENZA scaricare (nx/ny da fallback GRIDS) ---
     if dry_run:
         known = GRIDS.get(domain)
@@ -732,16 +1423,12 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
     grid = grid_cache.get(domain)
     if grid is None:
         first = anchors[0]
-        fpath, _ = fetch_frame(s3_url(domain, ref_time, first), domain,
-                               valid_time_to_filename(first), cache_dir,
-                               frames_cache, label="griglia")
-        if fpath is None:
-            res["reason"] = "download del primo frame (griglia) fallito"
-            print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
-            return res
-        shape = frame_shape(fpath)
-        if not shape:
-            res["reason"] = "shape del primo frame non leggibile"
+        shape, src_mode = probe_frame_shape(
+            s3_url(domain, ref_time, first), domain,
+            valid_time_to_filename(first), cache_dir, frames_cache, dl,
+            allow_range=not args.no_range)
+        if shape is None:
+            res["reason"] = "shape del primo frame non leggibile (mode=%s)" % src_mode
             print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
             return res
         ny, nx = shape
@@ -750,6 +1437,7 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
             res["reason"] = "crs_wkt privo di BBOX o dimensioni non valide"
             print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
             return res
+        print("%s   griglia dal PRIMO frame (%s)" % (LOG, src_mode))
         for w in grid_guard(domain, grid):
             print("%s [WARN] dominio '%s': %s" % (LOG, domain, w))
         grid_cache[domain] = grid
@@ -768,6 +1456,14 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
     os.makedirs(out_dir, exist_ok=True)
 
     ordered_names = [rv["name"] for rv in V2_RISK_VARS]
+
+    # Cumulata di precipitazione (STATE) sulla griglia di OUTPUT (dopo
+    # crop/resample): accumulata lungo la serie ORDINATA dei valid_times.
+    # precipitation_cum e' pubblicata su TUTTI i frame (frame 0 = 0.0).
+    out_shape = (out_grid["ny"], out_grid["nx"])
+    precip_cum = None
+    precip_seen = False
+
     frames = []
     variables_map = {}
     sizes_map = {}
@@ -775,53 +1471,79 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
 
     for vi, anchor in enumerate(anchors):
         print("%s   frame %d/%d valid_time=%s" % (LOG, vi + 1, len(anchors), anchor))
-        fpath, _ = fetch_frame(s3_url(domain, ref_time, anchor), domain,
-                               valid_time_to_filename(anchor), cache_dir,
-                               frames_cache, label="frame")
-        if fpath is None:
-            print("%s [WARN] salto frame %s (download fallito)." % (LOG, anchor))
-            all_warnings.append("frame %s: download fallito" % anchor)
+        vname = valid_time_to_filename(anchor)
+        # `V2_READ_VARS` = pubblicate + INPUT: la lettura a intervalli deve
+        # leggere ANCHE le componenti u/v a 850/300 hPa, altrimenti le derivate
+        # wind_speed_850hPa/300hPa falliscono solo su quel percorso.
+        frame = load_frame(s3_url(domain, ref_time, anchor), domain, vname,
+                           cache_dir, frames_cache, V2_READ_VARS, grid,
+                           tgt_lats, tgt_lons, idx, dl,
+                           allow_range=not args.no_range)
+        if frame is None:
+            print("%s [WARN] salto frame %s (frame non ottenibile)." % (LOG, anchor))
+            all_warnings.append("frame %s: frame non ottenibile" % anchor)
             continue
 
-        reader = OmFileReader.from_path(fpath)
-        try:
-            crs_frame = ""
-            coordinates = "lat lon"
-            try:
-                crs_frame = reader.get_child_by_name("crs_wkt").read_scalar()
-            except Exception:  # noqa: BLE001
-                crs_frame = crs_wkt
-            if not crs_frame:
-                crs_frame = crs_wkt
+        crs_frame = frame["crs_frame"] or crs_wkt
+        coordinates = "lat lon"
+        arrays = frame["arrays"]
+        vmeta = frame["meta"]
+        warns = frame["warnings"]
 
-            arrays, vmeta, warns = resolve_domain_frame(
-                reader, grid, V2_RISK_VARS, tgt_lats, tgt_lons, idx, domain)
+        # Cumulata stateful: il frame senza `precipitation` (reference_time)
+        # contribuisce 0 e NON interrompe l'accumulo.
+        precip = arrays.get("precipitation")
+        if precip is not None:
+            precip_seen = True
+        precip_cum = accumulate_precip_cum(precip_cum, precip, out_shape)
+        arrays["precipitation_cum"] = precip_cum.astype(np.float32)
+        vmeta["precipitation_cum"] = {
+            "source_domain": domain, "derived": True,
+            "derived_from": ["precipitation"]}
 
-            vt_dt = parse_iso(anchor)
-            ref_dt = parse_iso(ref_time)
-            fname = valid_time_to_filename(anchor) + ".om"
-            fpath_out = os.path.join(out_dir, fname)
-            size, nvars = write_frame_om(
-                fpath_out, ordered_names, arrays, crs_frame, coordinates,
-                int(vt_dt.timestamp()), int(ref_dt.timestamp()))
-            frames.append({"valid_time": anchor, "file": fname, "bytes": size,
-                           "variables": nvars})
-            variables_map[anchor] = vmeta
-            sizes_map[anchor] = size
-            all_warnings.extend(["%s: %s" % (anchor, w) for w in warns])
-            print("%s   scritto %s (%d byte, %d var)" % (LOG, fname, size, nvars))
-        finally:
-            reader.close()
+        vt_dt = parse_iso(anchor)
+        ref_dt = parse_iso(ref_time)
+        fname = vname + ".om"
+        fpath_out = os.path.join(out_dir, fname)
+        size, nvars = write_frame_om(
+            fpath_out, ordered_names, arrays, crs_frame, coordinates,
+            int(vt_dt.timestamp()), int(ref_dt.timestamp()))
+        frames.append({"valid_time": anchor, "file": fname, "bytes": size,
+                       "variables": nvars, "source_mode": frame["mode"]})
+        variables_map[anchor] = vmeta
+        sizes_map[anchor] = size
+        all_warnings.extend(["%s: %s" % (anchor, w) for w in warns])
+        print("%s   scritto %s (%d byte, %d var, src=%s)"
+              % (LOG, fname, size, nvars, frame["mode"]))
 
     if not frames:
         res["reason"] = "nessun frame scritto (tutti i download falliti?)"
         print("%s [FAIL] dominio '%s': %s." % (LOG, domain, res["reason"]))
         return res
 
+    if not precip_seen:
+        all_warnings.append(
+            "precipitation_cum: variabile 'precipitation' assente in TUTTI i "
+            "frame del dominio '%s': la cumulata resta a 0" % domain)
+
     removed = []
     if not args.no_prune:
         keep_files = [valid_time_to_filename(a) + ".om" for a in anchors]
         removed = prune_frames(out_dir, keep_files, args.valid_frames)
+
+    # Modalita' di download del dominio (registrata nel manifest/report).
+    used_range = dl["range_frames"] > 0 or dl["grid_probe_mode"] == "range"
+    used_dl = dl["download_frames"] > 0 or dl["grid_probe_mode"] == "download"
+    if used_range and used_dl:
+        dl["mode"] = "mixed"
+    elif used_dl:
+        dl["mode"] = "download"
+    elif used_range:
+        dl["mode"] = "range"
+    elif dl["cache_frames"]:
+        dl["mode"] = "frames-cache"
+    else:
+        dl["mode"] = "range"
 
     bb = bbox_for(domain)
     manifest = {
@@ -843,12 +1565,18 @@ def process_domain(domain, args, cache_dir, frames_cache, grid_cache, dry_run):
         "sizes": sizes_map,
         "pruned": removed,
         "warnings": all_warnings,
+        "download": dl,
     }
     write_json_atomic(latest_path, manifest)
 
     total_bytes = sum(f["bytes"] for f in frames)
     print("%s [OK] dominio '%s': %d frame, %d byte totali (%.1f KiB)."
           % (LOG, domain, len(frames), total_bytes, total_bytes / 1024.0))
+    print("%s   download: mode=%s (griglia=%s) | range=%d frame (%d req, %d byte) | "
+          "download=%d frame (%d byte) | cache=%d | fallback=%d"
+          % (LOG, dl["mode"], dl["grid_probe_mode"], dl["range_frames"],
+             dl["range_requests"], dl["range_bytes"], dl["download_frames"],
+             dl["download_bytes"], dl["cache_frames"], dl["fallback_count"]))
     if removed:
         print("%s   prune: rimossi %d frame vecchi." % (LOG, len(removed)))
     uniq_warn = sorted(set(all_warnings))
@@ -885,6 +1613,10 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true",
                     help="Stampa il piano di TUTTI i domini senza scaricare/scrivere.")
     ap.add_argument("--force", action="store_true", help="Ignora il NO-OP guard (riscrive sempre).")
+    ap.add_argument("--no-range", action="store_true",
+                    help="Disabilita la lettura a intervalli (range GET): scarica "
+                         "sempre il frame COMPLETO. Usato per debug/confronto; "
+                         "default = lettura selettiva con fallback esplicito.")
     ap.add_argument("--cache-dir", default=None,
                     help="Directory cache dei download (default: temp di sistema).")
     ap.add_argument("--frames-cache", default="",
@@ -966,8 +1698,10 @@ def main(argv=None):
     # Exit: 0 se almeno un dominio e' ok (anche solo NO-OP); 1 se TUTTI falliscono.
     if not ok:
         print("%s ERRORE: nessun dominio ok (tutti falliti)." % LOG)
+        close_http()
         return 1
     print("%s FATTO: %d/%d domini ok." % (LOG, len(ok), len(results)))
+    close_http()
     return 0
 
 

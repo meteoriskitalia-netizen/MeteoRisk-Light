@@ -8,7 +8,7 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     orizzonte INTERO del manifest del dominio: --valid-frames 0, nessun cap sul
 #     prune). Attribuzione Open-Meteo (CC BY 4.0); omfiles solo a runtime.
 #   - MULTI-DOMINIO = MATRIX (strategia scelta): UN JOB PER DOMINIO
-#     (matrix.domain, 10 domini GEOGCRS). Motivo: i domini globali pubblicano
+#     (matrix.domain, 7 domini GEOGCRS). Motivo: i domini globali pubblicano
 #     ~200 frame ciascuno (es. ncep_gfs025 209): un unico job seriale (timeout 20')
 #     sforerebbe. Il matrix isola i fallimenti (un dominio KO non uccide gli altri,
 #     fail-fast:false), parallelizza i download e riduce la pressione su S3.
@@ -19,7 +19,7 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     nessun conflitto di contenuto, il rebase riallinea solo la history).
 #   - chmi_aladin_central_europe_2km NON e' nella matrice: il suo CRS e' PROJCRS
 #     (Lambert), il motore lo salterebbe con `SKIP dominio ... (PROJCRS/Lambert)`
-#     e un job con SOLO domini skip uscirebbe 1 (nessun dominio ok). Restano i 10
+#     e un job con SOLO domini skip uscirebbe 1 (nessun dominio ok). Restano i 7
 #     domini GEOGCRS.
 #   - EGRESS: i frame full-size S3 sono tenuti in cache GitHub
 #     (.cache_fm2_frames/<dominio>/<VALID>.om, actions/cache) e riusati tra run via
@@ -34,7 +34,7 @@ name: Forecast Maps V2 (mappe .om su cache GitHub)
 #     client non si attivava mai. Architettura attuale (entrambi i temi light/dark
 #     conservati, nessun cap sugli frame; TRE regioni per dominio: `italia`,
 #     `europa` e `domain` = l'intero dominio, resa solo per i domini non globali):
-#     1) `render` = MATRICE per-dominio (stessa lista dei 10 domini dell'engine,
+#     1) `render` = MATRICE per-dominio (stessa lista dei 7 domini dell'engine,
 #        fail-fast:false, concurrency forecast-maps-v2-render-<dominio>,
 #        timeout-minutes:240): ogni shard scarica l'artifact engine ESATTO del
 #        proprio dominio (fm2-<dominio>), renderizza SOLO quel dominio
@@ -94,7 +94,7 @@ permissions:
 jobs:
   engine:
     runs-on: ubuntu-latest
-    # Un job per dominio (10 domini GEOGCRS). Ogni job e' autonomo e parallelo:
+    # Un job per dominio (7 domini GEOGCRS). Ogni job e' autonomo e parallelo:
     # il fallimento/timeout di un dominio non ferma gli altri (fail-fast:false).
     # timeout per-job alzato (20' -> 60') per coprire i domini globali con ~200
     # frame al primo run a cache fredda; a cache calda il run e' molto piu' corto.
@@ -105,14 +105,11 @@ jobs:
         domain:
           - dwd_icon_eu
           - dwd_icon_d2
-          - italia_meteo_arpae_icon_2i
           - ecmwf_ifs025
           - ncep_gfs025
+          - ncep_gfs013
           - dwd_icon
           - meteofrance_arpege_world025
-          - ukmo_global_deterministic_10km
-          - jma_gsm
-          - cma_grapes_global
     concurrency:
       queue: max
       # Group PER-DOMINIO: le run dello stesso dominio si serializzano tra loro,
@@ -236,7 +233,7 @@ jobs:
     # li ricostruisce il single-writer render-merge.
     name: render (${{ matrix.domain }})
     needs: engine
-    # !cancelled(): un dominio engine fallito non blocca gli altri 9 shard — quel
+    # !cancelled(): un dominio engine fallito non blocca gli altri 6 shard — quel
     # dominio manchera' dal --in del merge e verra' escluso dalla gate.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
@@ -253,18 +250,15 @@ jobs:
         domain:
           - dwd_icon_eu
           - dwd_icon_d2
-          - italia_meteo_arpae_icon_2i
           - ecmwf_ifs025
           - ncep_gfs025
+          - ncep_gfs013
           - dwd_icon
           - meteofrance_arpege_world025
-          - ukmo_global_deterministic_10km
-          - jma_gsm
-          - cma_grapes_global
     concurrency:
       queue: max
       # Group PER-DOMINIO: gli shard si serializzano solo tra run dello stesso
-      # dominio; i 10 domini procedono in parallelo tra loro e rispetto all'engine.
+      # dominio; i 7 domini procedono in parallelo tra loro e rispetto all'engine.
       group: forecast-maps-v2-render-${{ matrix.domain }}
       cancel-in-progress: false
     steps:
